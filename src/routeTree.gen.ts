@@ -9,10 +9,16 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as AuthRouteImport } from './routes/auth'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiPublicShopConfigRouteImport } from './routes/api/public/shop-config'
 import { Route as ApiPublicRachidaChatRouteImport } from './routes/api/public/rachida-chat'
 
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -31,36 +37,56 @@ const ApiPublicRachidaChatRoute = ApiPublicRachidaChatRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
   '/api/public/rachida-chat': typeof ApiPublicRachidaChatRoute
   '/api/public/shop-config': typeof ApiPublicShopConfigRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
   '/api/public/rachida-chat': typeof ApiPublicRachidaChatRoute
   '/api/public/shop-config': typeof ApiPublicShopConfigRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
   '/api/public/rachida-chat': typeof ApiPublicRachidaChatRoute
   '/api/public/shop-config': typeof ApiPublicShopConfigRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/api/public/rachida-chat' | '/api/public/shop-config'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/api/public/rachida-chat'
+    | '/api/public/shop-config'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/api/public/rachida-chat' | '/api/public/shop-config'
-  id: '__root__' | '/' | '/api/public/rachida-chat' | '/api/public/shop-config'
+  to: '/' | '/auth' | '/api/public/rachida-chat' | '/api/public/shop-config'
+  id:
+    | '__root__'
+    | '/'
+    | '/auth'
+    | '/api/public/rachida-chat'
+    | '/api/public/shop-config'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthRoute: typeof AuthRoute
   ApiPublicRachidaChatRoute: typeof ApiPublicRachidaChatRoute
   ApiPublicShopConfigRoute: typeof ApiPublicShopConfigRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -87,6 +113,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthRoute: AuthRoute,
   ApiPublicRachidaChatRoute: ApiPublicRachidaChatRoute,
   ApiPublicShopConfigRoute: ApiPublicShopConfigRoute,
 }
