@@ -9,11 +9,17 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiPublicShopConfigRouteImport } from './routes/api/public/shop-config'
 import { Route as ApiPublicRachidaChatRouteImport } from './routes/api/public/rachida-chat'
 
+const DashboardRoute = DashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
@@ -38,12 +44,14 @@ const ApiPublicRachidaChatRoute = ApiPublicRachidaChatRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/dashboard': typeof DashboardRoute
   '/api/public/rachida-chat': typeof ApiPublicRachidaChatRoute
   '/api/public/shop-config': typeof ApiPublicShopConfigRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/dashboard': typeof DashboardRoute
   '/api/public/rachida-chat': typeof ApiPublicRachidaChatRoute
   '/api/public/shop-config': typeof ApiPublicShopConfigRoute
 }
@@ -51,6 +59,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/dashboard': typeof DashboardRoute
   '/api/public/rachida-chat': typeof ApiPublicRachidaChatRoute
   '/api/public/shop-config': typeof ApiPublicShopConfigRoute
 }
@@ -59,14 +68,21 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/dashboard'
     | '/api/public/rachida-chat'
     | '/api/public/shop-config'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/api/public/rachida-chat' | '/api/public/shop-config'
+  to:
+    | '/'
+    | '/auth'
+    | '/dashboard'
+    | '/api/public/rachida-chat'
+    | '/api/public/shop-config'
   id:
     | '__root__'
     | '/'
     | '/auth'
+    | '/dashboard'
     | '/api/public/rachida-chat'
     | '/api/public/shop-config'
   fileRoutesById: FileRoutesById
@@ -74,12 +90,20 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthRoute: typeof AuthRoute
+  DashboardRoute: typeof DashboardRoute
   ApiPublicRachidaChatRoute: typeof ApiPublicRachidaChatRoute
   ApiPublicShopConfigRoute: typeof ApiPublicShopConfigRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/dashboard': {
+      id: '/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof DashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/auth': {
       id: '/auth'
       path: '/auth'
@@ -114,6 +138,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRoute: AuthRoute,
+  DashboardRoute: DashboardRoute,
   ApiPublicRachidaChatRoute: ApiPublicRachidaChatRoute,
   ApiPublicShopConfigRoute: ApiPublicShopConfigRoute,
 }
