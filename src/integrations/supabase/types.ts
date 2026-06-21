@@ -14,7 +14,243 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      conversations: {
+        Row: {
+          client_contact: string | null
+          client_name: string | null
+          created_at: string
+          emotion: string | null
+          human_requested: boolean
+          id: string
+          shop_id: string
+          updated_at: string
+        }
+        Insert: {
+          client_contact?: string | null
+          client_name?: string | null
+          created_at?: string
+          emotion?: string | null
+          human_requested?: boolean
+          id?: string
+          shop_id: string
+          updated_at?: string
+        }
+        Update: {
+          client_contact?: string | null
+          client_name?: string | null
+          created_at?: string
+          emotion?: string | null
+          human_requested?: boolean
+          id?: string
+          shop_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversations_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      messages: {
+        Row: {
+          content: string
+          conversation_id: string
+          created_at: string
+          id: string
+          role: string
+        }
+        Insert: {
+          content: string
+          conversation_id: string
+          created_at?: string
+          id?: string
+          role: string
+        }
+        Update: {
+          content?: string
+          conversation_id?: string
+          created_at?: string
+          id?: string
+          role?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      orders: {
+        Row: {
+          cart: Json
+          client_contact: string | null
+          client_name: string | null
+          conversation_id: string | null
+          created_at: string
+          id: string
+          notes: string | null
+          shop_id: string
+          status: string
+          total: number
+          updated_at: string
+        }
+        Insert: {
+          cart?: Json
+          client_contact?: string | null
+          client_name?: string | null
+          conversation_id?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          shop_id: string
+          status?: string
+          total?: number
+          updated_at?: string
+        }
+        Update: {
+          cart?: Json
+          client_contact?: string | null
+          client_name?: string | null
+          conversation_id?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          shop_id?: string
+          status?: string
+          total?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orders_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      products: {
+        Row: {
+          category: string | null
+          color: string | null
+          created_at: string
+          description: string | null
+          gender: string | null
+          id: string
+          image_url: string | null
+          is_active: boolean
+          keywords: string | null
+          name: string
+          price: number
+          shop_id: string
+          stock: number
+          updated_at: string
+        }
+        Insert: {
+          category?: string | null
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          gender?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          keywords?: string | null
+          name: string
+          price?: number
+          shop_id: string
+          stock?: number
+          updated_at?: string
+        }
+        Update: {
+          category?: string | null
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          gender?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          keywords?: string | null
+          name?: string
+          price?: number
+          shop_id?: string
+          stock?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "products_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shops: {
+        Row: {
+          color: string
+          created_at: string
+          currency: string
+          greeting: string
+          id: string
+          max_remise: number
+          name: string
+          owner_id: string
+          rachida_name: string
+          slug: string
+          system_prompt_extra: string | null
+          updated_at: string
+          whatsapp: string | null
+        }
+        Insert: {
+          color?: string
+          created_at?: string
+          currency?: string
+          greeting?: string
+          id?: string
+          max_remise?: number
+          name: string
+          owner_id: string
+          rachida_name?: string
+          slug: string
+          system_prompt_extra?: string | null
+          updated_at?: string
+          whatsapp?: string | null
+        }
+        Update: {
+          color?: string
+          created_at?: string
+          currency?: string
+          greeting?: string
+          id?: string
+          max_remise?: number
+          name?: string
+          owner_id?: string
+          rachida_name?: string
+          slug?: string
+          system_prompt_extra?: string | null
+          updated_at?: string
+          whatsapp?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
