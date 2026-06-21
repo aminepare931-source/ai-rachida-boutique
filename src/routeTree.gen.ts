@@ -10,33 +10,43 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ApiPublicShopConfigRouteImport } from './routes/api/public/shop-config'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicShopConfigRoute = ApiPublicShopConfigRouteImport.update({
+  id: '/api/public/shop-config',
+  path: '/api/public/shop-config',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/api/public/shop-config': typeof ApiPublicShopConfigRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/api/public/shop-config': typeof ApiPublicShopConfigRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/api/public/shop-config': typeof ApiPublicShopConfigRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths: '/' | '/api/public/shop-config'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to: '/' | '/api/public/shop-config'
+  id: '__root__' | '/' | '/api/public/shop-config'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ApiPublicShopConfigRoute: typeof ApiPublicShopConfigRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +58,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/shop-config': {
+      id: '/api/public/shop-config'
+      path: '/api/public/shop-config'
+      fullPath: '/api/public/shop-config'
+      preLoaderRoute: typeof ApiPublicShopConfigRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ApiPublicShopConfigRoute: ApiPublicShopConfigRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
