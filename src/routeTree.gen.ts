@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiPublicShopConfigRouteImport } from './routes/api/public/shop-config'
+import { Route as ApiPublicRachidaChatRouteImport } from './routes/api/public/rachida-chat'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -22,30 +23,39 @@ const ApiPublicShopConfigRoute = ApiPublicShopConfigRouteImport.update({
   path: '/api/public/shop-config',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicRachidaChatRoute = ApiPublicRachidaChatRouteImport.update({
+  id: '/api/public/rachida-chat',
+  path: '/api/public/rachida-chat',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/api/public/rachida-chat': typeof ApiPublicRachidaChatRoute
   '/api/public/shop-config': typeof ApiPublicShopConfigRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/api/public/rachida-chat': typeof ApiPublicRachidaChatRoute
   '/api/public/shop-config': typeof ApiPublicShopConfigRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/api/public/rachida-chat': typeof ApiPublicRachidaChatRoute
   '/api/public/shop-config': typeof ApiPublicShopConfigRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/api/public/shop-config'
+  fullPaths: '/' | '/api/public/rachida-chat' | '/api/public/shop-config'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/api/public/shop-config'
-  id: '__root__' | '/' | '/api/public/shop-config'
+  to: '/' | '/api/public/rachida-chat' | '/api/public/shop-config'
+  id: '__root__' | '/' | '/api/public/rachida-chat' | '/api/public/shop-config'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ApiPublicRachidaChatRoute: typeof ApiPublicRachidaChatRoute
   ApiPublicShopConfigRoute: typeof ApiPublicShopConfigRoute
 }
 
@@ -65,11 +75,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicShopConfigRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/rachida-chat': {
+      id: '/api/public/rachida-chat'
+      path: '/api/public/rachida-chat'
+      fullPath: '/api/public/rachida-chat'
+      preLoaderRoute: typeof ApiPublicRachidaChatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ApiPublicRachidaChatRoute: ApiPublicRachidaChatRoute,
   ApiPublicShopConfigRoute: ApiPublicShopConfigRoute,
 }
 export const routeTree = rootRouteImport
