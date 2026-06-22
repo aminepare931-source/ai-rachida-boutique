@@ -1,94 +1,109 @@
+# RACHIDA AI — Refonte Premium 2026 + Extension IA
 
-# Rachida AI — Plateforme SaaS pour boutiques du Burkina Faso
+Le MVP fonctionnel existe déjà (auth, dashboard, catalogue, widget, chat IA, émotions, persistance). Cette phase transforme l'expérience visuelle et étend les capacités IA. Travail découpé en **3 phases livrables séparément** — chaque phase est testable avant de passer à la suivante.
 
-Une plateforme où chaque entrepreneur crée un compte, configure sa boutique, importe son catalogue, et obtient un script à coller sur son site. Le widget Rachida (déjà codé dans `rachida.js`) discute avec ses clients, recommande des produits, détecte les émotions, prend des commandes et propose un transfert WhatsApp humain.
+---
 
-## Stack
-- **Lovable Cloud** (auth + base de données Postgres + storage images)
-- **Lovable AI Gateway** (modèle `google/gemini-3-flash-preview`) — remplace la clé Groq cachée du script original
-- **TanStack Start** (déjà en place)
-- Widget JS public servable depuis `/widget/rachida.js`
+## PHASE 1 — Design System Premium + Landing Cinématique
 
-## Phase 1 — MVP (cette itération)
+**Objectif** : qu'un investisseur dise "cette plateforme a 2 ans d'avance" dès la landing.
 
-### 1. Landing publique (`/`)
-Présentation du produit en français : promesse "une IA vendeuse qui ne dort jamais", démo animée du chat, fonctionnalités (chat vente, détection d'émotions, panier multi-produits, transfert WhatsApp, suivi commandes), CTA "Créer ma boutique gratuitement". Design chaleureux, couleurs adaptées au marché BF.
+### Design System (`src/styles.css`)
+- Palette futuriste : fond `#05060F` (near-black bleuté), néons `#7C5CFF` (violet electric) + `#00E5FF` (cyan), accent or `#F4C95D` pour les CTAs premium
+- Typo : **Space Grotesk** (display) + **Inter Tight** (body), monospace **JetBrains Mono** pour les chiffres
+- Tokens : gradients néon, glows OKLCH, glassmorphism (backdrop-blur + bordures 1px white/10), shadows multi-couches
+- Mode sombre uniquement (le futuriste passe mal en light)
 
-### 2. Authentification (`/auth`)
-Inscription / connexion email + mot de passe via Lovable Cloud.
+### Dépendances à installer
+`framer-motion`, `gsap` + `@gsap/react`, `three`, `@react-three/fiber`, `@react-three/drei`, `lenis` (smooth scroll), `lottie-react`, `recharts`
 
-### 3. Dashboard boutique (`/_authenticated/dashboard`)
-- **Onglet Boutique** : nom, logo, WhatsApp, couleur du widget, message d'accueil, remise max, langues.
-- **Onglet Catalogue** : 
-  - Ajout/édition/suppression manuelle de produits (nom, prix FCFA, catégorie, genre, couleur, image, stock, description)
-  - **Import CSV/JSON** d'un catalogue entier
-  - (Shopify/WooCommerce reporté en Phase 2)
-- **Onglet Conversations** : liste des chats récents, transcripts, émotion détectée, statut commande.
-- **Onglet Commandes** : commandes capturées par l'IA avec coordonnées client, panier, statut, bouton "Marquer comme livrée".
-- **Onglet Intégration** : snippet `<script src=".../widget/rachida.js" data-shop="SHOP_ID"></script>` à copier-coller.
+### Landing (`src/routes/index.tsx`) — refonte complète
+- **Hero** : sphère 3D Three.js (réseau de particules formant un visage IA stylisé) qui réagit à la souris, headline en révélation lettre par lettre (GSAP SplitText), CTA glassmorphique avec halo néon
+- **Section "Elle parle comme une vraie vendeuse"** : démo chat live animée (messages qui apparaissent en streaming simulé, détection émotion visualisée par halo coloré)
+- **Section capacités** : bento grid 3D, cartes qui se soulèvent au hover avec parallax tilt
+- **Section "Comment ça marche"** : timeline scroll-driven (ScrollTrigger) — 3 étapes qui s'animent au scroll
+- **Section chiffres** : compteurs animés au viewport
+- **Section langues** : FR/Mooré/Dioula avec drapeaux animés
+- **CTA final** : carte glass + glow pulsant
+- Smooth scroll Lenis sur toute la page
 
-### 4. Widget embarquable (`/widget/rachida.js`)
-Réutilisation directe du `rachida.js` fourni, adapté :
-- Charge `RACHIDA_CONFIG` depuis l'API en fonction du `data-shop` du `<script>`
-- Pointe `apiEndpoint` vers `/api/public/rachida-chat` (route serveur publique TanStack)
-- Conserve : filtrage catalogue, détection émotion, panier multi-produits, demande transfert humain, sauvegarde contact
+### Auth (`src/routes/auth.tsx`) — refonte
+- Split-screen : gauche = formulaire glass, droite = animation Three.js (grille néon perspective)
 
-### 5. Backend IA (`/api/public/rachida-chat`)
-Route serveur publique (sans auth — appelée depuis les sites des boutiques, CORS ouvert). Pour chaque message :
-1. Identifie la boutique via `shopId`
-2. Charge le catalogue filtré (mêmes critères extraits que le JS actuel)
-3. Construit le system prompt avec contexte boutique
-4. Appelle Lovable AI Gateway en streaming
-5. Persiste message, émotion, commande détectée dans Postgres
+**Livrable Phase 1** : landing + auth visuellement "wow", dashboard inchangé pour l'instant.
 
-## Détails techniques
+---
 
-### Schéma base de données
-```text
-shops          (id, owner_id, name, whatsapp, color, greeting, max_remise, ...)
-products       (id, shop_id, name, price, category, gender, color, image_url, stock, description)
-conversations  (id, shop_id, client_name, client_contact, emotion, created_at)
-messages       (id, conversation_id, role, content, created_at)
-orders         (id, shop_id, conversation_id, cart_json, total, status, client_contact)
-```
-RLS : owner voit uniquement ses propres `shops` et données liées. Une policy `TO anon` lit `shops` + `products` via la route publique (filtrée par `shop_id`).
+## PHASE 2 — Dashboard Premium Style Linear/Vercel
 
-### Routes
-```text
-/                                  landing
-/auth                              login/signup
-/_authenticated/dashboard          shell + onglets
-/_authenticated/dashboard/shop
-/_authenticated/dashboard/catalog
-/_authenticated/dashboard/orders
-/_authenticated/dashboard/conversations
-/_authenticated/dashboard/integration
-/api/public/rachida-chat           POST stream IA (CORS *)
-/api/public/shop-config            GET config + catalogue allégé pour widget
-/widget/rachida.js                 fichier statique servi depuis /public
-```
+### Layout
+- Sidebar fixe glass avec icônes Lucide animées, indicateur actif néon coulissant (layoutId Framer)
+- Topbar avec recherche command-palette (Cmd+K), avatar, notifications
+- Contenu en grille bento
 
-### Fichiers principaux à créer
-- `src/routes/index.tsx` (landing)
-- `src/routes/auth.tsx`
-- `src/routes/_authenticated/dashboard.tsx` + onglets enfants
-- `src/routes/api/public/rachida-chat.ts`
-- `src/routes/api/public/shop-config.ts`
-- `src/lib/shops.functions.ts`, `products.functions.ts`, `orders.functions.ts`
-- `src/lib/ai-gateway.server.ts`
-- `public/widget/rachida.js` (adapté depuis l'upload)
-- Migration SQL avec tables + GRANTs + RLS
+### Pages dashboard refaites
+1. **Vue d'ensemble** (nouvelle) : KPIs cards animées (ventes, leads, conversion, sentiment moyen), graphique Recharts area avec gradient néon, heatmap conversations par heure, top produits
+2. **Conversations** : liste temps réel (Supabase Realtime), détail conversation avec timeline messages + badges émotion colorés + score lead
+3. **Catalogue** : grille produits avec preview cards 3D tilt, modal édition glass, import CSV avec drop-zone animée
+4. **Leads** : kanban scoring 1-10 avec drag (dnd-kit), filtres
+5. **Configuration IA** : éditeur ton/personnalité avec preview live de Rachida qui répond
+6. **Boutique** : color picker live, preview widget en iframe
 
-## Phase 2 (plus tard)
-- Sync Shopify / WooCommerce
-- Abonnement payant (Stripe)
-- Multi-langues (Mooré, Dioula, Anglais)
-- Relances WhatsApp automatiques (via connector GatewayAPI/Twilio)
-- Analytics avancées (taux de conversion par émotion)
+### Micro-interactions partout
+- Hover : scale + glow
+- Loading : skeletons shimmer + "Rachida réfléchit..." avec dots animés
+- Toasts : slide + glass
 
-## Hors scope de cette itération
-- Paiement / facturation des boutiques
-- Sync e-commerce externe
-- App mobile
+**Livrable Phase 2** : dashboard digne de Linear.
 
-Prêt à construire la Phase 1 si tu valides ?
+---
+
+## PHASE 3 — Extensions IA & Backend
+
+### Nouvelles tables DB
+- `customer_profiles` : mémoire persistante par client (prénom, langue, budget, préférences, historique) — clé `(shop_id, customer_phone)` 
+- `product_views` : tracking consultations
+- `lead_scores` : score 1-10 + raisons
+- `faq` : Q/R par boutique (servies sans appel IA)
+- `loyalty` : compteur commandes/dépenses par client
+- `daily_reports` : rapports générés
+- `payment_proofs` : analyses Mobile Money
+
+### Server functions / routes nouvelles
+- `/api/public/rachida-chat` — enrichi : mémoire client, FAQ-first (skip IA si match), détection langue auto (FR/Mooré/Dioula), scoring lead temps réel, négociation avec remise max, détection achat → création order, upsell auto
+- `/api/public/rachida-vision` — analyse image (capture Mobile Money + photo produit) via Gemini vision
+- `/api/public/rachida-search` — recherche catalogue full-text + filtres extraits (RACHIDA_QUERY_PRODUCTS)
+- `/api/public/rachida-tts` — text-to-speech (Lovable AI Gateway si dispo, sinon Web Speech côté widget)
+- Cron quotidien 08h00 : `/api/public/hooks/daily-report` → génère rapport, log dans `daily_reports`
+
+### Widget (`public/widget/rachida.js`) — extensions
+- Bouton micro (STT navigateur)
+- Lecture audio des réponses (toggle)
+- Affichage "Rachida réfléchit..." avec animation
+- Halo coloré selon émotion détectée
+- Panier conversationnel persistant (localStorage par shop)
+- Upload image (preuve paiement / photo produit)
+- Comparateur tableau quand demandé
+
+### Sécurité
+- Rate limiting par IP sur `/api/public/*` (table `rate_limits` + check 30 req/min)
+- RLS audit complet (script de vérif)
+- Validation Zod sur tous les endpoints publics
+
+**Livrable Phase 3** : Rachida = vraie vendeuse 24/7.
+
+---
+
+## Hors scope (à proposer plus tard)
+- Paiement Stripe/abonnements (l'utilisateur a dit "pas encore")
+- Sync Shopify/WooCommerce
+- App mobile native
+- Module actualités sport/CAN
+
+---
+
+## Question avant de démarrer
+
+Je commence par **Phase 1 (design landing + auth)** seule, puis tu valides visuellement avant que je passe au dashboard ? Ou tu préfères que j'enchaîne Phase 1+2 d'un coup ?
+
+Confirme aussi : palette néon violet+cyan sur fond near-black OK, ou tu veux une autre direction (ex: or+vert africain, rouge burkinabè, etc.) ?
