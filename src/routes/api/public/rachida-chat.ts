@@ -13,7 +13,6 @@ type ChatBody = {
   conversationId?: string;
   clientName?: string;
   clientContact?: string;
-  emotion?: string;
   messages: { role: "user" | "assistant" | "system"; content: string }[];
 };
 
@@ -26,9 +25,32 @@ function detectEmotion(text: string): string {
   return "neutre";
 }
 
+function detectLanguage(text: string): string {
+  const t = text.toLowerCase();
+  // crude detection — Mooré markers
+  if (/(yaa son|barka|nesongo|ne y windga|ne y zaabre|wend|naaba|ka beoogo)/.test(t)) return "moore";
+  // Dioula markers
+  if (/(i ni ce|i ni sogoma|i ni tile|aw ni ce|n'be|baara|donni)/.test(t)) return "dioula";
+  return "fr";
+}
+
+function scoreLead(messages: { role: string; content: string }[]): { score: number; reasons: string } {
+  const userText = messages.filter((m) => m.role === "user").map((m) => m.content.toLowerCase()).join(" ");
+  let score = 1;
+  const reasons: string[] = [];
+  if (/(prix|combien|coute|coûte|coût)/.test(userText)) { score += 2; reasons.push("intérêt prix"); }
+  if (/(commander|acheter|prends|prends-le|je veux|j'achete)/.test(userText)) { score += 4; reasons.push("intention achat"); }
+  if (/(livraison|livrer|adresse|quand)/.test(userText)) { score += 2; reasons.push("logistique"); }
+  if (/(\+?\d[\d\s]{6,})/.test(userText)) { score += 1; reasons.push("contact partagé"); }
+  if (/(reflechir|réfléchir|peut-etre|plus tard|trop cher)/.test(userText)) { score -= 1; reasons.push("hésitation"); }
+  if (messages.filter((m) => m.role === "user").length > 5) { score += 1; reasons.push("engagement conversation"); }
+  score = Math.max(1, Math.min(10, score));
+  return { score, reasons: reasons.join(", ") || "exploration" };
+}
+
 function extractCriteria(msg: string) {
   const lower = msg.toLowerCase();
-  const c: { priceMax?: number; priceMin?: number; gender?: string; color?: string; category?: string; keywords: string[] } = { keywords: [] };
+  const c: { priceMax?: number; priceMin?: number; gender?: string; color?: string; keywords: string[] } = { keywords: [] };
   const pMax = lower.match(/moins de\s*([\d\s]+)/) || lower.match(/max(?:imum)?\s*([\d\s]+)/);
   if (pMax) c.priceMax = parseInt(pMax[1].replace(/\s/g, ""));
   const pMin = lower.match(/plus de\s*([\d\s]+)/);
@@ -42,11 +64,37 @@ function extractCriteria(msg: string) {
   return c;
 }
 
+async function checkRateLimit(ip: string, endpoint: string): Promise<boolean> {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const windowStart = new Date(Math.floor(Date.now() / 60000) * 60000).toISOString();
+  const { data } = await supabaseAdmin
+    .from("rate_limits")
+    .select("count")
+    .eq("ip", ip)
+    .eq("endpoint", endpoint)
+    .eq("window_start", windowStart)
+    .maybeSingle();
+  if (data && data.count >= 30) return false;
+  if (data) {
+    await supabaseAdmin
+      .from("rate_limits")
+      .update({ count: data.count + 1 })
+      .eq("ip", ip).eq("endpoint", endpoint).eq("window_start", windowStart);
+  } else {
+    await supabaseAdmin.from("rate_limits").insert({ ip, endpoint, window_start: windowStart, count: 1 });
+  }
+  return true;
+}
+
 export const Route = createFileRoute("/api/public/rachida-chat")({
   server: {
     handlers: {
       OPTIONS: async () => new Response(null, { headers: corsHeaders }),
       POST: async ({ request }) => {
+        const ip = request.headers.get("cf-connecting-ip") || request.headers.get("x-forwarded-for") || "unknown";
+        const ok = await checkRateLimit(ip.split(",")[0].trim(), "chat");
+        if (!ok) return new Response("rate limit exceeded", { status: 429, headers: corsHeaders });
+
         const body = (await request.json()) as ChatBody;
         if (!body?.shopSlug || !Array.isArray(body.messages)) {
           return new Response("bad request", { status: 400, headers: corsHeaders });
@@ -65,9 +113,36 @@ export const Route = createFileRoute("/api/public/rachida-chat")({
         const lastUser = [...body.messages].reverse().find((m) => m.role === "user")?.content ?? "";
         const criteria = extractCriteria(lastUser);
         const emotion = detectEmotion(lastUser);
+        const language = detectLanguage(lastUser);
+
+        // FAQ first — instant answer if match
+        const { data: faqs } = await supabaseAdmin
+          .from("faq")
+          .select("question, answer, keywords")
+          .eq("shop_id", shop.id);
+        const lowerLast = lastUser.toLowerCase();
+        const faqMatch = (faqs ?? []).find((f) => {
+          const kws = (f.keywords ?? "").toLowerCase().split(/[,;\s]+/).filter(Boolean);
+          if (kws.some((k) => k && lowerLast.includes(k))) return true;
+          const qWords = f.question.toLowerCase().split(/\W+/).filter((w) => w.length > 4);
+          const hits = qWords.filter((w) => lowerLast.includes(w)).length;
+          return hits >= 2;
+        });
+
+        // Customer memory
+        let customerProfile: { customer_name?: string | null; language?: string | null; budget_max?: number | null; notes?: string | null; total_conversations?: number } | null = null;
+        if (body.clientContact) {
+          const { data: prof } = await supabaseAdmin
+            .from("customer_profiles")
+            .select("customer_name, language, budget_max, notes, total_conversations")
+            .eq("shop_id", shop.id)
+            .eq("customer_contact", body.clientContact)
+            .maybeSingle();
+          customerProfile = prof;
+        }
 
         // Filter catalog
-        let q = supabaseAdmin.from("products").select("name, description, price, category, gender, color, stock").eq("shop_id", shop.id).eq("is_active", true);
+        let q = supabaseAdmin.from("products").select("id, name, description, price, category, gender, color, stock").eq("shop_id", shop.id).eq("is_active", true);
         if (criteria.priceMax) q = q.lte("price", criteria.priceMax);
         if (criteria.priceMin) q = q.gte("price", criteria.priceMin);
         if (criteria.gender) q = q.eq("gender", criteria.gender);
@@ -81,7 +156,7 @@ export const Route = createFileRoute("/api/public/rachida-chat")({
             .from("conversations")
             .insert({
               shop_id: shop.id,
-              client_name: body.clientName ?? null,
+              client_name: body.clientName ?? customerProfile?.customer_name ?? null,
               client_contact: body.clientContact ?? null,
               emotion,
             })
@@ -102,22 +177,98 @@ export const Route = createFileRoute("/api/public/rachida-chat")({
           });
         }
 
+        // Track product views
+        if (products?.length && conversationId) {
+          await supabaseAdmin.from("product_views").insert(
+            products.slice(0, 5).map((p) => ({ shop_id: shop.id, product_id: p.id, conversation_id: conversationId! })),
+          );
+        }
+
+        // Lead scoring
+        const lead = scoreLead(body.messages);
+        if (conversationId) {
+          await supabaseAdmin
+            .from("lead_scores")
+            .upsert(
+              { shop_id: shop.id, conversation_id: conversationId, score: lead.score, reasons: lead.reasons },
+              { onConflict: "conversation_id" },
+            );
+        }
+
+        // Update customer profile
+        if (body.clientContact) {
+          await supabaseAdmin.from("customer_profiles").upsert(
+            {
+              shop_id: shop.id,
+              customer_contact: body.clientContact,
+              customer_name: body.clientName ?? customerProfile?.customer_name ?? null,
+              language,
+              last_seen_at: new Date().toISOString(),
+              total_conversations: (customerProfile?.total_conversations ?? 0) + (body.conversationId ? 0 : 1),
+            },
+            { onConflict: "shop_id,customer_contact" },
+          );
+        }
+
+        // FAQ short-circuit (still log message but skip IA)
+        if (faqMatch) {
+          if (conversationId) {
+            await supabaseAdmin.from("messages").insert({
+              conversation_id: conversationId,
+              role: "assistant",
+              content: faqMatch.answer,
+            });
+          }
+          return new Response(faqMatch.answer, {
+            headers: {
+              ...corsHeaders,
+              "X-Conversation-Id": conversationId ?? "",
+              "X-Emotion": emotion,
+              "X-Lead-Score": String(lead.score),
+              "X-Source": "faq",
+              "Access-Control-Expose-Headers": "X-Conversation-Id, X-Emotion, X-Lead-Score, X-Source",
+              "Content-Type": "text/plain; charset=utf-8",
+            },
+          });
+        }
+
         const catalogText = products && products.length
           ? products.map((p) => `- ${p.name} | ${p.price} ${shop.currency} | ${p.category ?? ""} ${p.gender ?? ""} ${p.color ?? ""} | stock:${p.stock}${p.description ? ` | ${p.description}` : ""}`).join("\n")
           : "(aucun produit ne correspond exactement, propose une alternative et demande des précisions)";
 
+        const memoryBlock = customerProfile
+          ? `MÉMOIRE CLIENT :
+- Nom : ${customerProfile.customer_name ?? "inconnu"}
+- Langue préférée : ${customerProfile.language ?? "fr"}
+- Budget habituel : ${customerProfile.budget_max ?? "?"} ${shop.currency}
+- Conversations précédentes : ${customerProfile.total_conversations ?? 0}
+- Notes : ${customerProfile.notes ?? "—"}
+`
+          : "";
+
+        const langInstruction =
+          language === "moore"
+            ? "Le client a écrit en Mooré. Réponds en Mooré simple si tu sais, sinon en français en commençant par 'Yaa son barka'."
+            : language === "dioula"
+              ? "Le client a écrit en Dioula. Réponds en Dioula simple si tu sais, sinon en français en commençant par 'I ni ce'."
+              : "";
+
         const systemPrompt = `Tu es ${shop.rachida_name}, vendeuse IA chaleureuse et professionnelle de la boutique "${shop.name}" au Burkina Faso.
 Tu parles français naturel, chaleureux, avec parfois une touche locale ("akwaaba", "yaa son barka") sans en abuser.
-Émotion détectée du client : ${emotion}. Adapte ton ton (rassurer si négatif, encourager si positif).
+Émotion détectée : ${emotion} (score lead actuel : ${lead.score}/10 — ${lead.reasons}). Adapte ton ton.
 Devise : ${shop.currency}. Remise maximum autorisée : ${shop.max_remise}%.
 WhatsApp boutique : ${shop.whatsapp ?? "non configuré"}.
+${langInstruction}
 
+${memoryBlock}
 CATALOGUE FILTRÉ POUR CE MESSAGE :
 ${catalogText}
 
 RÈGLES :
 - Recommande 1 à 3 produits maximum à la fois, avec nom + prix.
-- Si le client veut commander, demande nom et numéro WhatsApp.
+- Si le client veut commander, demande nom et numéro WhatsApp s'ils manquent.
+- Si client hésite sur le prix, propose UNE remise max ${shop.max_remise}% MAX, jamais plus.
+- Quand pertinent, propose UN upsell ou complément.
 - Si la question dépasse tes compétences, propose le transfert WhatsApp humain : "${shop.whatsapp ?? ""}".
 - Reste concise (2-4 phrases max sauf si une liste est demandée).
 ${shop.system_prompt_extra ?? ""}`;
@@ -147,7 +298,10 @@ ${shop.system_prompt_extra ?? ""}`;
             ...corsHeaders,
             "X-Conversation-Id": conversationId ?? "",
             "X-Emotion": emotion,
-            "Access-Control-Expose-Headers": "X-Conversation-Id, X-Emotion",
+            "X-Lead-Score": String(lead.score),
+            "X-Language": language,
+            "X-Source": "ai",
+            "Access-Control-Expose-Headers": "X-Conversation-Id, X-Emotion, X-Lead-Score, X-Language, X-Source",
           },
         });
       },
