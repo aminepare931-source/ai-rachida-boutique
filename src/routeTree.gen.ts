@@ -13,7 +13,10 @@ import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiPublicShopConfigRouteImport } from './routes/api/public/shop-config'
+import { Route as ApiPublicRachidaVisionRouteImport } from './routes/api/public/rachida-vision'
+import { Route as ApiPublicRachidaSearchRouteImport } from './routes/api/public/rachida-search'
 import { Route as ApiPublicRachidaChatRouteImport } from './routes/api/public/rachida-chat'
+import { Route as ApiPublicHooksDailyReportRouteImport } from './routes/api/public/hooks/daily-report'
 
 const DashboardRoute = DashboardRouteImport.update({
   id: '/dashboard',
@@ -35,25 +38,47 @@ const ApiPublicShopConfigRoute = ApiPublicShopConfigRouteImport.update({
   path: '/api/public/shop-config',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicRachidaVisionRoute = ApiPublicRachidaVisionRouteImport.update({
+  id: '/api/public/rachida-vision',
+  path: '/api/public/rachida-vision',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicRachidaSearchRoute = ApiPublicRachidaSearchRouteImport.update({
+  id: '/api/public/rachida-search',
+  path: '/api/public/rachida-search',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicRachidaChatRoute = ApiPublicRachidaChatRouteImport.update({
   id: '/api/public/rachida-chat',
   path: '/api/public/rachida-chat',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicHooksDailyReportRoute =
+  ApiPublicHooksDailyReportRouteImport.update({
+    id: '/api/public/hooks/daily-report',
+    path: '/api/public/hooks/daily-report',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/dashboard': typeof DashboardRoute
   '/api/public/rachida-chat': typeof ApiPublicRachidaChatRoute
+  '/api/public/rachida-search': typeof ApiPublicRachidaSearchRoute
+  '/api/public/rachida-vision': typeof ApiPublicRachidaVisionRoute
   '/api/public/shop-config': typeof ApiPublicShopConfigRoute
+  '/api/public/hooks/daily-report': typeof ApiPublicHooksDailyReportRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/dashboard': typeof DashboardRoute
   '/api/public/rachida-chat': typeof ApiPublicRachidaChatRoute
+  '/api/public/rachida-search': typeof ApiPublicRachidaSearchRoute
+  '/api/public/rachida-vision': typeof ApiPublicRachidaVisionRoute
   '/api/public/shop-config': typeof ApiPublicShopConfigRoute
+  '/api/public/hooks/daily-report': typeof ApiPublicHooksDailyReportRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -61,7 +86,10 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/dashboard': typeof DashboardRoute
   '/api/public/rachida-chat': typeof ApiPublicRachidaChatRoute
+  '/api/public/rachida-search': typeof ApiPublicRachidaSearchRoute
+  '/api/public/rachida-vision': typeof ApiPublicRachidaVisionRoute
   '/api/public/shop-config': typeof ApiPublicShopConfigRoute
+  '/api/public/hooks/daily-report': typeof ApiPublicHooksDailyReportRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -70,21 +98,30 @@ export interface FileRouteTypes {
     | '/auth'
     | '/dashboard'
     | '/api/public/rachida-chat'
+    | '/api/public/rachida-search'
+    | '/api/public/rachida-vision'
     | '/api/public/shop-config'
+    | '/api/public/hooks/daily-report'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/auth'
     | '/dashboard'
     | '/api/public/rachida-chat'
+    | '/api/public/rachida-search'
+    | '/api/public/rachida-vision'
     | '/api/public/shop-config'
+    | '/api/public/hooks/daily-report'
   id:
     | '__root__'
     | '/'
     | '/auth'
     | '/dashboard'
     | '/api/public/rachida-chat'
+    | '/api/public/rachida-search'
+    | '/api/public/rachida-vision'
     | '/api/public/shop-config'
+    | '/api/public/hooks/daily-report'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -92,7 +129,10 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   DashboardRoute: typeof DashboardRoute
   ApiPublicRachidaChatRoute: typeof ApiPublicRachidaChatRoute
+  ApiPublicRachidaSearchRoute: typeof ApiPublicRachidaSearchRoute
+  ApiPublicRachidaVisionRoute: typeof ApiPublicRachidaVisionRoute
   ApiPublicShopConfigRoute: typeof ApiPublicShopConfigRoute
+  ApiPublicHooksDailyReportRoute: typeof ApiPublicHooksDailyReportRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -125,11 +165,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicShopConfigRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/rachida-vision': {
+      id: '/api/public/rachida-vision'
+      path: '/api/public/rachida-vision'
+      fullPath: '/api/public/rachida-vision'
+      preLoaderRoute: typeof ApiPublicRachidaVisionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/rachida-search': {
+      id: '/api/public/rachida-search'
+      path: '/api/public/rachida-search'
+      fullPath: '/api/public/rachida-search'
+      preLoaderRoute: typeof ApiPublicRachidaSearchRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/rachida-chat': {
       id: '/api/public/rachida-chat'
       path: '/api/public/rachida-chat'
       fullPath: '/api/public/rachida-chat'
       preLoaderRoute: typeof ApiPublicRachidaChatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/daily-report': {
+      id: '/api/public/hooks/daily-report'
+      path: '/api/public/hooks/daily-report'
+      fullPath: '/api/public/hooks/daily-report'
+      preLoaderRoute: typeof ApiPublicHooksDailyReportRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -140,7 +201,10 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   DashboardRoute: DashboardRoute,
   ApiPublicRachidaChatRoute: ApiPublicRachidaChatRoute,
+  ApiPublicRachidaSearchRoute: ApiPublicRachidaSearchRoute,
+  ApiPublicRachidaVisionRoute: ApiPublicRachidaVisionRoute,
   ApiPublicShopConfigRoute: ApiPublicShopConfigRoute,
+  ApiPublicHooksDailyReportRoute: ApiPublicHooksDailyReportRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
