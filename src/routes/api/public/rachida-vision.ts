@@ -71,8 +71,8 @@ export const Route = createFileRoute("/api/public/rachida-vision")({
           await supabaseAdmin.from("payment_proofs").insert({
             shop_id: shop.id,
             conversation_id: body.conversationId ?? null,
-            analysis: a,
-            amount_detected: typeof a?.montant === "number" ? a.montant : null,
+            analysis: a as never,
+            amount_detected: typeof a?.montant === "number" ? (a.montant as number) : null,
             status: a?.valide ? "valid" : "pending",
           });
         }
