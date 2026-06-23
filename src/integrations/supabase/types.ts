@@ -55,6 +55,233 @@ export type Database = {
           },
         ]
       }
+      customer_profiles: {
+        Row: {
+          budget_max: number | null
+          created_at: string
+          customer_contact: string
+          customer_name: string | null
+          id: string
+          language: string | null
+          last_seen_at: string | null
+          notes: string | null
+          preferences: Json | null
+          shop_id: string
+          total_conversations: number | null
+          updated_at: string
+        }
+        Insert: {
+          budget_max?: number | null
+          created_at?: string
+          customer_contact: string
+          customer_name?: string | null
+          id?: string
+          language?: string | null
+          last_seen_at?: string | null
+          notes?: string | null
+          preferences?: Json | null
+          shop_id: string
+          total_conversations?: number | null
+          updated_at?: string
+        }
+        Update: {
+          budget_max?: number | null
+          created_at?: string
+          customer_contact?: string
+          customer_name?: string | null
+          id?: string
+          language?: string | null
+          last_seen_at?: string | null
+          notes?: string | null
+          preferences?: Json | null
+          shop_id?: string
+          total_conversations?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_profiles_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      daily_reports: {
+        Row: {
+          conversations_count: number | null
+          created_at: string
+          emotions_breakdown: Json | null
+          id: string
+          orders_count: number | null
+          report_date: string
+          revenue: number | null
+          shop_id: string
+          summary: string | null
+          top_products: Json | null
+        }
+        Insert: {
+          conversations_count?: number | null
+          created_at?: string
+          emotions_breakdown?: Json | null
+          id?: string
+          orders_count?: number | null
+          report_date: string
+          revenue?: number | null
+          shop_id: string
+          summary?: string | null
+          top_products?: Json | null
+        }
+        Update: {
+          conversations_count?: number | null
+          created_at?: string
+          emotions_breakdown?: Json | null
+          id?: string
+          orders_count?: number | null
+          report_date?: string
+          revenue?: number | null
+          shop_id?: string
+          summary?: string | null
+          top_products?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_reports_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      faq: {
+        Row: {
+          answer: string
+          created_at: string
+          id: string
+          keywords: string | null
+          question: string
+          shop_id: string
+          updated_at: string
+        }
+        Insert: {
+          answer: string
+          created_at?: string
+          id?: string
+          keywords?: string | null
+          question: string
+          shop_id: string
+          updated_at?: string
+        }
+        Update: {
+          answer?: string
+          created_at?: string
+          id?: string
+          keywords?: string | null
+          question?: string
+          shop_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "faq_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lead_scores: {
+        Row: {
+          conversation_id: string
+          created_at: string
+          id: string
+          reasons: string | null
+          score: number
+          shop_id: string
+          status: string | null
+          updated_at: string
+        }
+        Insert: {
+          conversation_id: string
+          created_at?: string
+          id?: string
+          reasons?: string | null
+          score?: number
+          shop_id: string
+          status?: string | null
+          updated_at?: string
+        }
+        Update: {
+          conversation_id?: string
+          created_at?: string
+          id?: string
+          reasons?: string | null
+          score?: number
+          shop_id?: string
+          status?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_scores_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: true
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lead_scores_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      loyalty: {
+        Row: {
+          created_at: string
+          customer_contact: string
+          id: string
+          last_order_at: string | null
+          orders_count: number | null
+          shop_id: string
+          total_spent: number | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          customer_contact: string
+          id?: string
+          last_order_at?: string | null
+          orders_count?: number | null
+          shop_id: string
+          total_spent?: number | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          customer_contact?: string
+          id?: string
+          last_order_at?: string | null
+          orders_count?: number | null
+          shop_id?: string
+          total_spent?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "loyalty_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       messages: {
         Row: {
           content: string
@@ -144,6 +371,110 @@ export type Database = {
           },
         ]
       }
+      payment_proofs: {
+        Row: {
+          amount_detected: number | null
+          analysis: Json | null
+          conversation_id: string | null
+          created_at: string
+          id: string
+          image_url: string | null
+          order_id: string | null
+          shop_id: string
+          status: string | null
+        }
+        Insert: {
+          amount_detected?: number | null
+          analysis?: Json | null
+          conversation_id?: string | null
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          order_id?: string | null
+          shop_id: string
+          status?: string | null
+        }
+        Update: {
+          amount_detected?: number | null
+          analysis?: Json | null
+          conversation_id?: string | null
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          order_id?: string | null
+          shop_id?: string
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_proofs_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_proofs_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_proofs_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_views: {
+        Row: {
+          conversation_id: string | null
+          created_at: string
+          id: string
+          product_id: string | null
+          shop_id: string
+        }
+        Insert: {
+          conversation_id?: string | null
+          created_at?: string
+          id?: string
+          product_id?: string | null
+          shop_id: string
+        }
+        Update: {
+          conversation_id?: string | null
+          created_at?: string
+          id?: string
+          product_id?: string | null
+          shop_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_views_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_views_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_views_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       products: {
         Row: {
           category: string | null
@@ -202,6 +533,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      rate_limits: {
+        Row: {
+          count: number
+          endpoint: string
+          id: string
+          ip: string
+          window_start: string
+        }
+        Insert: {
+          count?: number
+          endpoint: string
+          id?: string
+          ip: string
+          window_start?: string
+        }
+        Update: {
+          count?: number
+          endpoint?: string
+          id?: string
+          ip?: string
+          window_start?: string
+        }
+        Relationships: []
       }
       shops: {
         Row: {

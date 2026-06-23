@@ -1,10 +1,15 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Session } from "@supabase/supabase-js";
 import { toast } from "sonner";
 import { Toaster } from "@/components/ui/sonner";
-import { Bot, Settings, Package, MessageSquare, ShoppingBag, Code, LogOut, Plus, Trash2, Upload } from "lucide-react";
+import {
+  Bot, Settings, Package, MessageSquare, ShoppingBag, Code, LogOut, Plus, Trash2, Upload,
+  LayoutDashboard, Users, HelpCircle, Sparkles, TrendingUp, Flame,
+} from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { AreaChart, Area, ResponsiveContainer, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 
 export const Route = createFileRoute("/dashboard")({
   head: () => ({ meta: [{ title: "Dashboard — Rachida AI" }] }),
@@ -12,47 +17,37 @@ export const Route = createFileRoute("/dashboard")({
 });
 
 type Shop = {
-  id: string;
-  slug: string;
-  name: string;
-  whatsapp: string | null;
-  color: string;
-  greeting: string;
-  max_remise: number;
-  rachida_name: string;
-  currency: string;
+  id: string; slug: string; name: string; whatsapp: string | null; color: string;
+  greeting: string; max_remise: number; rachida_name: string; currency: string;
   system_prompt_extra: string | null;
 };
-
 type Product = {
-  id: string;
-  name: string;
-  price: number;
-  category: string | null;
-  gender: string | null;
-  color: string | null;
-  image_url: string | null;
-  stock: number;
-  description: string | null;
-  is_active: boolean;
+  id: string; name: string; price: number; category: string | null; gender: string | null;
+  color: string | null; image_url: string | null; stock: number; description: string | null; is_active: boolean;
 };
-
 type Conversation = { id: string; client_name: string | null; client_contact: string | null; emotion: string | null; created_at: string };
 type Order = { id: string; client_name: string | null; client_contact: string | null; cart: unknown; total: number; status: string; created_at: string };
+type LeadScore = { id: string; conversation_id: string; score: number; reasons: string | null; status: string | null };
+type Faq = { id: string; question: string; answer: string; keywords: string | null };
 
 const TABS = [
-  { key: "shop", label: "Boutique", icon: Settings },
-  { key: "catalog", label: "Catalogue", icon: Package },
+  { key: "overview", label: "Vue d'ensemble", icon: LayoutDashboard },
   { key: "conversations", label: "Conversations", icon: MessageSquare },
+  { key: "leads", label: "Leads", icon: Flame },
+  { key: "catalog", label: "Catalogue", icon: Package },
   { key: "orders", label: "Commandes", icon: ShoppingBag },
+  { key: "faq", label: "FAQ", icon: HelpCircle },
+  { key: "shop", label: "IA & Boutique", icon: Sparkles },
   { key: "integration", label: "Intégration", icon: Code },
 ] as const;
+
+type TabKey = (typeof TABS)[number]["key"];
 
 function Dashboard() {
   const nav = useNavigate();
   const [session, setSession] = useState<Session | null>(null);
   const [shop, setShop] = useState<Shop | null>(null);
-  const [tab, setTab] = useState<(typeof TABS)[number]["key"]>("shop");
+  const [tab, setTab] = useState<TabKey>("overview");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -74,13 +69,10 @@ function Dashboard() {
     if (error) toast.error(error.message);
     if (data) setShop(data as Shop);
     else {
-      // auto-create
       const slug = "shop-" + Math.random().toString(36).slice(2, 8);
       const { data: created, error: e2 } = await supabase
-        .from("shops")
-        .insert({ owner_id: session.user.id, slug, name: "Ma Boutique" })
-        .select()
-        .single();
+        .from("shops").insert({ owner_id: session.user.id, slug, name: "Ma Boutique" })
+        .select().single();
       if (e2) toast.error(e2.message);
       if (created) setShop(created as Shop);
     }
@@ -90,41 +82,434 @@ function Dashboard() {
   useEffect(() => { void loadShop(); }, [loadShop]);
 
   if (!session || loading || !shop) {
-    return <div className="min-h-screen flex items-center justify-center text-gray-500">Chargement...</div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#05060F] text-white/60">
+        <div className="flex items-center gap-3">
+          <div className="w-2 h-2 rounded-full bg-violet-500 animate-pulse" />
+          Chargement de Rachida...
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Toaster />
-      <header className="bg-white border-b px-6 py-3 flex items-center justify-between">
-        <Link to="/" className="flex items-center gap-2 font-bold"><Bot className="text-orange-600" /> Rachida AI</Link>
-        <div className="flex items-center gap-3 text-sm">
-          <span className="text-gray-600">{session.user.email}</span>
-          <button onClick={() => supabase.auth.signOut()} className="flex items-center gap-1 text-gray-500 hover:text-red-600"><LogOut size={16} /> Déconnexion</button>
-        </div>
-      </header>
+    <div className="min-h-screen bg-[#05060F] text-white relative overflow-hidden">
+      {/* Ambient glow background */}
+      <div className="pointer-events-none fixed inset-0 z-0">
+        <div className="absolute top-0 left-1/4 w-[600px] h-[600px] rounded-full bg-violet-600/20 blur-[120px]" />
+        <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] rounded-full bg-cyan-500/15 blur-[120px]" />
+      </div>
 
-      <div className="max-w-6xl mx-auto px-6 py-6 grid md:grid-cols-[220px_1fr] gap-6">
-        <nav className="space-y-1">
-          {TABS.map((t) => (
-            <button key={t.key} onClick={() => setTab(t.key)} className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium ${tab === t.key ? "bg-orange-100 text-orange-700" : "text-gray-600 hover:bg-white"}`}>
-              <t.icon size={16} /> {t.label}
+      <Toaster theme="dark" />
+
+      <div className="relative z-10 flex">
+        {/* Sidebar */}
+        <aside className="hidden md:flex w-[240px] h-screen sticky top-0 flex-col border-r border-white/5 bg-white/[0.02] backdrop-blur-xl">
+          <Link to="/" className="px-6 py-5 flex items-center gap-2 font-bold text-lg">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-violet-500 to-cyan-400 flex items-center justify-center shadow-lg shadow-violet-500/50">
+              <Bot size={18} />
+            </div>
+            Rachida
+          </Link>
+
+          <nav className="flex-1 px-3 space-y-1">
+            {TABS.map((t) => {
+              const Icon = t.icon;
+              const active = tab === t.key;
+              return (
+                <button
+                  key={t.key}
+                  onClick={() => setTab(t.key)}
+                  className={`relative w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                    active ? "text-white" : "text-white/50 hover:text-white/90 hover:bg-white/5"
+                  }`}
+                >
+                  {active && (
+                    <motion.div
+                      layoutId="active-tab"
+                      className="absolute inset-0 rounded-xl bg-gradient-to-r from-violet-500/20 to-cyan-500/10 border border-violet-400/30"
+                      transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                    />
+                  )}
+                  <Icon size={16} className="relative z-10" />
+                  <span className="relative z-10">{t.label}</span>
+                </button>
+              );
+            })}
+          </nav>
+
+          <div className="p-4 border-t border-white/5">
+            <div className="text-xs text-white/40 truncate mb-2">{session.user.email}</div>
+            <button
+              onClick={() => supabase.auth.signOut()}
+              className="flex items-center gap-2 text-xs text-white/60 hover:text-red-400 transition"
+            >
+              <LogOut size={14} /> Déconnexion
             </button>
-          ))}
-        </nav>
+          </div>
+        </aside>
 
-        <main className="bg-white rounded-xl shadow-sm p-6">
-          {tab === "shop" && <ShopTab shop={shop} onUpdated={setShop} />}
-          {tab === "catalog" && <CatalogTab shopId={shop.id} />}
-          {tab === "conversations" && <ConversationsTab shopId={shop.id} />}
-          {tab === "orders" && <OrdersTab shopId={shop.id} />}
-          {tab === "integration" && <IntegrationTab shop={shop} />}
+        {/* Mobile top tabs */}
+        <div className="md:hidden fixed top-0 left-0 right-0 z-30 bg-[#05060F]/90 backdrop-blur-xl border-b border-white/5 px-4 py-3 overflow-x-auto">
+          <div className="flex gap-2">
+            {TABS.map((t) => (
+              <button key={t.key} onClick={() => setTab(t.key)}
+                className={`whitespace-nowrap px-3 py-1.5 rounded-lg text-xs font-medium ${tab === t.key ? "bg-violet-500/20 text-white border border-violet-400/30" : "text-white/50"}`}>
+                {t.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Main */}
+        <main className="flex-1 min-w-0 p-6 md:p-10 pt-20 md:pt-10">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={tab}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.2 }}
+            >
+              {tab === "overview" && <OverviewTab shopId={shop.id} currency={shop.currency} />}
+              {tab === "shop" && <ShopTab shop={shop} onUpdated={setShop} />}
+              {tab === "catalog" && <CatalogTab shopId={shop.id} />}
+              {tab === "conversations" && <ConversationsTab shopId={shop.id} />}
+              {tab === "leads" && <LeadsTab shopId={shop.id} />}
+              {tab === "faq" && <FaqTab shopId={shop.id} />}
+              {tab === "orders" && <OrdersTab shopId={shop.id} currency={shop.currency} />}
+              {tab === "integration" && <IntegrationTab shop={shop} />}
+            </motion.div>
+          </AnimatePresence>
         </main>
+      </div>
+      <Style />
+    </div>
+  );
+}
+
+/* ---------- Overview ---------- */
+function OverviewTab({ shopId, currency }: { shopId: string; currency: string }) {
+  const [stats, setStats] = useState({ convs: 0, orders: 0, revenue: 0, hotLeads: 0 });
+  const [chartData, setChartData] = useState<{ day: string; convs: number; orders: number }[]>([]);
+  const [emotions, setEmotions] = useState<Record<string, number>>({});
+  const [topProducts, setTopProducts] = useState<{ name: string; views: number }[]>([]);
+
+  useEffect(() => {
+    (async () => {
+      const since = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString();
+      const [{ data: convs }, { data: orders }, { data: leads }, { data: views }] = await Promise.all([
+        supabase.from("conversations").select("id, emotion, created_at").eq("shop_id", shopId).gte("created_at", since),
+        supabase.from("orders").select("id, total, created_at").eq("shop_id", shopId).gte("created_at", since),
+        supabase.from("lead_scores").select("score").eq("shop_id", shopId).gte("score", 7),
+        supabase.from("product_views").select("product_id, products(name)").eq("shop_id", shopId).gte("created_at", since).limit(500),
+      ]);
+      const revenue = (orders ?? []).reduce((s, o) => s + (Number(o.total) || 0), 0);
+      setStats({ convs: convs?.length ?? 0, orders: orders?.length ?? 0, revenue, hotLeads: leads?.length ?? 0 });
+
+      const em: Record<string, number> = {};
+      (convs ?? []).forEach((c) => { const e = c.emotion ?? "neutre"; em[e] = (em[e] ?? 0) + 1; });
+      setEmotions(em);
+
+      const days: Record<string, { convs: number; orders: number }> = {};
+      for (let i = 13; i >= 0; i--) {
+        const d = new Date(Date.now() - i * 86400000).toISOString().slice(5, 10);
+        days[d] = { convs: 0, orders: 0 };
+      }
+      (convs ?? []).forEach((c) => { const k = c.created_at.slice(5, 10); if (days[k]) days[k].convs++; });
+      (orders ?? []).forEach((o) => { const k = o.created_at.slice(5, 10); if (days[k]) days[k].orders++; });
+      setChartData(Object.entries(days).map(([day, v]) => ({ day, ...v })));
+
+      const counts: Record<string, number> = {};
+      type V = { product_id: string | null; products: { name: string } | { name: string }[] | null };
+      (views as V[] | null ?? []).forEach((v) => {
+        const prod = Array.isArray(v.products) ? v.products[0] : v.products;
+        const name = prod?.name;
+        if (name) counts[name] = (counts[name] ?? 0) + 1;
+      });
+      setTopProducts(
+        Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 5).map(([name, views]) => ({ name, views }))
+      );
+    })();
+  }, [shopId]);
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight">Vue d'ensemble</h1>
+        <p className="text-white/40 text-sm">14 derniers jours · données temps réel</p>
+      </div>
+
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <KpiCard label="Conversations" value={stats.convs} icon={MessageSquare} accent="from-violet-500 to-purple-500" />
+        <KpiCard label="Commandes" value={stats.orders} icon={ShoppingBag} accent="from-cyan-500 to-blue-500" />
+        <KpiCard label={`Revenu (${currency})`} value={stats.revenue.toLocaleString()} icon={TrendingUp} accent="from-emerald-500 to-teal-500" />
+        <KpiCard label="Leads chauds" value={stats.hotLeads} icon={Flame} accent="from-orange-500 to-red-500" />
+      </div>
+
+      <GlassCard>
+        <h3 className="font-semibold mb-4">Activité quotidienne</h3>
+        <div className="h-64">
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={chartData}>
+              <defs>
+                <linearGradient id="g1" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#7c5cff" stopOpacity={0.6} />
+                  <stop offset="95%" stopColor="#7c5cff" stopOpacity={0} />
+                </linearGradient>
+                <linearGradient id="g2" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#00e5ff" stopOpacity={0.6} />
+                  <stop offset="95%" stopColor="#00e5ff" stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid stroke="rgba(255,255,255,.05)" />
+              <XAxis dataKey="day" stroke="rgba(255,255,255,.3)" fontSize={11} />
+              <YAxis stroke="rgba(255,255,255,.3)" fontSize={11} />
+              <Tooltip contentStyle={{ background: "rgba(10,10,20,.95)", border: "1px solid rgba(255,255,255,.1)", borderRadius: 8, fontSize: 12 }} />
+              <Area type="monotone" dataKey="convs" stroke="#7c5cff" fill="url(#g1)" strokeWidth={2} />
+              <Area type="monotone" dataKey="orders" stroke="#00e5ff" fill="url(#g2)" strokeWidth={2} />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
+      </GlassCard>
+
+      <div className="grid md:grid-cols-2 gap-4">
+        <GlassCard>
+          <h3 className="font-semibold mb-4">Émotions des clients</h3>
+          <div className="space-y-2">
+            {Object.entries(emotions).length === 0 && <p className="text-white/40 text-sm">Pas encore de données.</p>}
+            {Object.entries(emotions).map(([e, n]) => {
+              const total = Object.values(emotions).reduce((a, b) => a + b, 0);
+              const pct = total ? (n / total) * 100 : 0;
+              return (
+                <div key={e}>
+                  <div className="flex justify-between text-xs mb-1"><span className="capitalize">{e}</span><span className="text-white/40">{n}</span></div>
+                  <div className="h-2 bg-white/5 rounded-full overflow-hidden">
+                    <motion.div initial={{ width: 0 }} animate={{ width: `${pct}%` }} className={`h-full ${emotionColor(e)}`} />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </GlassCard>
+
+        <GlassCard>
+          <h3 className="font-semibold mb-4">Top produits consultés</h3>
+          <div className="space-y-2">
+            {topProducts.length === 0 && <p className="text-white/40 text-sm">Pas encore de données.</p>}
+            {topProducts.map((p, i) => (
+              <div key={p.name} className="flex items-center gap-3 text-sm">
+                <div className="w-6 h-6 rounded bg-violet-500/20 text-violet-300 flex items-center justify-center text-xs font-bold">{i + 1}</div>
+                <div className="flex-1 truncate">{p.name}</div>
+                <div className="text-white/40 text-xs">{p.views} vues</div>
+              </div>
+            ))}
+          </div>
+        </GlassCard>
       </div>
     </div>
   );
 }
 
+function emotionColor(e: string) {
+  return ({ positif: "bg-emerald-500", négatif: "bg-red-500", triste: "bg-blue-500", questionneur: "bg-amber-500", neutre: "bg-violet-500" }[e]) ?? "bg-violet-500";
+}
+
+function KpiCard({ label, value, icon: Icon, accent }: { label: string; value: number | string; icon: typeof MessageSquare; accent: string }) {
+  return (
+    <motion.div whileHover={{ y: -2 }} className="relative p-5 rounded-2xl bg-white/[0.03] border border-white/10 backdrop-blur-xl overflow-hidden group">
+      <div className={`absolute -top-10 -right-10 w-32 h-32 rounded-full bg-gradient-to-br ${accent} opacity-20 blur-2xl group-hover:opacity-40 transition`} />
+      <div className="relative">
+        <div className="flex items-center justify-between mb-3">
+          <span className="text-xs text-white/50">{label}</span>
+          <Icon size={16} className="text-white/40" />
+        </div>
+        <div className="text-3xl font-bold tracking-tight">{value}</div>
+      </div>
+    </motion.div>
+  );
+}
+
+function GlassCard({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+  return <div className={`p-5 rounded-2xl bg-white/[0.03] border border-white/10 backdrop-blur-xl ${className}`}>{children}</div>;
+}
+
+/* ---------- Conversations (Realtime) ---------- */
+function ConversationsTab({ shopId }: { shopId: string }) {
+  const [convs, setConvs] = useState<Conversation[]>([]);
+  const [selected, setSelected] = useState<string | null>(null);
+  const [messages, setMessages] = useState<{ role: string; content: string; created_at: string }[]>([]);
+
+  useEffect(() => {
+    const load = () => supabase.from("conversations").select("*").eq("shop_id", shopId).order("created_at", { ascending: false }).limit(50)
+      .then(({ data }) => setConvs((data ?? []) as Conversation[]));
+    load();
+    const channel = supabase.channel("convs-" + shopId).on("postgres_changes", { event: "*", schema: "public", table: "conversations", filter: `shop_id=eq.${shopId}` }, load).subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [shopId]);
+
+  useEffect(() => {
+    if (!selected) return;
+    const load = () => supabase.from("messages").select("role, content, created_at").eq("conversation_id", selected).order("created_at")
+      .then(({ data }) => setMessages(data ?? []));
+    load();
+    const channel = supabase.channel("msgs-" + selected).on("postgres_changes", { event: "INSERT", schema: "public", table: "messages", filter: `conversation_id=eq.${selected}` }, load).subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [selected]);
+
+  return (
+    <div className="space-y-4">
+      <h1 className="text-3xl font-bold tracking-tight">Conversations <span className="text-white/30 text-lg ml-2">temps réel</span></h1>
+      <div className="grid md:grid-cols-[300px_1fr] gap-4 h-[640px]">
+        <GlassCard className="overflow-y-auto !p-3 space-y-1">
+          {convs.map((c) => (
+            <button key={c.id} onClick={() => setSelected(c.id)}
+              className={`w-full text-left p-3 rounded-xl text-sm transition ${selected === c.id ? "bg-violet-500/20 border border-violet-400/30" : "hover:bg-white/5 border border-transparent"}`}>
+              <div className="flex justify-between items-center">
+                <div className="font-medium truncate">{c.client_name ?? "Anonyme"}</div>
+                <EmotionBadge e={c.emotion} />
+              </div>
+              <div className="text-xs text-white/40 mt-1">{new Date(c.created_at).toLocaleString("fr")}</div>
+            </button>
+          ))}
+          {convs.length === 0 && <p className="text-sm text-white/40 p-3">Pas encore de conversation.</p>}
+        </GlassCard>
+        <GlassCard className="overflow-y-auto !p-4 space-y-2">
+          {selected ? messages.map((m, i) => (
+            <div key={i} className={`p-3 rounded-2xl max-w-[80%] text-sm ${m.role === "user" ? "bg-violet-500/20 ml-auto border border-violet-400/20" : "bg-white/5 border border-white/10"}`}>{m.content}</div>
+          )) : <p className="text-white/40 text-center mt-10">Sélectionne une conversation</p>}
+        </GlassCard>
+      </div>
+    </div>
+  );
+}
+
+function EmotionBadge({ e }: { e: string | null }) {
+  const map: Record<string, string> = { positif: "bg-emerald-500/20 text-emerald-300", négatif: "bg-red-500/20 text-red-300", triste: "bg-blue-500/20 text-blue-300", questionneur: "bg-amber-500/20 text-amber-300", neutre: "bg-white/10 text-white/60" };
+  return <span className={`text-[10px] px-2 py-0.5 rounded-full ${map[e ?? "neutre"] ?? "bg-white/10 text-white/60"}`}>{e ?? "neutre"}</span>;
+}
+
+/* ---------- Leads ---------- */
+function LeadsTab({ shopId }: { shopId: string }) {
+  const [leads, setLeads] = useState<(LeadScore & { conv: Conversation })[]>([]);
+
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase
+        .from("lead_scores")
+        .select("id, conversation_id, score, reasons, status, conversations(id, client_name, client_contact, emotion, created_at)")
+        .eq("shop_id", shopId).order("score", { ascending: false }).limit(100);
+      type Row = LeadScore & { conversations: Conversation | Conversation[] | null };
+      const mapped = (data as Row[] | null ?? []).map((r) => ({
+        ...r,
+        conv: (Array.isArray(r.conversations) ? r.conversations[0] : r.conversations) as Conversation,
+      })).filter((r) => r.conv);
+      setLeads(mapped);
+    })();
+  }, [shopId]);
+
+  const groups = useMemo(() => ({
+    chaud: leads.filter((l) => l.score >= 7),
+    tiede: leads.filter((l) => l.score >= 4 && l.score < 7),
+    froid: leads.filter((l) => l.score < 4),
+  }), [leads]);
+
+  return (
+    <div className="space-y-4">
+      <h1 className="text-3xl font-bold tracking-tight">Leads <span className="text-white/30 text-lg ml-2">scoring 1-10</span></h1>
+      <div className="grid md:grid-cols-3 gap-4">
+        {[
+          { key: "chaud" as const, label: "🔥 Chauds (7-10)", color: "from-orange-500/30 to-red-500/20", border: "border-orange-400/30" },
+          { key: "tiede" as const, label: "🌡️ Tièdes (4-6)", color: "from-amber-500/20 to-yellow-500/10", border: "border-amber-400/20" },
+          { key: "froid" as const, label: "❄️ Froids (1-3)", color: "from-blue-500/15 to-cyan-500/10", border: "border-blue-400/20" },
+        ].map((g) => (
+          <div key={g.key} className={`p-4 rounded-2xl bg-gradient-to-b ${g.color} border ${g.border} backdrop-blur-xl space-y-3 min-h-[300px]`}>
+            <div className="font-semibold text-sm">{g.label} <span className="text-white/40">· {groups[g.key].length}</span></div>
+            {groups[g.key].map((l) => (
+              <div key={l.id} className="p-3 rounded-xl bg-white/5 border border-white/10 text-sm">
+                <div className="flex justify-between items-center">
+                  <span className="font-medium truncate">{l.conv.client_name ?? "Anonyme"}</span>
+                  <span className="text-xs font-bold text-violet-300">{l.score}/10</span>
+                </div>
+                <div className="text-xs text-white/40 mt-1">{l.conv.client_contact ?? "—"}</div>
+                {l.reasons && <div className="text-xs text-white/50 mt-1 italic">{l.reasons}</div>}
+              </div>
+            ))}
+            {groups[g.key].length === 0 && <p className="text-xs text-white/30">Aucun lead.</p>}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ---------- FAQ ---------- */
+function FaqTab({ shopId }: { shopId: string }) {
+  const [items, setItems] = useState<Faq[]>([]);
+  const [editing, setEditing] = useState<Partial<Faq> | null>(null);
+
+  const load = useCallback(() => {
+    supabase.from("faq").select("*").eq("shop_id", shopId).order("created_at", { ascending: false })
+      .then(({ data }) => setItems((data ?? []) as Faq[]));
+  }, [shopId]);
+  useEffect(() => { load(); }, [load]);
+
+  async function save() {
+    if (!editing?.question || !editing.answer) return;
+    const payload = { shop_id: shopId, question: editing.question, answer: editing.answer, keywords: editing.keywords ?? null };
+    const { error } = editing.id
+      ? await supabase.from("faq").update(payload).eq("id", editing.id)
+      : await supabase.from("faq").insert(payload);
+    if (error) return toast.error(error.message);
+    toast.success("Enregistré");
+    setEditing(null); load();
+  }
+  async function del(id: string) {
+    if (!confirm("Supprimer ?")) return;
+    await supabase.from("faq").delete().eq("id", id); load();
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h1 className="text-3xl font-bold tracking-tight">FAQ <span className="text-white/30 text-lg ml-2">réponses instantanées</span></h1>
+        <button onClick={() => setEditing({})} className="btn-neon"><Plus size={14} /> Question</button>
+      </div>
+      <p className="text-white/40 text-sm">Quand un client pose une question qui matche, Rachida répond instantanément sans appeler l'IA (plus rapide, gratuit).</p>
+      <div className="space-y-2">
+        {items.map((f) => (
+          <GlassCard key={f.id} className="flex justify-between items-start gap-3">
+            <div className="flex-1">
+              <div className="font-medium">{f.question}</div>
+              <div className="text-sm text-white/60 mt-1">{f.answer}</div>
+              {f.keywords && <div className="text-xs text-violet-300 mt-2">Mots-clés : {f.keywords}</div>}
+            </div>
+            <div className="flex gap-2">
+              <button onClick={() => setEditing(f)} className="text-sm text-violet-300 hover:text-violet-200">Modifier</button>
+              <button onClick={() => del(f.id)} className="text-red-400"><Trash2 size={16} /></button>
+            </div>
+          </GlassCard>
+        ))}
+        {items.length === 0 && <p className="text-white/40 text-sm">Aucune FAQ. Ajoute tes questions les plus fréquentes (livraison, paiement, horaires...)</p>}
+      </div>
+
+      {editing && (
+        <Modal onClose={() => setEditing(null)}>
+          <h3 className="font-bold text-lg">{editing.id ? "Modifier" : "Nouvelle"} FAQ</h3>
+          <Field label="Question"><input className="input-neon" value={editing.question ?? ""} onChange={(e) => setEditing({ ...editing, question: e.target.value })} placeholder="Quels sont vos horaires ?" /></Field>
+          <Field label="Réponse"><textarea className="input-neon" rows={4} value={editing.answer ?? ""} onChange={(e) => setEditing({ ...editing, answer: e.target.value })} placeholder="Nous sommes ouverts de 8h à 18h, du lundi au samedi." /></Field>
+          <Field label="Mots-clés (séparés par espaces ou virgules)"><input className="input-neon" value={editing.keywords ?? ""} onChange={(e) => setEditing({ ...editing, keywords: e.target.value })} placeholder="horaire ouvert fermeture heures" /></Field>
+          <div className="flex gap-2 justify-end">
+            <button onClick={() => setEditing(null)} className="btn-ghost">Annuler</button>
+            <button onClick={save} className="btn-neon">Enregistrer</button>
+          </div>
+        </Modal>
+      )}
+    </div>
+  );
+}
+
+/* ---------- Shop ---------- */
 function ShopTab({ shop, onUpdated }: { shop: Shop; onUpdated: (s: Shop) => void }) {
   const [form, setForm] = useState(shop);
   const [saving, setSaving] = useState(false);
@@ -140,25 +525,27 @@ function ShopTab({ shop, onUpdated }: { shop: Shop; onUpdated: (s: Shop) => void
     if (data) { onUpdated(data as Shop); toast.success("Boutique mise à jour"); }
   }
   return (
-    <div className="space-y-4">
-      <h2 className="text-xl font-bold">Réglages de la boutique</h2>
-      <div className="grid md:grid-cols-2 gap-4">
-        <Field label="Nom de la boutique"><input className="input" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></Field>
-        <Field label="Identifiant URL (slug)"><input className="input" value={form.slug} onChange={(e) => setForm({ ...form, slug: e.target.value.replace(/[^a-z0-9-]/gi, "-").toLowerCase() })} /></Field>
-        <Field label="WhatsApp (avec indicatif, ex: 22670000000)"><input className="input" value={form.whatsapp ?? ""} onChange={(e) => setForm({ ...form, whatsapp: e.target.value })} /></Field>
-        <Field label="Nom de l'IA"><input className="input" value={form.rachida_name} onChange={(e) => setForm({ ...form, rachida_name: e.target.value })} /></Field>
-        <Field label="Couleur du widget"><input type="color" value={form.color} onChange={(e) => setForm({ ...form, color: e.target.value })} className="h-10 w-20" /></Field>
-        <Field label="Devise"><input className="input" value={form.currency} onChange={(e) => setForm({ ...form, currency: e.target.value })} /></Field>
-        <Field label="Remise max autorisée (%)"><input type="number" className="input" value={form.max_remise} onChange={(e) => setForm({ ...form, max_remise: parseInt(e.target.value) || 0 })} /></Field>
-      </div>
-      <Field label="Message d'accueil"><textarea className="input" rows={2} value={form.greeting} onChange={(e) => setForm({ ...form, greeting: e.target.value })} /></Field>
-      <Field label="Instructions supplémentaires pour l'IA (optionnel)"><textarea className="input" rows={3} value={form.system_prompt_extra ?? ""} onChange={(e) => setForm({ ...form, system_prompt_extra: e.target.value })} /></Field>
-      <button onClick={save} disabled={saving} className="btn-primary">{saving ? "..." : "Enregistrer"}</button>
-      <Style />
+    <div className="space-y-6">
+      <h1 className="text-3xl font-bold tracking-tight">IA & Boutique</h1>
+      <GlassCard>
+        <div className="grid md:grid-cols-2 gap-4">
+          <Field label="Nom de la boutique"><input className="input-neon" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></Field>
+          <Field label="Identifiant URL (slug)"><input className="input-neon" value={form.slug} onChange={(e) => setForm({ ...form, slug: e.target.value.replace(/[^a-z0-9-]/gi, "-").toLowerCase() })} /></Field>
+          <Field label="WhatsApp (ex: 22670000000)"><input className="input-neon" value={form.whatsapp ?? ""} onChange={(e) => setForm({ ...form, whatsapp: e.target.value })} /></Field>
+          <Field label="Nom de l'IA"><input className="input-neon" value={form.rachida_name} onChange={(e) => setForm({ ...form, rachida_name: e.target.value })} /></Field>
+          <Field label="Couleur du widget"><input type="color" value={form.color} onChange={(e) => setForm({ ...form, color: e.target.value })} className="h-10 w-20 rounded-lg bg-transparent border border-white/10" /></Field>
+          <Field label="Devise"><input className="input-neon" value={form.currency} onChange={(e) => setForm({ ...form, currency: e.target.value })} /></Field>
+          <Field label="Remise max (%)"><input type="number" className="input-neon" value={form.max_remise} onChange={(e) => setForm({ ...form, max_remise: parseInt(e.target.value) || 0 })} /></Field>
+        </div>
+        <Field label="Message d'accueil"><textarea className="input-neon" rows={2} value={form.greeting} onChange={(e) => setForm({ ...form, greeting: e.target.value })} /></Field>
+        <Field label="Personnalité & instructions supplémentaires"><textarea className="input-neon" rows={4} value={form.system_prompt_extra ?? ""} onChange={(e) => setForm({ ...form, system_prompt_extra: e.target.value })} placeholder="Ex : Tu es spécialisée en mode féminine, sois enthousiaste et propose toujours des coordonnés." /></Field>
+        <button onClick={save} disabled={saving} className="btn-neon mt-4">{saving ? "..." : "Enregistrer"}</button>
+      </GlassCard>
     </div>
   );
 }
 
+/* ---------- Catalog ---------- */
 function CatalogTab({ shopId }: { shopId: string }) {
   const [items, setItems] = useState<Product[]>([]);
   const [editing, setEditing] = useState<Partial<Product> | null>(null);
@@ -172,154 +559,99 @@ function CatalogTab({ shopId }: { shopId: string }) {
   async function save() {
     if (!editing?.name) return;
     const payload = {
-      shop_id: shopId,
-      name: editing.name,
-      price: editing.price ?? 0,
-      category: editing.category ?? null,
-      gender: editing.gender ?? null,
-      color: editing.color ?? null,
-      image_url: editing.image_url ?? null,
-      stock: editing.stock ?? 0,
-      description: editing.description ?? null,
-      is_active: editing.is_active ?? true,
+      shop_id: shopId, name: editing.name, price: editing.price ?? 0,
+      category: editing.category ?? null, gender: editing.gender ?? null, color: editing.color ?? null,
+      image_url: editing.image_url ?? null, stock: editing.stock ?? 0,
+      description: editing.description ?? null, is_active: editing.is_active ?? true,
     };
     const { error } = editing.id
       ? await supabase.from("products").update(payload).eq("id", editing.id)
       : await supabase.from("products").insert(payload);
     if (error) return toast.error(error.message);
-    toast.success("Enregistré");
-    setEditing(null);
-    void load();
+    toast.success("Enregistré"); setEditing(null); void load();
   }
   async function del(id: string) {
     if (!confirm("Supprimer ce produit ?")) return;
-    await supabase.from("products").delete().eq("id", id);
-    void load();
+    await supabase.from("products").delete().eq("id", id); void load();
   }
   async function importCSV(file: File) {
     const txt = await file.text();
     const lines = txt.split(/\r?\n/).filter(Boolean);
     const headers = lines[0].split(",").map((h) => h.trim().toLowerCase());
     const rows = lines.slice(1).map((line) => {
-      const cols = line.split(",");
-      const o: Record<string, string> = {};
+      const cols = line.split(","); const o: Record<string, string> = {};
       headers.forEach((h, i) => { o[h] = (cols[i] ?? "").trim(); });
       return {
-        shop_id: shopId,
-        name: o.name || o.nom || "",
+        shop_id: shopId, name: o.name || o.nom || "",
         price: parseFloat(o.price || o.prix || "0") || 0,
-        category: o.category || o.categorie || null,
-        gender: o.gender || o.genre || null,
-        color: o.color || o.couleur || null,
-        image_url: o.image_url || o.image || null,
-        stock: parseInt(o.stock || "0") || 0,
-        description: o.description || null,
+        category: o.category || o.categorie || null, gender: o.gender || o.genre || null,
+        color: o.color || o.couleur || null, image_url: o.image_url || o.image || null,
+        stock: parseInt(o.stock || "0") || 0, description: o.description || null,
       };
     }).filter((r) => r.name);
     if (!rows.length) return toast.error("CSV vide ou sans colonne 'name'");
     const { error } = await supabase.from("products").insert(rows);
     if (error) return toast.error(error.message);
-    toast.success(`${rows.length} produits importés`);
-    void load();
+    toast.success(`${rows.length} produits importés`); void load();
   }
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h2 className="text-xl font-bold">Catalogue ({items.length})</h2>
+      <div className="flex items-center justify-between flex-wrap gap-2">
+        <h1 className="text-3xl font-bold tracking-tight">Catalogue <span className="text-white/30 text-lg ml-2">{items.length}</span></h1>
         <div className="flex gap-2">
-          <label className="btn-outline cursor-pointer"><Upload size={14} /> Importer CSV
+          <label className="btn-ghost cursor-pointer"><Upload size={14} /> Importer CSV
             <input type="file" accept=".csv" hidden onChange={(e) => e.target.files?.[0] && importCSV(e.target.files[0])} />
           </label>
-          <button onClick={() => setEditing({ is_active: true, stock: 1 })} className="btn-primary"><Plus size={14} /> Produit</button>
+          <button onClick={() => setEditing({ is_active: true, stock: 1 })} className="btn-neon"><Plus size={14} /> Produit</button>
         </div>
       </div>
-      <p className="text-xs text-gray-500">Format CSV attendu : <code>name,price,category,gender,color,image_url,stock,description</code></p>
+      <p className="text-xs text-white/40">CSV : <code className="text-violet-300">name,price,category,gender,color,image_url,stock,description</code></p>
 
-      <div className="grid gap-2">
+      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
         {items.map((p) => (
-          <div key={p.id} className="flex items-center gap-3 p-3 border rounded-lg">
-            {p.image_url ? <img src={p.image_url} alt="" className="w-12 h-12 object-cover rounded" /> : <div className="w-12 h-12 bg-gray-100 rounded" />}
-            <div className="flex-1">
-              <div className="font-medium">{p.name}</div>
-              <div className="text-xs text-gray-500">{p.price} · {p.category ?? "—"} · {p.gender ?? "—"} · stock {p.stock}</div>
+          <motion.div key={p.id} whileHover={{ y: -3 }} className="p-4 rounded-2xl bg-white/[0.03] border border-white/10 backdrop-blur-xl">
+            <div className="flex gap-3">
+              {p.image_url ? <img src={p.image_url} alt="" className="w-16 h-16 object-cover rounded-xl" /> : <div className="w-16 h-16 bg-gradient-to-br from-violet-500/20 to-cyan-500/10 rounded-xl" />}
+              <div className="flex-1 min-w-0">
+                <div className="font-medium truncate">{p.name}</div>
+                <div className="text-xs text-white/40 mt-0.5">{p.price} · {p.category ?? "—"} · stock {p.stock}</div>
+                <div className="flex gap-2 mt-2">
+                  <button onClick={() => setEditing(p)} className="text-xs text-violet-300 hover:text-violet-200">Modifier</button>
+                  <button onClick={() => del(p.id)} className="text-red-400"><Trash2 size={14} /></button>
+                </div>
+              </div>
             </div>
-            <button onClick={() => setEditing(p)} className="text-sm text-orange-600">Modifier</button>
-            <button onClick={() => del(p.id)} className="text-red-500"><Trash2 size={16} /></button>
-          </div>
+          </motion.div>
         ))}
-        {items.length === 0 && <p className="text-sm text-gray-500">Aucun produit. Ajoutes-en un ou importe un CSV.</p>}
+        {items.length === 0 && <p className="text-sm text-white/40 col-span-full">Aucun produit. Ajoutes-en un ou importe un CSV.</p>}
       </div>
 
       {editing && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4" onClick={() => setEditing(null)}>
-          <div className="bg-white rounded-xl p-6 max-w-lg w-full space-y-3" onClick={(e) => e.stopPropagation()}>
-            <h3 className="font-bold text-lg">{editing.id ? "Modifier" : "Nouveau"} produit</h3>
-            <div className="grid grid-cols-2 gap-3">
-              <Field label="Nom"><input className="input" value={editing.name ?? ""} onChange={(e) => setEditing({ ...editing, name: e.target.value })} /></Field>
-              <Field label="Prix"><input type="number" className="input" value={editing.price ?? 0} onChange={(e) => setEditing({ ...editing, price: parseFloat(e.target.value) })} /></Field>
-              <Field label="Catégorie"><input className="input" value={editing.category ?? ""} onChange={(e) => setEditing({ ...editing, category: e.target.value })} /></Field>
-              <Field label="Genre"><input className="input" placeholder="homme/femme/enfant" value={editing.gender ?? ""} onChange={(e) => setEditing({ ...editing, gender: e.target.value })} /></Field>
-              <Field label="Couleur"><input className="input" value={editing.color ?? ""} onChange={(e) => setEditing({ ...editing, color: e.target.value })} /></Field>
-              <Field label="Stock"><input type="number" className="input" value={editing.stock ?? 0} onChange={(e) => setEditing({ ...editing, stock: parseInt(e.target.value) || 0 })} /></Field>
-            </div>
-            <Field label="URL image"><input className="input" value={editing.image_url ?? ""} onChange={(e) => setEditing({ ...editing, image_url: e.target.value })} /></Field>
-            <Field label="Description"><textarea className="input" rows={3} value={editing.description ?? ""} onChange={(e) => setEditing({ ...editing, description: e.target.value })} /></Field>
-            <div className="flex gap-2 justify-end">
-              <button onClick={() => setEditing(null)} className="btn-outline">Annuler</button>
-              <button onClick={save} className="btn-primary">Enregistrer</button>
-            </div>
+        <Modal onClose={() => setEditing(null)}>
+          <h3 className="font-bold text-lg">{editing.id ? "Modifier" : "Nouveau"} produit</h3>
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Nom"><input className="input-neon" value={editing.name ?? ""} onChange={(e) => setEditing({ ...editing, name: e.target.value })} /></Field>
+            <Field label="Prix"><input type="number" className="input-neon" value={editing.price ?? 0} onChange={(e) => setEditing({ ...editing, price: parseFloat(e.target.value) })} /></Field>
+            <Field label="Catégorie"><input className="input-neon" value={editing.category ?? ""} onChange={(e) => setEditing({ ...editing, category: e.target.value })} /></Field>
+            <Field label="Genre"><input className="input-neon" placeholder="homme/femme/enfant" value={editing.gender ?? ""} onChange={(e) => setEditing({ ...editing, gender: e.target.value })} /></Field>
+            <Field label="Couleur"><input className="input-neon" value={editing.color ?? ""} onChange={(e) => setEditing({ ...editing, color: e.target.value })} /></Field>
+            <Field label="Stock"><input type="number" className="input-neon" value={editing.stock ?? 0} onChange={(e) => setEditing({ ...editing, stock: parseInt(e.target.value) || 0 })} /></Field>
           </div>
-        </div>
+          <Field label="URL image"><input className="input-neon" value={editing.image_url ?? ""} onChange={(e) => setEditing({ ...editing, image_url: e.target.value })} /></Field>
+          <Field label="Description"><textarea className="input-neon" rows={3} value={editing.description ?? ""} onChange={(e) => setEditing({ ...editing, description: e.target.value })} /></Field>
+          <div className="flex gap-2 justify-end">
+            <button onClick={() => setEditing(null)} className="btn-ghost">Annuler</button>
+            <button onClick={save} className="btn-neon">Enregistrer</button>
+          </div>
+        </Modal>
       )}
-      <Style />
     </div>
   );
 }
 
-function ConversationsTab({ shopId }: { shopId: string }) {
-  const [convs, setConvs] = useState<Conversation[]>([]);
-  const [selected, setSelected] = useState<string | null>(null);
-  const [messages, setMessages] = useState<{ role: string; content: string; created_at: string }[]>([]);
-
-  useEffect(() => {
-    supabase.from("conversations").select("*").eq("shop_id", shopId).order("created_at", { ascending: false }).limit(50)
-      .then(({ data }) => setConvs((data ?? []) as Conversation[]));
-  }, [shopId]);
-
-  useEffect(() => {
-    if (!selected) return;
-    supabase.from("messages").select("role, content, created_at").eq("conversation_id", selected).order("created_at")
-      .then(({ data }) => setMessages(data ?? []));
-  }, [selected]);
-
-  return (
-    <div className="grid md:grid-cols-[260px_1fr] gap-4 h-[600px]">
-      <div className="overflow-y-auto border-r pr-2 space-y-1">
-        <h2 className="font-bold mb-2">Conversations</h2>
-        {convs.map((c) => (
-          <button key={c.id} onClick={() => setSelected(c.id)} className={`w-full text-left p-2 rounded text-sm ${selected === c.id ? "bg-orange-100" : "hover:bg-gray-100"}`}>
-            <div className="font-medium">{c.client_name ?? "Anonyme"} · <EmotionBadge e={c.emotion} /></div>
-            <div className="text-xs text-gray-500">{new Date(c.created_at).toLocaleString("fr")}</div>
-          </button>
-        ))}
-        {convs.length === 0 && <p className="text-sm text-gray-500">Pas encore de conversation.</p>}
-      </div>
-      <div className="overflow-y-auto space-y-2 p-2 bg-gray-50 rounded">
-        {selected ? messages.map((m, i) => (
-          <div key={i} className={`p-3 rounded-lg max-w-[80%] text-sm ${m.role === "user" ? "bg-blue-100 ml-auto" : "bg-white"}`}>{m.content}</div>
-        )) : <p className="text-gray-500 text-center mt-10">Sélectionne une conversation</p>}
-      </div>
-    </div>
-  );
-}
-
-function EmotionBadge({ e }: { e: string | null }) {
-  const colors: Record<string, string> = { positif: "text-green-600", négatif: "text-red-600", triste: "text-blue-600", questionneur: "text-yellow-600", neutre: "text-gray-500" };
-  return <span className={`text-xs ${colors[e ?? "neutre"] ?? "text-gray-500"}`}>{e ?? "neutre"}</span>;
-}
-
-function OrdersTab({ shopId }: { shopId: string }) {
+/* ---------- Orders ---------- */
+function OrdersTab({ shopId, currency }: { shopId: string; currency: string }) {
   const [orders, setOrders] = useState<Order[]>([]);
   const load = useCallback(() => {
     supabase.from("orders").select("*").eq("shop_id", shopId).order("created_at", { ascending: false })
@@ -328,65 +660,88 @@ function OrdersTab({ shopId }: { shopId: string }) {
   useEffect(() => { load(); }, [load]);
 
   async function setStatus(id: string, status: string) {
-    await supabase.from("orders").update({ status }).eq("id", id);
-    load();
+    await supabase.from("orders").update({ status }).eq("id", id); load();
   }
 
   return (
-    <div className="space-y-3">
-      <h2 className="text-xl font-bold">Commandes ({orders.length})</h2>
+    <div className="space-y-4">
+      <h1 className="text-3xl font-bold tracking-tight">Commandes <span className="text-white/30 text-lg ml-2">{orders.length}</span></h1>
       {orders.map((o) => (
-        <div key={o.id} className="p-4 border rounded-lg">
-          <div className="flex justify-between">
+        <GlassCard key={o.id}>
+          <div className="flex justify-between items-start gap-3 flex-wrap">
             <div>
-              <div className="font-medium">{o.client_name ?? "Anonyme"} — {o.client_contact ?? "—"}</div>
-              <div className="text-xs text-gray-500">{new Date(o.created_at).toLocaleString("fr")}</div>
+              <div className="font-medium">{o.client_name ?? "Anonyme"} — <span className="text-white/60">{o.client_contact ?? "—"}</span></div>
+              <div className="text-xs text-white/40">{new Date(o.created_at).toLocaleString("fr")}</div>
             </div>
-            <select value={o.status} onChange={(e) => setStatus(o.id, e.target.value)} className="text-sm border rounded px-2">
-              <option value="nouvelle">Nouvelle</option>
-              <option value="confirmée">Confirmée</option>
-              <option value="livrée">Livrée</option>
-              <option value="annulée">Annulée</option>
+            <select value={o.status} onChange={(e) => setStatus(o.id, e.target.value)} className="input-neon !py-1 !text-sm !w-auto">
+              <option value="nouvelle">Nouvelle</option><option value="confirmée">Confirmée</option>
+              <option value="livrée">Livrée</option><option value="annulée">Annulée</option>
             </select>
           </div>
-          <pre className="text-xs mt-2 bg-gray-50 p-2 rounded overflow-auto">{JSON.stringify(o.cart, null, 2)}</pre>
-          <div className="text-right font-bold">Total : {o.total}</div>
-        </div>
+          <pre className="text-xs mt-2 bg-black/30 p-2 rounded overflow-auto text-white/70">{JSON.stringify(o.cart, null, 2)}</pre>
+          <div className="text-right font-bold mt-1">Total : {o.total} {currency}</div>
+        </GlassCard>
       ))}
-      {orders.length === 0 && <p className="text-sm text-gray-500">Aucune commande pour l'instant.</p>}
+      {orders.length === 0 && <p className="text-sm text-white/40">Aucune commande pour l'instant.</p>}
     </div>
   );
 }
 
+/* ---------- Integration ---------- */
 function IntegrationTab({ shop }: { shop: Shop }) {
   const origin = typeof window !== "undefined" ? window.location.origin : "";
   const snippet = `<script src="${origin}/widget/rachida.js" data-shop="${shop.slug}"></script>`;
   return (
     <div className="space-y-4">
-      <h2 className="text-xl font-bold">Intégration sur votre site</h2>
-      <p className="text-sm text-gray-600">Copie ce code juste avant <code>&lt;/body&gt;</code> sur ton site. Rachida apparaîtra en bas à droite.</p>
-      <pre className="bg-gray-900 text-green-300 p-4 rounded-lg text-sm overflow-x-auto">{snippet}</pre>
-      <button onClick={() => { navigator.clipboard.writeText(snippet); toast.success("Copié !"); }} className="btn-primary">Copier le code</button>
-      <div className="mt-6 p-4 bg-orange-50 rounded-lg text-sm">
-        💡 Astuce : tu peux tester ton widget directement sur cette page :
-        <div className="mt-2" dangerouslySetInnerHTML={{ __html: `<iframe srcdoc='<html><body style=\"padding:40px;font-family:sans-serif\"><h2>Aperçu boutique : ${shop.name}</h2><p>Clique sur la bulle en bas à droite.</p><script src=\"${origin}/widget/rachida.js\" data-shop=\"${shop.slug}\"></script></body></html>' style='width:100%;height:600px;border:1px solid #ddd;border-radius:8px'></iframe>` }} />
-      </div>
+      <h1 className="text-3xl font-bold tracking-tight">Intégration</h1>
+      <GlassCard>
+        <p className="text-sm text-white/60 mb-3">Colle ce code juste avant <code className="text-violet-300">&lt;/body&gt;</code> sur ton site :</p>
+        <pre className="bg-black/40 p-4 rounded-xl text-xs overflow-x-auto text-cyan-300 border border-white/5">{snippet}</pre>
+        <button onClick={() => { navigator.clipboard.writeText(snippet); toast.success("Copié !"); }} className="btn-neon mt-3">Copier</button>
+      </GlassCard>
+      <GlassCard>
+        <h3 className="font-semibold mb-2">Capacités du widget</h3>
+        <ul className="text-sm text-white/70 space-y-1.5">
+          <li>✨ Chat streaming temps réel</li>
+          <li>🎤 Reconnaissance vocale (parle au lieu d'écrire)</li>
+          <li>🔊 Lecture vocale des réponses</li>
+          <li>📷 Upload image (preuve paiement Mobile Money, photo produit)</li>
+          <li>🛒 Panier persistant côté client</li>
+          <li>💜 Halo coloré selon l'émotion détectée</li>
+          <li>🔥 Score lead temps réel</li>
+          <li>💬 Bouton transfert WhatsApp humain</li>
+        </ul>
+      </GlassCard>
+    </div>
+  );
+}
+
+/* ---------- Primitives ---------- */
+function Modal({ onClose, children }: { onClose: () => void; children: React.ReactNode }) {
+  return (
+    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={onClose}>
+      <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
+        className="bg-[#0a0b1a] border border-white/10 rounded-2xl p-6 max-w-lg w-full space-y-3 backdrop-blur-xl shadow-2xl shadow-violet-500/20"
+        onClick={(e) => e.stopPropagation()}>
+        {children}
+      </motion.div>
     </div>
   );
 }
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return <label className="block"><span className="text-sm font-medium text-gray-700">{label}</span>{children}</label>;
+  return <label className="block space-y-1"><span className="text-xs font-medium text-white/60">{label}</span>{children}</label>;
 }
 
 function Style() {
   return (
     <style>{`
-      .input { width:100%; margin-top:4px; padding:8px 10px; border:1px solid #d1d5db; border-radius:8px; font-size:14px; }
-      .input:focus { outline:none; border-color:#ea580c; }
-      .btn-primary { display:inline-flex; align-items:center; gap:6px; padding:8px 14px; background:#ea580c; color:#fff; border-radius:8px; font-weight:600; font-size:14px; }
-      .btn-primary:hover { background:#c2410c; }
-      .btn-outline { display:inline-flex; align-items:center; gap:6px; padding:8px 14px; border:1px solid #d1d5db; border-radius:8px; font-weight:500; font-size:14px; background:#fff; }
+      .input-neon { width: 100%; padding: 8px 12px; background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.1); border-radius: 10px; color: #fff; font-size: 14px; outline: none; transition: all .15s; }
+      .input-neon:focus { border-color: rgba(124,92,255,.6); box-shadow: 0 0 0 3px rgba(124,92,255,.15); }
+      .btn-neon { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; background: linear-gradient(135deg, #7c5cff, #00e5ff); color: #fff; border: none; border-radius: 10px; font-weight: 600; font-size: 13px; cursor: pointer; box-shadow: 0 4px 20px rgba(124,92,255,.4); transition: transform .15s; }
+      .btn-neon:hover { transform: translateY(-1px); }
+      .btn-ghost { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; background: rgba(255,255,255,.05); color: #fff; border: 1px solid rgba(255,255,255,.1); border-radius: 10px; font-weight: 500; font-size: 13px; cursor: pointer; }
+      .btn-ghost:hover { background: rgba(255,255,255,.08); }
     `}</style>
   );
 }
