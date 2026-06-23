@@ -130,7 +130,8 @@ export const Route = createFileRoute("/api/public/rachida-chat")({
         });
 
         // Customer memory
-        let customerProfile: { customer_name?: string | null; language?: string | null; budget_max?: number | null; notes?: string | null; total_conversations?: number } | null = null;
+        type CustomerProfile = { customer_name: string | null; language: string | null; budget_max: number | null; notes: string | null; total_conversations: number | null };
+        let customerProfile: CustomerProfile | null = null;
         if (body.clientContact) {
           const { data: prof } = await supabaseAdmin
             .from("customer_profiles")
