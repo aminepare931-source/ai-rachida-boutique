@@ -23,7 +23,7 @@ const DEMO_PRODUCTS = [
 
 function ShopPage() {
   const { slug } = Route.useParams();
-  const shopName = slug.replace(/[-_]/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+  const shopName = slug.replace(/[-_]/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase());
 
   // Inject the Rachida widget script
   useEffect(() => {

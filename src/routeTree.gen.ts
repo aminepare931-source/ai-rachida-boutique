@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ShopSlugRouteImport } from './routes/shop.$slug'
 import { Route as ApiPublicShopConfigRouteImport } from './routes/api/public/shop-config'
 import { Route as ApiPublicRachidaVisionRouteImport } from './routes/api/public/rachida-vision'
 import { Route as ApiPublicRachidaSearchRouteImport } from './routes/api/public/rachida-search'
@@ -31,6 +32,11 @@ const AuthRoute = AuthRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ShopSlugRoute = ShopSlugRouteImport.update({
+  id: '/shop/$slug',
+  path: '/shop/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicShopConfigRoute = ApiPublicShopConfigRouteImport.update({
@@ -64,6 +70,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/dashboard': typeof DashboardRoute
+  '/shop/$slug': typeof ShopSlugRoute
   '/api/public/rachida-chat': typeof ApiPublicRachidaChatRoute
   '/api/public/rachida-search': typeof ApiPublicRachidaSearchRoute
   '/api/public/rachida-vision': typeof ApiPublicRachidaVisionRoute
@@ -74,6 +81,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/dashboard': typeof DashboardRoute
+  '/shop/$slug': typeof ShopSlugRoute
   '/api/public/rachida-chat': typeof ApiPublicRachidaChatRoute
   '/api/public/rachida-search': typeof ApiPublicRachidaSearchRoute
   '/api/public/rachida-vision': typeof ApiPublicRachidaVisionRoute
@@ -85,6 +93,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/dashboard': typeof DashboardRoute
+  '/shop/$slug': typeof ShopSlugRoute
   '/api/public/rachida-chat': typeof ApiPublicRachidaChatRoute
   '/api/public/rachida-search': typeof ApiPublicRachidaSearchRoute
   '/api/public/rachida-vision': typeof ApiPublicRachidaVisionRoute
@@ -97,6 +106,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/dashboard'
+    | '/shop/$slug'
     | '/api/public/rachida-chat'
     | '/api/public/rachida-search'
     | '/api/public/rachida-vision'
@@ -107,6 +117,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/dashboard'
+    | '/shop/$slug'
     | '/api/public/rachida-chat'
     | '/api/public/rachida-search'
     | '/api/public/rachida-vision'
@@ -117,6 +128,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/dashboard'
+    | '/shop/$slug'
     | '/api/public/rachida-chat'
     | '/api/public/rachida-search'
     | '/api/public/rachida-vision'
@@ -128,6 +140,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthRoute: typeof AuthRoute
   DashboardRoute: typeof DashboardRoute
+  ShopSlugRoute: typeof ShopSlugRoute
   ApiPublicRachidaChatRoute: typeof ApiPublicRachidaChatRoute
   ApiPublicRachidaSearchRoute: typeof ApiPublicRachidaSearchRoute
   ApiPublicRachidaVisionRoute: typeof ApiPublicRachidaVisionRoute
@@ -156,6 +169,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/shop/$slug': {
+      id: '/shop/$slug'
+      path: '/shop/$slug'
+      fullPath: '/shop/$slug'
+      preLoaderRoute: typeof ShopSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/shop-config': {
@@ -200,6 +220,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRoute: AuthRoute,
   DashboardRoute: DashboardRoute,
+  ShopSlugRoute: ShopSlugRoute,
   ApiPublicRachidaChatRoute: ApiPublicRachidaChatRoute,
   ApiPublicRachidaSearchRoute: ApiPublicRachidaSearchRoute,
   ApiPublicRachidaVisionRoute: ApiPublicRachidaVisionRoute,
