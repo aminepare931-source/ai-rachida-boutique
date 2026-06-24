@@ -64,7 +64,7 @@ export function ChatDemo() {
       </div>
       <div className="space-y-2.5 min-h-[280px]">
         <AnimatePresence initial={false}>
-          {shown.map((m) => (
+          {shown.filter(Boolean).map((m) => (
             <motion.div
               key={m.id}
               initial={{ opacity: 0, y: 8, scale: 0.96 }}
