@@ -24,22 +24,29 @@ export function ChatDemo() {
 
   useEffect(() => {
     let i = 0;
+    let cancelled = false;
     let timer: ReturnType<typeof setTimeout>;
     const tick = () => {
+      if (cancelled) return;
       if (i >= script.length) {
         timer = setTimeout(() => {
+          if (cancelled) return;
           setShown([]);
           i = 0;
           tick();
         }, 4000);
         return;
       }
-      setShown((prev) => [...prev, script[i]]);
+      const next = script[i];
       i++;
+      if (next) setShown((prev) => [...prev, next]);
       timer = setTimeout(tick, 1600);
     };
     timer = setTimeout(tick, 600);
-    return () => clearTimeout(timer);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
   }, []);
 
   return (
