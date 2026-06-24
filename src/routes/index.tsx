@@ -69,9 +69,9 @@ function Nav() {
     <header className="fixed top-4 left-0 right-0 z-50 px-4">
       <div className="mx-auto max-w-6xl glass rounded-2xl px-5 py-3 flex items-center justify-between">
         <Link to="/" className="flex items-center gap-2 font-display font-bold text-lg">
-          <span className="relative grid place-items-center size-8 rounded-xl bg-gradient-to-br from-[--color-neon-violet] to-[--color-neon-cyan]">
-            <Sparkles className="size-4 text-white" />
-            <span className="absolute inset-0 rounded-xl glow-violet" />
+          <span className="relative grid place-items-center size-9 rounded-xl overflow-hidden">
+            <img src={rachidaLogo} alt="Rachida AI" className="size-9 object-contain" />
+            <span className="absolute inset-0 rounded-xl glow-violet opacity-60" aria-hidden />
           </span>
           <span>Rachida<span className="text-gradient-neon">.ai</span></span>
         </Link>
