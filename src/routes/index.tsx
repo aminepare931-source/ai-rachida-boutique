@@ -106,6 +106,17 @@ function Hero() {
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background/40 to-background" />
       </div>
 
+      <motion.img
+        src={rachidaAvatar}
+        alt="Rachida — vendeuse IA"
+        width={1024}
+        height={1024}
+        initial={{ opacity: 0, y: 30, scale: 0.95 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ duration: 1.1, delay: 0.3, ease: [0.21, 0.47, 0.32, 0.98] }}
+        className="hidden lg:block absolute right-[4%] bottom-0 w-[36vw] max-w-[520px] pointer-events-none select-none drop-shadow-[0_30px_80px_rgba(139,92,246,0.45)]"
+      />
+
       <div className="relative mx-auto max-w-5xl text-center">
         <motion.div
           initial={{ opacity: 0, y: 10 }}
