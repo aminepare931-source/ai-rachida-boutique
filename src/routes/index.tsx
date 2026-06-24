@@ -11,11 +11,17 @@ import {
   Zap,
   MessageSquare,
   TrendingUp,
+  Check,
+  Copy,
 } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
 import { ParticleSphere } from "@/components/landing/ParticleSphere";
 import { ChatDemo } from "@/components/landing/ChatDemo";
 import { SmoothScroll } from "@/components/landing/SmoothScroll";
 import { Counter } from "@/components/landing/Counter";
+import rachidaAvatar from "@/assets/rachida-avatar.png";
+import rachidaLogo from "@/assets/rachida-logo.png";
 
 export const Route = createFileRoute("/")({
   head: () => ({
