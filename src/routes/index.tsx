@@ -51,6 +51,7 @@ function Landing() {
       <HowItWorksSection />
       <StatsSection />
       <LanguagesSection />
+      <NoCodeInstallSection />
       <FinalCta />
       <Footer />
     </div>
