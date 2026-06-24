@@ -403,6 +403,98 @@ function FinalCta() {
   );
 }
 
+function NoCodeInstallSection() {
+  const snippet = `<script src="https://rachida.ai/widget/rachida.js" data-shop="VOTRE-ID"></script>`;
+  const methods = [
+    {
+      icon: "1",
+      title: "Copier-coller (site web)",
+      desc: "Ajoutez cette ligne avant </body> de votre site Wix, Shopify, WordPress ou autre. Aucune compétence requise.",
+      action: "snippet" as const,
+    },
+    {
+      icon: "2",
+      title: "Lien WhatsApp prêt",
+      desc: "On vous génère un numéro WhatsApp connecté à Rachida. Partagez-le sur vos statuts, votre bio Instagram, vos affiches.",
+      action: "wa" as const,
+    },
+    {
+      icon: "3",
+      title: "Page boutique offerte",
+      desc: "Pas de site ? On vous donne un lien rachida.ai/votre-boutique avec votre catalogue et Rachida intégrée.",
+      action: "page" as const,
+    },
+  ];
+  const copy = () => {
+    navigator.clipboard?.writeText(snippet);
+  };
+  return (
+    <section className="relative py-24 px-6">
+      <motion.div {...fadeUp} className="max-w-3xl mx-auto text-center">
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full glass text-xs text-muted-foreground mb-5">
+          <Zap className="size-3 text-[--color-neon-cyan]" /> Pour tout le monde
+        </div>
+        <h2 className="font-display font-bold text-4xl sm:text-5xl">
+          Vous ne savez pas coder ? <span className="text-gradient-neon">Aucun problème.</span>
+        </h2>
+        <p className="mt-4 text-muted-foreground">
+          3 façons d'installer Rachida en moins de 2 minutes — choisissez celle qui vous ressemble.
+        </p>
+      </motion.div>
+      <div className="mt-14 mx-auto max-w-6xl grid md:grid-cols-3 gap-5">
+        {methods.map((m, i) => (
+          <motion.div
+            key={m.title}
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5, delay: i * 0.1 }}
+            className="glass rounded-3xl p-6 flex flex-col"
+          >
+            <div className="size-10 grid place-items-center rounded-xl bg-gradient-to-br from-[--color-neon-violet] to-[--color-neon-cyan] font-display font-bold">
+              {m.icon}
+            </div>
+            <h3 className="mt-4 font-display font-semibold text-lg">{m.title}</h3>
+            <p className="mt-2 text-sm text-muted-foreground flex-1">{m.desc}</p>
+            {m.action === "snippet" && (
+              <div className="mt-4">
+                <div className="rounded-xl bg-black/40 border border-white/10 p-3 font-mono text-[11px] text-cyan-200 overflow-x-auto">
+                  {snippet}
+                </div>
+                <button
+                  onClick={copy}
+                  className="mt-2 text-xs px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 transition"
+                >
+                  Copier le code
+                </button>
+              </div>
+            )}
+            {m.action === "wa" && (
+              <Link
+                to="/auth"
+                className="mt-4 text-xs px-3 py-2 rounded-lg bg-emerald-500/20 text-emerald-200 hover:bg-emerald-500/30 transition text-center"
+              >
+                Activer le WhatsApp
+              </Link>
+            )}
+            {m.action === "page" && (
+              <Link
+                to="/auth"
+                className="mt-4 text-xs px-3 py-2 rounded-lg bg-primary/30 hover:bg-primary/40 transition text-center"
+              >
+                Créer ma page
+              </Link>
+            )}
+          </motion.div>
+        ))}
+      </div>
+      <p className="mt-10 text-center text-xs text-muted-foreground max-w-xl mx-auto">
+        Besoin d'aide ? Notre équipe installe Rachida pour vous gratuitement — envoyez-nous votre lien boutique sur WhatsApp.
+      </p>
+    </section>
+  );
+}
+
 function Footer() {
   return (
     <footer className="relative border-t border-white/5 py-10 px-6 text-center text-xs text-muted-foreground">
