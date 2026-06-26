@@ -100,7 +100,14 @@ function ShopPage() {
                 <h3 className="font-display font-medium text-sm">{p.name}</h3>
                 <div className="mt-2 flex items-center justify-between">
                   <span className="text-sm text-[--color-neon-cyan] font-semibold">{p.price}</span>
-                  <button className="text-xs px-2.5 py-1 rounded-lg bg-primary/30 hover:bg-primary/40 transition">
+                  <button
+                    onClick={() => {
+                      const priceNum = parseInt(p.price.replace(/\D/g, ""), 10) || 0;
+                      (window as any).RachidaAddToCart?.({ name: p.name, price: priceNum });
+                      (window as any).RachidaOpen?.(`Je veux ${p.name}, c'est possible ?`);
+                    }}
+                    className="text-xs px-2.5 py-1 rounded-lg bg-primary/30 hover:bg-primary/40 transition cursor-pointer"
+                  >
                     Ajouter
                   </button>
                 </div>
