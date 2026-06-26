@@ -7,7 +7,10 @@ import { Toaster } from "@/components/ui/sonner";
 import {
   Bot, Settings, Package, MessageSquare, ShoppingBag, Code, LogOut, Plus, Trash2, Upload,
   LayoutDashboard, Users, HelpCircle, Sparkles, TrendingUp, Flame,
+  CheckCircle2, XCircle, Loader2, Mail, Globe, Copy, ExternalLink,
 } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
+import { checkInstall } from "@/lib/install-checker.functions";
 import { motion, AnimatePresence } from "framer-motion";
 import { AreaChart, Area, ResponsiveContainer, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 
@@ -688,17 +691,231 @@ function OrdersTab({ shopId, currency }: { shopId: string; currency: string }) {
 }
 
 /* ---------- Integration ---------- */
+const PLATFORMS: Record<string, { label: string; emoji: string; steps: string[]; link?: { label: string; url: string } }> = {
+  wordpress: {
+    label: "WordPress",
+    emoji: "🟦",
+    steps: [
+      "Installez le plugin gratuit « Insert Headers and Footers » (ou WPCode).",
+      "Allez dans Réglages → Insert Headers and Footers.",
+      "Collez le script dans la zone « Scripts in Footer ».",
+      "Cliquez sur Enregistrer. Rachida apparaît en bas à droite immédiatement.",
+    ],
+    link: { label: "Voir le plugin", url: "https://wordpress.org/plugins/insert-headers-and-footers/" },
+  },
+  wix: {
+    label: "Wix",
+    emoji: "🟧",
+    steps: [
+      "Dans Wix : Paramètres → Avancé → Code personnalisé.",
+      "Cliquez sur + Ajouter du code.",
+      "Collez le script, choisissez « Corps - fin », et appliquez à toutes les pages.",
+      "Publiez votre site Wix.",
+    ],
+    link: { label: "Aide Wix", url: "https://support.wix.com/fr/article/code-personnalise" },
+  },
+  shopify: {
+    label: "Shopify",
+    emoji: "🟩",
+    steps: [
+      "Boutique en ligne → Thèmes → Actions → Modifier le code.",
+      "Ouvrez le fichier theme.liquid.",
+      "Collez le script juste avant </body>.",
+      "Enregistrez.",
+    ],
+  },
+  squarespace: {
+    label: "Squarespace",
+    emoji: "⬛",
+    steps: [
+      "Réglages → Avancé → Injection de code.",
+      "Collez le script dans le champ « Pied de page ».",
+      "Enregistrez.",
+    ],
+  },
+  webflow: {
+    label: "Webflow",
+    emoji: "🟪",
+    steps: [
+      "Project Settings → Custom Code → Footer Code.",
+      "Collez le script et Save Changes.",
+      "Publiez le site.",
+    ],
+  },
+  other: {
+    label: "Site fait main / autre",
+    emoji: "🌐",
+    steps: ["Collez le script juste avant la balise </body> de votre HTML."],
+  },
+};
+
 function IntegrationTab({ shop }: { shop: Shop }) {
   const origin = typeof window !== "undefined" ? window.location.origin : "";
-  const snippet = `<script src="${origin}/widget/rachida.js" data-shop="${shop.slug}"></script>`;
+  const snippet = `<script src="${origin}/widget/rachida.js" data-shop="${shop.slug}" async defer onerror="console.warn('Rachida widget indisponible')"></script>`;
+  const [platform, setPlatform] = useState<string>("wordpress");
+  const plat = PLATFORMS[platform];
+
+  const copy = () => { navigator.clipboard.writeText(snippet); toast.success("Code copié !"); };
+
+  /* Diagnostic */
+  const runCheck = useServerFn(checkInstall);
+  const [siteUrl, setSiteUrl] = useState("");
+  const [checking, setChecking] = useState(false);
+  const [checkResult, setCheckResult] = useState<{ ok: boolean; reason?: string; message?: string } | null>(null);
+  const doCheck = async () => {
+    if (!siteUrl.trim()) { toast.error("Entrez l'URL de votre site"); return; }
+    setChecking(true); setCheckResult(null);
+    try {
+      const r = await runCheck({ data: { url: siteUrl, slug: shop.slug } });
+      setCheckResult(r);
+      r.ok ? toast.success("Rachida est active !") : toast.error("Rachida non détectée");
+    } catch (e: any) {
+      setCheckResult({ ok: false, reason: e?.message || "Erreur" });
+    } finally { setChecking(false); }
+  };
+
+  /* Webmaster invite */
+  const [techEmail, setTechEmail] = useState("");
+  const inviteWebmaster = () => {
+    if (!techEmail.trim()) { toast.error("Email du technicien requis"); return; }
+    const subject = encodeURIComponent(`Installation du widget Rachida AI sur ${shop.name}`);
+    const body = encodeURIComponent(
+`Bonjour,
+
+Je vous demande d'installer le widget Rachida AI (assistante de vente intelligente) sur le site de ${shop.name}.
+
+C'est très simple : collez le code ci-dessous juste avant la balise </body> de toutes les pages du site.
+
+------ CODE À COLLER ------
+${snippet}
+---------------------------
+
+Plus d'infos : ${origin}
+Page boutique de démonstration : ${origin}/shop/${shop.slug}
+
+Une fois installé, je pourrai vérifier que tout fonctionne depuis mon tableau de bord Rachida.
+
+Merci !`
+    );
+    window.location.href = `mailto:${encodeURIComponent(techEmail)}?subject=${subject}&body=${body}`;
+    toast.success("Mail prêt à envoyer");
+  };
+
   return (
     <div className="space-y-4">
-      <h1 className="text-3xl font-bold tracking-tight">Intégration</h1>
+      <div className="flex items-center justify-between flex-wrap gap-2">
+        <h1 className="text-3xl font-bold tracking-tight">Intégration</h1>
+        <Link to="/shop/$slug" params={{ slug: shop.slug }} target="_blank" className="btn-ghost">
+          <ExternalLink className="size-4" /> Ma page boutique offerte
+        </Link>
+      </div>
+
+      {/* Sélecteur de plateforme */}
       <GlassCard>
-        <p className="text-sm text-white/60 mb-3">Colle ce code juste avant <code className="text-violet-300">&lt;/body&gt;</code> sur ton site :</p>
-        <pre className="bg-black/40 p-4 rounded-xl text-xs overflow-x-auto text-cyan-300 border border-white/5">{snippet}</pre>
-        <button onClick={() => { navigator.clipboard.writeText(snippet); toast.success("Copié !"); }} className="btn-neon mt-3">Copier</button>
+        <h3 className="font-semibold mb-3 flex items-center gap-2"><Globe className="size-4 text-cyan-300" /> Quelle est votre plateforme ?</h3>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 mb-4">
+          {Object.entries(PLATFORMS).map(([k, p]) => (
+            <button
+              key={k}
+              onClick={() => setPlatform(k)}
+              className={`p-3 rounded-xl border text-sm transition text-left ${
+                platform === k
+                  ? "bg-violet-500/20 border-violet-400/60 shadow-[0_0_20px_rgba(124,92,255,.3)]"
+                  : "bg-white/3 border-white/10 hover:bg-white/5"
+              }`}
+            >
+              <div className="text-xl">{p.emoji}</div>
+              <div className="font-medium text-xs mt-1">{p.label}</div>
+            </button>
+          ))}
+        </div>
+
+        <div className="rounded-xl bg-black/30 border border-white/5 p-4 space-y-3">
+          <div className="text-sm font-medium text-white/90">{plat.emoji} Installer sur {plat.label}</div>
+          <ol className="text-sm text-white/70 space-y-1.5 list-decimal list-inside">
+            {plat.steps.map((s, i) => <li key={i}>{s}</li>)}
+          </ol>
+          {plat.link && (
+            <a href={plat.link.url} target="_blank" rel="noreferrer" className="text-xs text-cyan-300 hover:underline inline-flex items-center gap-1">
+              <ExternalLink className="size-3" /> {plat.link.label}
+            </a>
+          )}
+        </div>
+
+        <div className="mt-4">
+          <p className="text-xs text-white/50 mb-2">Code à copier :</p>
+          <pre className="bg-black/40 p-3 rounded-xl text-xs overflow-x-auto text-cyan-300 border border-white/5 whitespace-pre-wrap break-all">{snippet}</pre>
+          <button onClick={copy} className="btn-neon mt-3"><Copy className="size-4" /> Copier le code</button>
+        </div>
       </GlassCard>
+
+      {/* Diagnostic */}
+      <GlassCard>
+        <h3 className="font-semibold mb-2 flex items-center gap-2"><CheckCircle2 className="size-4 text-emerald-300" /> Diagnostic d'installation</h3>
+        <p className="text-sm text-white/60 mb-3">Vérifiez que Rachida est bien active sur votre site.</p>
+        <div className="flex gap-2 flex-wrap">
+          <input
+            type="url"
+            placeholder="https://monsite.com"
+            value={siteUrl}
+            onChange={(e) => setSiteUrl(e.target.value)}
+            className="input-neon flex-1 min-w-[200px]"
+          />
+          <button onClick={doCheck} disabled={checking} className="btn-neon disabled:opacity-50">
+            {checking ? <><Loader2 className="size-4 animate-spin" /> Vérification…</> : <>Vérifier</>}
+          </button>
+        </div>
+        {checkResult && (
+          <div className={`mt-3 p-3 rounded-xl text-sm flex items-start gap-2 ${
+            checkResult.ok ? "bg-emerald-500/10 border border-emerald-400/30 text-emerald-200"
+                            : "bg-amber-500/10 border border-amber-400/30 text-amber-100"
+          }`}>
+            {checkResult.ok ? <CheckCircle2 className="size-5 shrink-0 mt-0.5" /> : <XCircle className="size-5 shrink-0 mt-0.5" />}
+            <div>
+              <div className="font-medium">{checkResult.ok ? checkResult.message : checkResult.reason}</div>
+              {!checkResult.ok && <div className="text-xs opacity-80 mt-1">Choisissez votre plateforme ci-dessus, ou demandez à votre technicien (section suivante).</div>}
+            </div>
+          </div>
+        )}
+      </GlassCard>
+
+      {/* Inviter le webmaster */}
+      <GlassCard>
+        <h3 className="font-semibold mb-2 flex items-center gap-2"><Mail className="size-4 text-violet-300" /> Inviter mon webmaster</h3>
+        <p className="text-sm text-white/60 mb-3">Pas envie de toucher au code ? Envoyez les instructions à la personne qui s'occupe de votre site.</p>
+        <div className="flex gap-2 flex-wrap">
+          <input
+            type="email"
+            placeholder="technicien@exemple.com"
+            value={techEmail}
+            onChange={(e) => setTechEmail(e.target.value)}
+            className="input-neon flex-1 min-w-[200px]"
+          />
+          <button onClick={inviteWebmaster} className="btn-neon"><Mail className="size-4" /> Envoyer les instructions</button>
+        </div>
+        <p className="text-xs text-white/40 mt-2">Un mail prêt à envoyer s'ouvrira avec le code et les étapes claires.</p>
+      </GlassCard>
+
+      {/* Pas de site */}
+      <GlassCard>
+        <h3 className="font-semibold mb-2 flex items-center gap-2"><Sparkles className="size-4 text-pink-300" /> Pas de site web ?</h3>
+        <p className="text-sm text-white/60 mb-3">
+          Votre boutique en ligne offerte est déjà prête, avec Rachida intégrée. Partagez simplement le lien :
+        </p>
+        <div className="flex gap-2 flex-wrap items-center">
+          <code className="flex-1 min-w-[200px] bg-black/40 p-2.5 rounded-lg text-xs text-cyan-300 border border-white/5 break-all">
+            {origin}/shop/{shop.slug}
+          </code>
+          <button
+            onClick={() => { navigator.clipboard.writeText(`${origin}/shop/${shop.slug}`); toast.success("Lien copié !"); }}
+            className="btn-ghost"
+          ><Copy className="size-4" /> Copier</button>
+          <Link to="/shop/$slug" params={{ slug: shop.slug }} target="_blank" className="btn-neon">
+            <ExternalLink className="size-4" /> Ouvrir
+          </Link>
+        </div>
+      </GlassCard>
+
       <GlassCard>
         <h3 className="font-semibold mb-2">Capacités du widget</h3>
         <ul className="text-sm text-white/70 space-y-1.5">
@@ -710,6 +927,7 @@ function IntegrationTab({ shop }: { shop: Shop }) {
           <li>💜 Halo coloré selon l'émotion détectée</li>
           <li>🔥 Score lead temps réel</li>
           <li>💬 Bouton transfert WhatsApp humain</li>
+          <li>🛡️ Chargement async — n'affecte jamais la vitesse de votre site</li>
         </ul>
       </GlassCard>
     </div>
