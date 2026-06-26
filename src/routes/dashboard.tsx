@@ -188,6 +188,7 @@ function Dashboard() {
         </main>
       </div>
       <Style />
+      <RachidaWidget shop={shop.slug} />
     </div>
   );
 }
