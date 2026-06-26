@@ -61,6 +61,7 @@ function Landing() {
       <NoCodeInstallSection />
       <FinalCta />
       <Footer />
+      <RachidaWidget shop="demo" />
     </div>
   );
 }
