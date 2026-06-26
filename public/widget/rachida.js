@@ -348,6 +348,10 @@
   }
 
   // Expose API for site integration
+  window.RachidaOpen = function (msg) {
+    state.open = true; render();
+    if (msg) setTimeout(function () { send(msg); }, 200);
+  };
   window.RachidaAddToCart = function (product) {
     var existing = state.cart.find(function (i) { return i.name === product.name; });
     if (existing) existing.qty = (existing.qty || 1) + 1;
@@ -356,18 +360,28 @@
     if (state.open) render();
   };
 
-  // Load config
+  // Default config so the bubble appears immediately, even before the API responds
+  state.config = {
+    rachida_name: 'Rachida',
+    greeting: 'Salut 👋 Je suis Rachida, ton assistante. Comment puis-je t\'aider ?',
+    color: '#7c5cfc',
+    currency: 'FCFA',
+    whatsapp: null,
+  };
+  render();
+
+  // Load real config (override defaults if found)
   fetch(baseUrl + '/api/public/shop-config?shop=' + encodeURIComponent(shopSlug))
-    .then(function (r) { return r.json(); })
+    .then(function (r) { return r.ok ? r.json() : null; })
     .then(function (data) {
       if (data && data.shop) {
-        state.config = data.shop;
+        state.config = Object.assign({}, state.config, data.shop);
         render();
       } else {
-        console.warn('[Rachida] boutique introuvable:', shopSlug);
+        console.warn('[Rachida] boutique "' + shopSlug + '" introuvable — mode démo activé.');
       }
     })
-    .catch(function (e) { console.error('[Rachida] config error', e); });
+    .catch(function (e) { console.warn('[Rachida] config indisponible, mode démo', e); });
   } catch (e) {
     console.error('[Rachida] widget failed safely:', e);
   }

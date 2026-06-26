@@ -20,6 +20,7 @@ import { ParticleSphere } from "@/components/landing/ParticleSphere";
 import { ChatDemo } from "@/components/landing/ChatDemo";
 import { SmoothScroll } from "@/components/landing/SmoothScroll";
 import { Counter } from "@/components/landing/Counter";
+import { RachidaWidget } from "@/components/RachidaWidget";
 import rachidaAvatar from "@/assets/rachida-avatar.png";
 import rachidaLogo from "@/assets/rachida-logo.png";
 
@@ -60,6 +61,7 @@ function Landing() {
       <NoCodeInstallSection />
       <FinalCta />
       <Footer />
+      <RachidaWidget shop="demo" />
     </div>
   );
 }
