@@ -2,6 +2,7 @@
    Usage : <script src="https://votredomaine/widget/rachida.js" data-shop="SLUG"></script>
 */
 (function () {
+  try {
   var script = document.currentScript;
   var shopSlug = script && script.getAttribute('data-shop');
   if (!shopSlug) { console.warn('[Rachida] data-shop manquant'); return; }
@@ -367,4 +368,7 @@
       }
     })
     .catch(function (e) { console.error('[Rachida] config error', e); });
+  } catch (e) {
+    console.error('[Rachida] widget failed safely:', e);
+  }
 })();
