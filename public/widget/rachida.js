@@ -348,6 +348,10 @@
   }
 
   // Expose API for site integration
+  window.RachidaOpen = function (msg) {
+    state.open = true; render();
+    if (msg) setTimeout(function () { send(msg); }, 200);
+  };
   window.RachidaAddToCart = function (product) {
     var existing = state.cart.find(function (i) { return i.name === product.name; });
     if (existing) existing.qty = (existing.qty || 1) + 1;
