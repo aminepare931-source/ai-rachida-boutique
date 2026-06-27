@@ -426,7 +426,7 @@
       if (data && data.shop) {
         state.config = Object.assign({}, state.config, data.shop);
         state.config.greeting = modeGreeting();
-        if (state.config.avatar_url) avatarUrl = state.config.avatar_url;
+        if (state.config.avatar_url) avatarUrl = String(state.config.avatar_url).charAt(0) === '/' ? baseUrl + state.config.avatar_url : state.config.avatar_url;
         render();
       } else {
         console.warn('[Rachida] boutique "' + shopSlug + '" introuvable — mode démo activé.');
