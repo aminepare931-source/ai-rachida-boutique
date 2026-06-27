@@ -28,11 +28,13 @@ export const Route = createFileRoute("/api/public/rachida-vision")({
         if (!key) return new Response("missing key", { status: 500, headers: corsHeaders });
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-        const { data: shop } = await supabaseAdmin
+        const { data: shops } = await supabaseAdmin
           .from("shops")
           .select("id, currency, name")
           .eq("slug", body.shopSlug)
-          .maybeSingle();
+          .order("created_at", { ascending: false })
+          .limit(1);
+        const shop = shops?.[0];
         if (!shop) return new Response("shop not found", { status: 404, headers: corsHeaders });
 
         const intent = body.intent ?? "auto";
