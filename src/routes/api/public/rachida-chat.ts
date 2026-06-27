@@ -183,7 +183,21 @@ export const Route = createFileRoute("/api/public/rachida-chat")({
           .eq("slug", body.shopSlug)
           .order("created_at", { ascending: false })
           .limit(1);
-        const shop = shops?.[0];
+        const shop = shops?.[0] ?? (mode === "platform" ? {
+          id: "platform",
+          slug: "platform",
+          name: "Rachida AI",
+          owner_id: "",
+          color: "#7c5cfc",
+          currency: "FCFA",
+          greeting: "Bonjour, je suis Rachida.",
+          max_remise: 0,
+          rachida_name: "Rachida",
+          system_prompt_extra: null,
+          whatsapp: null,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        } : null);
         if (!shop) return new Response("shop not found", { status: 404, headers: corsHeaders });
 
         if (mode === "admin") {
