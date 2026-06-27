@@ -764,6 +764,7 @@ const PLATFORMS: Record<string, { label: string; emoji: string; steps: string[];
 function IntegrationTab({ shop }: { shop: Shop }) {
   const origin = typeof window !== "undefined" ? window.location.origin : "";
   const snippet = `<script src="${origin}/widget/rachida.js" data-shop="${shop.slug}" async defer onerror="console.warn('Rachida widget indisponible')"></script>`;
+  const safeSnippet = `<script>(function(){try{var s=document.createElement('script');s.src='${origin}/widget/rachida.js';s.async=true;s.defer=true;s.setAttribute('data-shop','${shop.slug}');s.onerror=function(){console.warn('Rachida widget indisponible')};document.body.appendChild(s)}catch(e){console.warn('Rachida non chargée',e)}})();</script>`;
   const [platform, setPlatform] = useState<string>("wordpress");
   const plat = PLATFORMS[platform];
 
@@ -857,7 +858,11 @@ Merci !`
         <div className="mt-4">
           <p className="text-xs text-white/50 mb-2">Code à copier :</p>
           <pre className="bg-black/40 p-3 rounded-xl text-xs overflow-x-auto text-cyan-300 border border-white/5 whitespace-pre-wrap break-all">{snippet}</pre>
-          <button onClick={copy} className="btn-neon mt-3"><Copy className="size-4" /> Copier le code</button>
+          <button onClick={copy} className="btn-neon mt-3"><Copy className="size-4" /> Copier le code simple</button>
+          <details className="mt-3 text-xs text-white/60">
+            <summary className="cursor-pointer text-cyan-200">Version ultra-sécurisée si votre site bloque les scripts</summary>
+            <pre className="mt-2 bg-black/40 p-3 rounded-xl overflow-x-auto text-cyan-300 border border-white/5 whitespace-pre-wrap break-all">{safeSnippet}</pre>
+          </details>
         </div>
       </GlassCard>
 
