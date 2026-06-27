@@ -10,6 +10,7 @@ const corsHeaders = {
 
 type ChatBody = {
   shopSlug: string;
+  mode?: "storefront" | "platform" | "admin";
   conversationId?: string;
   clientName?: string;
   clientContact?: string;
@@ -84,6 +85,76 @@ async function checkRateLimit(ip: string, endpoint: string): Promise<boolean> {
     await supabaseAdmin.from("rate_limits").insert({ ip, endpoint, window_start: windowStart, count: 1 });
   }
   return true;
+}
+
+function money(n: number | null | undefined, currency = "FCFA") {
+  return `${Math.round(n ?? 0).toLocaleString("fr-FR")} ${currency}`;
+}
+
+async function getAdminContext(supabaseAdmin: Awaited<typeof import("@/integrations/supabase/client.server")>["supabaseAdmin"], shop: { id: string; currency: string }) {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const todayIso = today.toISOString();
+
+  const [convsToday, convsTotal, ordersToday, ordersTotal, hotLeads, products, latestConvs, views] = await Promise.all([
+    supabaseAdmin.from("conversations").select("id", { count: "exact", head: true }).eq("shop_id", shop.id).gte("created_at", todayIso),
+    supabaseAdmin.from("conversations").select("id", { count: "exact", head: true }).eq("shop_id", shop.id),
+    supabaseAdmin.from("orders").select("id,total,status,client_name,client_contact,created_at").eq("shop_id", shop.id).gte("created_at", todayIso).order("created_at", { ascending: false }),
+    supabaseAdmin.from("orders").select("id,total,status,client_name,client_contact,created_at").eq("shop_id", shop.id).order("created_at", { ascending: false }).limit(80),
+    supabaseAdmin.from("lead_scores").select("id", { count: "exact", head: true }).eq("shop_id", shop.id).gte("score", 7),
+    supabaseAdmin.from("products").select("id,name,price,stock,category,description,is_active").eq("shop_id", shop.id).order("created_at", { ascending: false }).limit(30),
+    supabaseAdmin.from("conversations").select("id,client_name,client_contact,emotion,created_at").eq("shop_id", shop.id).order("created_at", { ascending: false }).limit(8),
+    supabaseAdmin.from("product_views").select("product_id, products(name)").eq("shop_id", shop.id).limit(120),
+  ]);
+
+  const todayRevenue = (ordersToday.data ?? []).reduce((s, o) => s + Number(o.total ?? 0), 0);
+  const totalRevenue = (ordersTotal.data ?? []).reduce((s, o) => s + Number(o.total ?? 0), 0);
+  const productRows = products.data ?? [];
+  const lowStock = productRows.filter((p) => Number(p.stock ?? 0) <= 3 && p.is_active).slice(0, 8);
+  const viewCounts: Record<string, number> = {};
+  type ViewRow = { products: { name: string } | { name: string }[] | null };
+  ((views.data ?? []) as ViewRow[]).forEach((v) => {
+    const prod = Array.isArray(v.products) ? v.products[0] : v.products;
+    if (prod?.name) viewCounts[prod.name] = (viewCounts[prod.name] ?? 0) + 1;
+  });
+  const topViewed = Object.entries(viewCounts).sort((a, b) => b[1] - a[1]).slice(0, 5);
+
+  return `DONNÉES BUSINESS DISPONIBLES POUR LE DASHBOARD :
+- Chiffre d'affaires aujourd'hui : ${money(todayRevenue, shop.currency)}
+- Commandes aujourd'hui : ${ordersToday.data?.length ?? 0}
+- Conversations aujourd'hui : ${convsToday.count ?? 0}
+- Chiffre d'affaires total connu : ${money(totalRevenue, shop.currency)}
+- Commandes totales connues : ${ordersTotal.data?.length ?? 0}
+- Conversations totales : ${convsTotal.count ?? 0}
+- Leads chauds (score >= 7) : ${hotLeads.count ?? 0}
+- Produits au catalogue : ${productRows.length}
+- Produits stock bas : ${lowStock.map((p) => `${p.name} (${p.stock})`).join(", ") || "aucun dans les 30 derniers produits"}
+- Produits les plus consultés : ${topViewed.map(([name, n]) => `${name} (${n} vues)`).join(", ") || "pas encore de vues"}
+- Dernières commandes : ${(ordersToday.data ?? []).slice(0, 5).map((o) => `${o.client_name ?? "client"} · ${money(Number(o.total), shop.currency)} · ${o.status}`).join(" | ") || "aucune aujourd'hui"}
+- Dernières conversations : ${(latestConvs.data ?? []).map((c) => `${c.client_name ?? "Anonyme"} · ${c.emotion ?? "neutre"}`).join(" | ") || "aucune"}
+- Extraits catalogue utiles : ${productRows.slice(0, 12).map((p) => `${p.name} (${money(Number(p.price), shop.currency)}, stock ${p.stock})`).join(" | ") || "catalogue vide"}`;
+}
+
+function platformPrompt(emotion: string) {
+  return `Tu es Rachida, l'assistante officielle de la plateforme Rachida AI, pas la vendeuse de la Boutique Démo.
+Tu réponds aux visiteurs entrepreneurs qui veulent comprendre le SaaS.
+Interdiction de parler du catalogue démo, sac, boubou, karité, etc sauf si on te demande explicitement une démonstration boutique.
+Ne commence jamais par "Yaa son barka". Utilise un français clair, professionnel, naturel.
+Émotion détectée : ${emotion}. Adapte ton ton.
+
+CE QUE TU SAIS SUR RACHIDA AI :
+- Rachida AI est une vendeuse IA pour entreprises, boutiques et entrepreneurs du Burkina Faso et d'Afrique francophone.
+- Elle s'intègre sur un site, une page boutique offerte, WhatsApp ou des plateformes no-code.
+- Elle apprend le catalogue, prix, stock, FAQ, règles de remise, ton de marque et contacts.
+- Elle conseille les clients, recommande les produits, négocie dans les limites autorisées, suit les leads, détecte l'émotion, analyse les images/preuves Mobile Money et aide à augmenter les ventes.
+- Le dashboard permet de voir conversations, leads chauds, commandes, chiffre d'affaires, catalogue, FAQ, diagnostic d'installation et page boutique offerte.
+- Pour les non-développeurs : lien boutique offert, invitation webmaster, guide WordPress/Wix/Shopify/Webflow/Squarespace, diagnostic automatique.
+
+RÈGLES :
+- Réponse courte et utile, 2 à 5 phrases.
+- Si on demande "comment ça marche", explique côté commerçant, côté client, et installation sans code.
+- Si on demande le prix, dis que la beta peut être gratuite/à valider selon l'offre, sans inventer un tarif fixe.
+- Ne dis pas que tu ne peux pas aider si la réponse est dans ces informations.`;
 }
 
 export const Route = createFileRoute("/api/public/rachida-chat")({
