@@ -184,7 +184,7 @@ export const Route = createFileRoute("/api/public/rachida-chat")({
           .order("created_at", { ascending: false })
           .limit(1);
         const shop = shops?.[0] ?? (mode === "platform" ? {
-          id: "platform",
+          id: "00000000-0000-0000-0000-000000000000",
           slug: "platform",
           name: "Rachida AI",
           owner_id: "",
