@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
 import { ShoppingBag, Star, Truck, ShieldCheck, ArrowLeft } from "lucide-react";
 import rachidaAvatar from "@/assets/rachida-avatar.png";
 import rachidaLogo from "@/assets/rachida-logo.png";
@@ -15,15 +16,51 @@ export const Route = createFileRoute("/shop/$slug")({
 });
 
 const DEMO_PRODUCTS = [
-  { name: "Sac en cuir cousu main", price: "25 000 FCFA", img: "https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=600" },
-  { name: "Boubou wax édition limitée", price: "32 000 FCFA", img: "https://images.unsplash.com/photo-1539109136881-3be0616acf4b?w=600" },
-  { name: "Beurre de karité bio 250g", price: "4 500 FCFA", img: "https://images.unsplash.com/photo-1556228720-195a672e8a03?w=600" },
-  { name: "Bijoux dorés artisanaux", price: "12 000 FCFA", img: "https://images.unsplash.com/photo-1611591437281-460bfbe1220a?w=600" },
+  { name: "Sac en cuir cousu main", price: 25000, image_url: "https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=600", description: "Finition Ouagadougou" },
+  { name: "Boubou wax édition limitée", price: 32000, image_url: "https://images.unsplash.com/photo-1539109136881-3be0616acf4b?w=600", description: "Édition limitée" },
+  { name: "Beurre de karité bio 250g", price: 4500, image_url: "https://images.unsplash.com/photo-1556228720-195a672e8a03?w=600", description: "Soin naturel" },
+  { name: "Bijoux dorés artisanaux", price: 12000, image_url: "https://images.unsplash.com/photo-1611591437281-460bfbe1220a?w=600", description: "Fabrication artisanale" },
 ];
+
+type PublicProduct = {
+  id?: string;
+  name: string;
+  price: number;
+  image_url?: string | null;
+  description?: string | null;
+  category?: string | null;
+  stock?: number | null;
+};
+
+type PublicShop = { name: string; currency: string; whatsapp?: string | null; color?: string | null };
 
 function ShopPage() {
   const { slug } = Route.useParams();
-  const shopName = slug.replace(/[-_]/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase());
+  const fallbackName = slug.replace(/[-_]/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase());
+  const [shop, setShop] = useState<PublicShop | null>(null);
+  const [products, setProducts] = useState<PublicProduct[]>(slug === "demo" ? DEMO_PRODUCTS : []);
+  const shopName = shop?.name ?? fallbackName;
+  const currency = shop?.currency ?? "FCFA";
+
+  useEffect(() => {
+    let alive = true;
+    Promise.all([
+      fetch(`/api/public/shop-config?shop=${encodeURIComponent(slug)}`).then((r) => r.ok ? r.json() : null).catch(() => null),
+      fetch("/api/public/rachida-search", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ shopSlug: slug, query: "", limit: 80 }),
+      }).then((r) => r.ok ? r.json() : null).catch(() => null),
+    ]).then(([cfg, search]) => {
+      if (!alive) return;
+      if (cfg?.shop) setShop(cfg.shop);
+      if (search?.products?.length) setProducts(search.products);
+      else if (slug !== "demo") setProducts([]);
+    });
+    return () => { alive = false; };
+  }, [slug]);
+
+  const openCart = () => (window as any).RachidaOpen?.("Je veux voir mon panier et finaliser ma commande.");
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -37,7 +74,7 @@ function ShopPage() {
             <img src={rachidaLogo} alt="" className="size-7" />
             <span>{shopName}</span>
           </div>
-          <button className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg glass">
+          <button onClick={openCart} className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg glass cursor-pointer">
             <ShoppingBag className="size-3.5" /> Panier
           </button>
         </div>
@@ -55,7 +92,7 @@ function ShopPage() {
               Bienvenue chez <span className="text-gradient-neon">{shopName}</span>
             </h1>
             <p className="mt-4 text-muted-foreground max-w-md">
-              Discutez avec Rachida en bas à droite — elle vous conseille, négocie et finalise votre commande en français, mooré ou dioula.
+              Parcourez le catalogue et discutez avec Rachida en bas à droite — elle conseille, négocie et finalise la commande.
             </p>
             <div className="mt-6 flex flex-wrap gap-4 text-xs text-muted-foreground">
               <span className="inline-flex items-center gap-1.5"><Truck className="size-3.5 text-[--color-neon-cyan]" /> Livraison Ouagadougou</span>
@@ -73,11 +110,11 @@ function ShopPage() {
       <section className="max-w-6xl mx-auto px-6 py-16">
         <h2 className="font-display font-bold text-2xl mb-6">Notre catalogue</h2>
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
-          {DEMO_PRODUCTS.map((p) => (
-            <article key={p.name} className="glass rounded-2xl overflow-hidden group">
+          {products.map((p) => (
+            <article key={p.id ?? p.name} className="glass rounded-2xl overflow-hidden group">
               <div className="aspect-square overflow-hidden bg-white/5">
                 <img
-                  src={p.img}
+                  src={p.image_url || "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=600"}
                   alt={p.name}
                   loading="lazy"
                   className="w-full h-full object-cover group-hover:scale-105 transition duration-700"
@@ -85,12 +122,12 @@ function ShopPage() {
               </div>
               <div className="p-4">
                 <h3 className="font-display font-medium text-sm">{p.name}</h3>
+                {p.description && <p className="mt-1 text-xs text-muted-foreground line-clamp-2">{p.description}</p>}
                 <div className="mt-2 flex items-center justify-between">
-                  <span className="text-sm text-[--color-neon-cyan] font-semibold">{p.price}</span>
+                  <span className="text-sm text-[--color-neon-cyan] font-semibold">{Number(p.price).toLocaleString("fr-FR")} {currency}</span>
                   <button
                     onClick={() => {
-                      const priceNum = parseInt(p.price.replace(/\D/g, ""), 10) || 0;
-                      (window as any).RachidaAddToCart?.({ name: p.name, price: priceNum });
+                      (window as any).RachidaAddToCart?.({ name: p.name, price: Number(p.price) || 0 });
                       (window as any).RachidaOpen?.(`Je veux ${p.name}, c'est possible ?`);
                     }}
                     className="text-xs px-2.5 py-1 rounded-lg bg-primary/30 hover:bg-primary/40 transition cursor-pointer"
@@ -101,6 +138,15 @@ function ShopPage() {
               </div>
             </article>
           ))}
+          {products.length === 0 && (
+            <div className="sm:col-span-2 lg:col-span-4 glass rounded-3xl p-10 text-center">
+              <h3 className="font-display text-xl font-semibold">Catalogue en préparation</h3>
+              <p className="mt-2 text-sm text-muted-foreground">Cette boutique n'a pas encore ajouté de produits visibles. Discutez avec Rachida pour contacter le vendeur.</p>
+              <button onClick={() => (window as any).RachidaOpen?.("Bonjour, je veux avoir plus d'informations sur cette boutique.")} className="mt-5 px-5 py-3 rounded-2xl bg-primary text-primary-foreground font-semibold">
+                Parler à Rachida
+              </button>
+            </div>
+          )}
         </div>
       </section>
 

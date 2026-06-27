@@ -305,7 +305,7 @@ function HowItWorksSection() {
   const steps = [
     { n: "01", t: "Crée ta boutique", d: "Email + nom. 30 secondes." },
     { n: "02", t: "Ajoute ton catalogue", d: "CSV, manuel ou import en lot. Rachida l'apprend automatiquement." },
-    { n: "03", t: "Colle le script", d: "Une ligne sur ton site. Rachida est en ligne 24h/24." },
+    { n: "03", t: "Active sans coder", d: "Partage ta boutique offerte, invite ton webmaster, ou suis le guide Wix/Shopify/WordPress avec diagnostic automatique." },
   ];
   return (
     <section id="comment" className="relative py-32 px-6">
