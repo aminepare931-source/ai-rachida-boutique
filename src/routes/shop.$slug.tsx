@@ -1,8 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect } from "react";
 import { ShoppingBag, Star, Truck, ShieldCheck, ArrowLeft } from "lucide-react";
 import rachidaAvatar from "@/assets/rachida-avatar.png";
 import rachidaLogo from "@/assets/rachida-logo.png";
+import { RachidaWidget } from "@/components/RachidaWidget";
 
 export const Route = createFileRoute("/shop/$slug")({
   head: ({ params }) => ({
@@ -24,19 +24,6 @@ const DEMO_PRODUCTS = [
 function ShopPage() {
   const { slug } = Route.useParams();
   const shopName = slug.replace(/[-_]/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase());
-
-  // Inject the Rachida widget script
-  useEffect(() => {
-    const s = document.createElement("script");
-    s.src = "/widget/rachida.js";
-    s.dataset.shop = slug;
-    s.defer = true;
-    document.body.appendChild(s);
-    return () => {
-      s.remove();
-      document.getElementById("rachida-widget-root")?.remove();
-    };
-  }, [slug]);
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -122,6 +109,7 @@ function ShopPage() {
         <Link to="/" className="text-gradient-neon font-semibold">Rachida AI</Link>
         {" "}— créez la vôtre gratuitement.
       </footer>
+      <RachidaWidget shop={slug} mode="storefront" />
     </div>
   );
 }

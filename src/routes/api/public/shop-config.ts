@@ -17,15 +17,17 @@ export const Route = createFileRoute("/api/public/shop-config")({
           return Response.json({ error: "missing shop" }, { status: 400, headers: corsHeaders });
         }
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-        const { data: shop, error } = await supabaseAdmin
+        const { data: shops, error } = await supabaseAdmin
           .from("shops")
           .select("id, slug, name, whatsapp, color, greeting, max_remise, rachida_name, currency")
           .eq("slug", slug)
-          .maybeSingle();
+          .order("created_at", { ascending: false })
+          .limit(1);
+        const shop = shops?.[0];
         if (error || !shop) {
           return Response.json({ error: "shop not found" }, { status: 404, headers: corsHeaders });
         }
-        return Response.json({ shop }, { headers: corsHeaders });
+        return Response.json({ shop: { ...shop, avatar_url: "/rachida-avatar.png" } }, { headers: corsHeaders });
       },
     },
   },

@@ -69,16 +69,22 @@ function Dashboard() {
   const loadShop = useCallback(async () => {
     if (!session?.user) return;
     setLoading(true);
-    const { data, error } = await supabase.from("shops").select("*").eq("owner_id", session.user.id).maybeSingle();
+    const { data, error } = await supabase
+      .from("shops")
+      .select("*")
+      .eq("owner_id", session.user.id)
+      .order("created_at", { ascending: false })
+      .limit(1);
     if (error) toast.error(error.message);
-    if (data) setShop(data as Shop);
+    const existing = data?.[0] as Shop | undefined;
+    if (existing) setShop(existing);
     else {
       const slug = "shop-" + Math.random().toString(36).slice(2, 8);
       const { data: created, error: e2 } = await supabase
         .from("shops").insert({ owner_id: session.user.id, slug, name: "Ma Boutique" })
-        .select().single();
+        .select().limit(1);
       if (e2) toast.error(e2.message);
-      if (created) setShop(created as Shop);
+      if (created?.[0]) setShop(created[0] as Shop);
     }
     setLoading(false);
   }, [session]);
@@ -188,7 +194,7 @@ function Dashboard() {
         </main>
       </div>
       <Style />
-      <RachidaWidget shop={shop.slug} />
+      <RachidaWidget shop={shop.slug} mode="admin" />
     </div>
   );
 }
@@ -524,10 +530,10 @@ function ShopTab({ shop, onUpdated }: { shop: Shop; onUpdated: (s: Shop) => void
       name: form.name, whatsapp: form.whatsapp, color: form.color, greeting: form.greeting,
       max_remise: form.max_remise, rachida_name: form.rachida_name, currency: form.currency,
       system_prompt_extra: form.system_prompt_extra, slug: form.slug,
-    }).eq("id", shop.id).select().single();
+    }).eq("id", shop.id).select().limit(1);
     setSaving(false);
     if (error) return toast.error(error.message);
-    if (data) { onUpdated(data as Shop); toast.success("Boutique mise à jour"); }
+    if (data?.[0]) { onUpdated(data[0] as Shop); toast.success("Boutique mise à jour"); }
   }
   return (
     <div className="space-y-6">
