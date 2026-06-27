@@ -257,7 +257,7 @@ export const Route = createFileRoute("/api/public/rachida-chat")({
             .update({ emotion, client_name: body.clientName, client_contact: body.clientContact })
             .eq("id", conversationId);
         }
-        if (conversationId && lastUser) {
+        if (isStorefront && conversationId && lastUser) {
           await supabaseAdmin.from("messages").insert({
             conversation_id: conversationId,
             role: "user",
@@ -392,7 +392,7 @@ ${shop.system_prompt_extra ?? ""}`;
             ...body.messages.map((m) => ({ role: m.role, content: m.content })),
           ] as ModelMessage[],
           onFinish: async ({ text }) => {
-            if (conversationId && text) {
+            if (isStorefront && conversationId && text) {
               await supabaseAdmin.from("messages").insert({
                 conversation_id: conversationId,
                 role: "assistant",

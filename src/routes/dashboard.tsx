@@ -75,7 +75,11 @@ function Dashboard() {
       .eq("owner_id", session.user.id)
       .order("created_at", { ascending: false })
       .limit(1);
-    if (error) toast.error(error.message);
+    if (error) {
+      toast.error(error.message);
+      setLoading(false);
+      return;
+    }
     const existing = data?.[0] as Shop | undefined;
     if (existing) setShop(existing);
     else {
