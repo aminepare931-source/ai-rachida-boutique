@@ -7,6 +7,8 @@
   var shopSlug = script && script.getAttribute('data-shop');
   if (!shopSlug) { console.warn('[Rachida] data-shop manquant'); return; }
   var baseUrl = new URL(script.src).origin;
+  var mode = (script && script.getAttribute('data-mode')) || (window.RachidaWidgetConfig && window.RachidaWidgetConfig.mode) || 'storefront';
+  var avatarUrl = (script && script.getAttribute('data-avatar')) || (window.RachidaWidgetConfig && window.RachidaWidgetConfig.avatarUrl) || (baseUrl + '/rachida-avatar.png');
   var CART_KEY = 'rachida_cart_' + shopSlug;
   var CONTACT_KEY = 'rachida_contact_' + shopSlug;
 
@@ -53,16 +55,40 @@
   function saveCart() { try { localStorage.setItem(CART_KEY, JSON.stringify(state.cart)); } catch (e) {} }
   function saveContact() { try { localStorage.setItem(CONTACT_KEY, JSON.stringify({ name: state.clientName, contact: state.clientContact })); } catch (e) {} }
 
+  function modeGreeting() {
+    if (mode === 'platform') return 'Bonjour, je suis Rachida. Pose-moi une question sur Rachida AI, l’installation, la boutique offerte ou les ventes.';
+    if (mode === 'admin') return 'Bonjour patron. Je peux analyser tes ventes, conversations, commandes, leads, catalogue et t’aider à créer des descriptions produit.';
+    return 'Salut 👋 Je suis Rachida, ton assistante de vente. Comment puis-je t’aider ?';
+  }
+
+  function cleanForSpeech(text) {
+    return String(text || '')
+      .replace(/```[\s\S]*?```/g, ' ')
+      .replace(/`([^`]+)`/g, '$1')
+      .replace(/\*\*([^*]+)\*\*/g, '$1')
+      .replace(/[*_#>~]/g, ' ')
+      .replace(/^\s*[-•]\s+/gm, '. ')
+      .replace(/[\u{1F300}-\u{1FAFF}]/gu, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
   function speak(text) {
     if (!state.audioOn || !('speechSynthesis' in window)) return;
     try {
-      var u = new SpeechSynthesisUtterance(text);
+      var u = new SpeechSynthesisUtterance(cleanForSpeech(text));
       u.lang = 'fr-FR';
-      u.rate = 1.05;
+      u.rate = 0.94;
+      u.pitch = 1.02;
+      var voices = window.speechSynthesis.getVoices ? window.speechSynthesis.getVoices() : [];
+      var voice = voices.find(function (v) { return /fr[-_]/i.test(v.lang) && /female|audrey|amelie|thomas|google|microsoft/i.test(v.name); }) || voices.find(function (v) { return /fr[-_]/i.test(v.lang); });
+      if (voice) u.voice = voice;
       window.speechSynthesis.cancel();
       window.speechSynthesis.speak(u);
     } catch (e) {}
   }
+
+  if ('speechSynthesis' in window && window.speechSynthesis.getVoices) window.speechSynthesis.getVoices();
 
   function startListening() {
     var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -88,6 +114,9 @@
     var color = (state.config && state.config.color) || '#7c5cfc';
     var glow = EMOTION_COLORS[state.emotion] || color;
 
+    var bubbleContent = state.open
+      ? '×'
+      : el('img', { src: avatarUrl, alt: 'Rachida', style: { width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%', display: 'block' } });
     var bubble = el('button', {
       id: 'rachida-bubble',
       style: {
@@ -96,11 +125,11 @@
         background: 'linear-gradient(135deg,' + color + ',' + glow + ')',
         color: '#fff', border: 'none', cursor: 'pointer',
         boxShadow: '0 10px 40px ' + glow + '66, 0 0 0 4px rgba(255,255,255,.1) inset',
-        fontSize: '28px', zIndex: 999999,
+        fontSize: '32px', zIndex: 999999, overflow: 'hidden', padding: state.open ? '0 0 5px' : '3px',
         transition: 'all .3s ease', animation: state.open ? '' : 'rachida-pulse 2s ease-in-out infinite'
       },
       onclick: function () { state.open = !state.open; render(); }
-    }, [state.open ? '×' : '💬']);
+    }, [bubbleContent]);
 
     var root = el('div', { id: 'rachida-root' }, [bubble]);
 
@@ -119,8 +148,11 @@
       }, [state.audioOn ? '🔊' : '🔇']);
 
       var headerLeft = el('div', { style: { display: 'flex', alignItems: 'center', gap: '10px' } }, [
-        el('div', { style: { width: '10px', height: '10px', borderRadius: '50%', background: glow, boxShadow: '0 0 10px ' + glow } }),
-        el('div', { style: { fontWeight: 700 } }, [(state.config ? state.config.rachida_name : 'Chat') + (state.leadScore >= 7 ? ' · 🔥' : '')]),
+        el('img', { src: avatarUrl, alt: 'Rachida', style: { width: '34px', height: '34px', borderRadius: '50%', objectFit: 'cover', border: '1px solid rgba(255,255,255,.55)', boxShadow: '0 0 18px ' + glow } }),
+        el('div', {}, [
+          el('div', { style: { fontWeight: 800, lineHeight: 1.1 } }, [(state.config ? state.config.rachida_name : 'Rachida') + (state.leadScore >= 7 && mode === 'storefront' ? ' · 🔥' : '')]),
+          el('div', { style: { fontSize: '11px', opacity: .82 } }, [mode === 'admin' ? 'Assistante business' : mode === 'platform' ? 'Guide Rachida AI' : 'Vendeuse IA'])
+        ]),
       ]);
       var header = el('div', {
         style: {
@@ -144,7 +176,7 @@
       var input = el('input', {
         id: 'rachida-input', type: 'text',
         placeholder: state.listening ? '🎤 Écoute en cours...' : 'Écris ton message...',
-        style: { flex: 1, padding: '10px 14px', border: '1px solid #e5e7eb', borderRadius: '999px', outline: 'none', fontSize: '14px', background: '#fff' }
+        style: { flex: 1, minWidth: 0, padding: '10px 14px', border: '1px solid #e5e7eb', borderRadius: '999px', outline: 'none', fontSize: '14px', background: '#fff', color: '#111827', caretColor: color }
       });
       input.addEventListener('keydown', function (e) { if (e.key === 'Enter') send(input.value); });
 
@@ -175,7 +207,7 @@
       var panel = el('div', {
         style: {
           position: 'fixed', bottom: '96px', right: '20px',
-          width: '360px', height: '560px', maxHeight: 'calc(100vh - 120px)',
+          width: 'min(360px, calc(100vw - 32px))', height: '560px', maxHeight: 'calc(100vh - 120px)',
           background: '#fff',
           borderRadius: '24px',
           boxShadow: '0 20px 60px rgba(0,0,0,.25), 0 0 0 1px rgba(255,255,255,.5) inset',
@@ -190,7 +222,7 @@
     if (!document.getElementById('rachida-style')) {
       var st = document.createElement('style');
       st.id = 'rachida-style';
-      st.innerHTML = '@keyframes rachida-pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}@keyframes rachida-slidein{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}@keyframes rachida-dot{0%,80%,100%{opacity:.3}40%{opacity:1}}.rachida-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:currentColor;margin:0 2px;animation:rachida-dot 1.4s infinite}.rachida-dot:nth-child(2){animation-delay:.2s}.rachida-dot:nth-child(3){animation-delay:.4s}';
+      st.innerHTML = '@keyframes rachida-pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}@keyframes rachida-slidein{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}@keyframes rachida-dot{0%,80%,100%{opacity:.3}40%{opacity:1}}.rachida-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:currentColor;margin:0 2px;animation:rachida-dot 1.4s infinite}.rachida-dot:nth-child(2){animation-delay:.2s}.rachida-dot:nth-child(3){animation-delay:.4s}#rachida-input::placeholder{color:#9ca3af}@media(max-width:480px){#rachida-bubble{right:14px!important;bottom:14px!important}}';
       document.head.appendChild(st);
     }
 
@@ -201,17 +233,21 @@
 
   function bubbleMsg(role, text, color) {
     var isUser = role === 'user';
-    return el('div', {
+    var msg = el('div', {
       style: {
-        alignSelf: isUser ? 'flex-end' : 'flex-start',
         background: isUser ? color : '#fff',
         color: isUser ? '#fff' : '#1f2937',
         padding: '10px 14px',
         borderRadius: isUser ? '18px 18px 4px 18px' : '18px 18px 18px 4px',
-        maxWidth: '82%', fontSize: '14px', lineHeight: '1.5',
+        maxWidth: isUser ? '82%' : 'calc(82% - 32px)', fontSize: '14px', lineHeight: '1.5',
         boxShadow: '0 2px 8px rgba(0,0,0,.06)', whiteSpace: 'pre-wrap', wordBreak: 'break-word'
       }
     }, [text]);
+    if (isUser) return el('div', { style: { alignSelf: 'flex-end', display: 'flex', justifyContent: 'flex-end', width: '100%' } }, [msg]);
+    return el('div', { style: { alignSelf: 'flex-start', display: 'flex', gap: '7px', alignItems: 'flex-end', width: '100%' } }, [
+      el('img', { src: avatarUrl, alt: 'Rachida', style: { width: '28px', height: '28px', borderRadius: '50%', objectFit: 'cover', flexShrink: 0, border: '1px solid #e5e7eb' } }),
+      msg
+    ]);
   }
 
   function typingIndicator(name) {
@@ -303,20 +339,32 @@
 
     render();
 
-    fetch(baseUrl + '/api/public/rachida-chat', {
+    var headers = { 'Content-Type': 'application/json' };
+    var tokenPromise = mode === 'admin' && window.RachidaGetAuthToken ? window.RachidaGetAuthToken() : Promise.resolve(null);
+    tokenPromise.then(function (token) {
+      if (token) headers.Authorization = 'Bearer ' + token;
+      return fetch(baseUrl + '/api/public/rachida-chat', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: headers,
       body: JSON.stringify({
         shopSlug: shopSlug,
+        mode: mode,
         conversationId: state.conversationId,
         clientName: state.clientName,
         clientContact: state.clientContact,
         messages: state.messages,
       }),
+    });
     }).then(function (res) {
       if (res.status === 429) {
         state.loading = false;
         state.messages.push({ role: 'assistant', content: 'Trop de messages d\'un coup, attends quelques secondes.' });
+        render();
+        return;
+      }
+      if (!res.ok || !res.body) {
+        state.loading = false;
+        state.messages.push({ role: 'assistant', content: mode === 'admin' ? 'Je n’arrive pas à accéder aux données du dashboard pour le moment. Recharge la page puis réessaie.' : 'Désolée, je n’arrive pas à répondre pour le moment. Réessaie dans quelques secondes.' });
         render();
         return;
       }
@@ -363,10 +411,11 @@
   // Default config so the bubble appears immediately, even before the API responds
   state.config = {
     rachida_name: 'Rachida',
-    greeting: 'Salut 👋 Je suis Rachida, ton assistante. Comment puis-je t\'aider ?',
+    greeting: modeGreeting(),
     color: '#7c5cfc',
     currency: 'FCFA',
     whatsapp: null,
+    avatar_url: avatarUrl,
   };
   render();
 
@@ -376,6 +425,8 @@
     .then(function (data) {
       if (data && data.shop) {
         state.config = Object.assign({}, state.config, data.shop);
+        state.config.greeting = modeGreeting();
+        if (state.config.avatar_url) avatarUrl = state.config.avatar_url;
         render();
       } else {
         console.warn('[Rachida] boutique "' + shopSlug + '" introuvable — mode démo activé.');
