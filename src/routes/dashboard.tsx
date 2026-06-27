@@ -69,16 +69,26 @@ function Dashboard() {
   const loadShop = useCallback(async () => {
     if (!session?.user) return;
     setLoading(true);
-    const { data, error } = await supabase.from("shops").select("*").eq("owner_id", session.user.id).maybeSingle();
-    if (error) toast.error(error.message);
-    if (data) setShop(data as Shop);
+    const { data, error } = await supabase
+      .from("shops")
+      .select("*")
+      .eq("owner_id", session.user.id)
+      .order("created_at", { ascending: false })
+      .limit(1);
+    if (error) {
+      toast.error(error.message);
+      setLoading(false);
+      return;
+    }
+    const existing = data?.[0] as Shop | undefined;
+    if (existing) setShop(existing);
     else {
       const slug = "shop-" + Math.random().toString(36).slice(2, 8);
       const { data: created, error: e2 } = await supabase
         .from("shops").insert({ owner_id: session.user.id, slug, name: "Ma Boutique" })
-        .select().single();
+        .select().limit(1);
       if (e2) toast.error(e2.message);
-      if (created) setShop(created as Shop);
+      if (created?.[0]) setShop(created[0] as Shop);
     }
     setLoading(false);
   }, [session]);
@@ -188,7 +198,7 @@ function Dashboard() {
         </main>
       </div>
       <Style />
-      <RachidaWidget shop={shop.slug} />
+      <RachidaWidget shop={shop.slug} mode="admin" />
     </div>
   );
 }
@@ -524,10 +534,10 @@ function ShopTab({ shop, onUpdated }: { shop: Shop; onUpdated: (s: Shop) => void
       name: form.name, whatsapp: form.whatsapp, color: form.color, greeting: form.greeting,
       max_remise: form.max_remise, rachida_name: form.rachida_name, currency: form.currency,
       system_prompt_extra: form.system_prompt_extra, slug: form.slug,
-    }).eq("id", shop.id).select().single();
+    }).eq("id", shop.id).select().limit(1);
     setSaving(false);
     if (error) return toast.error(error.message);
-    if (data) { onUpdated(data as Shop); toast.success("Boutique mise à jour"); }
+    if (data?.[0]) { onUpdated(data[0] as Shop); toast.success("Boutique mise à jour"); }
   }
   return (
     <div className="space-y-6">
@@ -754,6 +764,7 @@ const PLATFORMS: Record<string, { label: string; emoji: string; steps: string[];
 function IntegrationTab({ shop }: { shop: Shop }) {
   const origin = typeof window !== "undefined" ? window.location.origin : "";
   const snippet = `<script src="${origin}/widget/rachida.js" data-shop="${shop.slug}" async defer onerror="console.warn('Rachida widget indisponible')"></script>`;
+  const safeSnippet = `<script>(function(){try{var s=document.createElement('script');s.src='${origin}/widget/rachida.js';s.async=true;s.defer=true;s.setAttribute('data-shop','${shop.slug}');s.onerror=function(){console.warn('Rachida widget indisponible')};document.body.appendChild(s)}catch(e){console.warn('Rachida non chargée',e)}})();</script>`;
   const [platform, setPlatform] = useState<string>("wordpress");
   const plat = PLATFORMS[platform];
 
@@ -847,7 +858,11 @@ Merci !`
         <div className="mt-4">
           <p className="text-xs text-white/50 mb-2">Code à copier :</p>
           <pre className="bg-black/40 p-3 rounded-xl text-xs overflow-x-auto text-cyan-300 border border-white/5 whitespace-pre-wrap break-all">{snippet}</pre>
-          <button onClick={copy} className="btn-neon mt-3"><Copy className="size-4" /> Copier le code</button>
+          <button onClick={copy} className="btn-neon mt-3"><Copy className="size-4" /> Copier le code simple</button>
+          <details className="mt-3 text-xs text-white/60">
+            <summary className="cursor-pointer text-cyan-200">Version ultra-sécurisée si votre site bloque les scripts</summary>
+            <pre className="mt-2 bg-black/40 p-3 rounded-xl overflow-x-auto text-cyan-300 border border-white/5 whitespace-pre-wrap break-all">{safeSnippet}</pre>
+          </details>
         </div>
       </GlassCard>
 

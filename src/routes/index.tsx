@@ -14,7 +14,7 @@ import {
   Check,
   Copy,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { ParticleSphere } from "@/components/landing/ParticleSphere";
 import { ChatDemo } from "@/components/landing/ChatDemo";
@@ -61,7 +61,7 @@ function Landing() {
       <NoCodeInstallSection />
       <FinalCta />
       <Footer />
-      <RachidaWidget shop="demo" />
+      <RachidaWidget shop="demo" mode="platform" />
     </div>
   );
 }
@@ -305,7 +305,7 @@ function HowItWorksSection() {
   const steps = [
     { n: "01", t: "Crée ta boutique", d: "Email + nom. 30 secondes." },
     { n: "02", t: "Ajoute ton catalogue", d: "CSV, manuel ou import en lot. Rachida l'apprend automatiquement." },
-    { n: "03", t: "Colle le script", d: "Une ligne sur ton site. Rachida est en ligne 24h/24." },
+    { n: "03", t: "Active sans coder", d: "Partage ta boutique offerte, invite ton webmaster, ou suis le guide Wix/Shopify/WordPress avec diagnostic automatique." },
   ];
   return (
     <section id="comment" className="relative py-32 px-6">
@@ -423,7 +423,8 @@ function FinalCta() {
 }
 
 function NoCodeInstallSection() {
-  const origin = typeof window !== "undefined" ? window.location.origin : "https://rachida.ai";
+  const [origin, setOrigin] = useState("https://votre-domaine.com");
+  useEffect(() => setOrigin(window.location.origin), []);
   const snippet = `<script src="${origin}/widget/rachida.js" data-shop="demo" defer></script>`;
   const waNumber = "22670000000"; // numéro démo Rachida
   const waText = encodeURIComponent("Bonjour Rachida, je veux activer mon assistante IA pour ma boutique 🙌");
@@ -452,7 +453,7 @@ function NoCodeInstallSection() {
           Vous ne savez pas coder ? <span className="text-gradient-neon">Aucun problème.</span>
         </h2>
         <p className="mt-4 text-muted-foreground">
-          3 façons d'installer Rachida en moins de 2 minutes — choisissez celle qui vous ressemble.
+          3 chemins simples : on installe pour vous, vous partagez une page boutique, ou votre plateforme l'ajoute en quelques clics.
         </p>
       </motion.div>
       <div className="mt-14 mx-auto max-w-6xl grid md:grid-cols-3 gap-5">
@@ -465,9 +466,9 @@ function NoCodeInstallSection() {
           className="glass rounded-3xl p-6 flex flex-col"
         >
           <div className="size-10 grid place-items-center rounded-xl bg-gradient-to-br from-[--color-neon-violet] to-[--color-neon-cyan] font-display font-bold">1</div>
-          <h3 className="mt-4 font-display font-semibold text-lg">Copier-coller (site web)</h3>
+          <h3 className="mt-4 font-display font-semibold text-lg">Installation guidée</h3>
           <p className="mt-2 text-sm text-muted-foreground flex-1">
-            Ajoutez cette ligne avant <code className="text-cyan-200">&lt;/body&gt;</code> de votre site Wix, Shopify, WordPress ou autre. Aucune compétence requise.
+            WordPress, Wix, Shopify ou autre : le tableau de bord donne les étapes exactes et vérifie automatiquement si Rachida est bien installée.
           </p>
           <div className="mt-4">
             <div className="rounded-xl bg-black/40 border border-white/10 p-3 font-mono text-[11px] text-cyan-200 overflow-x-auto select-all">
@@ -478,7 +479,7 @@ function NoCodeInstallSection() {
               className="mt-2 inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 transition"
             >
               {copied ? <Check className="size-3.5 text-emerald-300" /> : <Copy className="size-3.5" />}
-              {copied ? "Copié !" : "Copier le code"}
+              {copied ? "Copié !" : "Copier si un technicien le demande"}
             </button>
           </div>
         </motion.div>
@@ -517,7 +518,7 @@ function NoCodeInstallSection() {
           <div className="size-10 grid place-items-center rounded-xl bg-gradient-to-br from-[--color-neon-violet] to-[--color-neon-cyan] font-display font-bold">3</div>
           <h3 className="mt-4 font-display font-semibold text-lg">Page boutique offerte</h3>
           <p className="mt-2 text-sm text-muted-foreground flex-1">
-            Pas de site ? On vous donne un lien <span className="text-cyan-200">rachida.ai/votre-boutique</span> avec votre catalogue et Rachida intégrée.
+            Pas de site ? Votre lien de vente est prêt dans le tableau de bord : catalogue, panier et Rachida intégrée. Vous le partagez sur WhatsApp, Facebook ou Instagram.
           </p>
           <a
             href={shopLink}

@@ -4,12 +4,13 @@ import { createLovableAiGatewayProvider } from "@/lib/ai-gateway.server";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "content-type",
+  "Access-Control-Allow-Headers": "content-type, authorization",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
 type ChatBody = {
   shopSlug: string;
+  mode?: "storefront" | "platform" | "admin";
   conversationId?: string;
   clientName?: string;
   clientContact?: string;
@@ -67,13 +68,14 @@ function extractCriteria(msg: string) {
 async function checkRateLimit(ip: string, endpoint: string): Promise<boolean> {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const windowStart = new Date(Math.floor(Date.now() / 60000) * 60000).toISOString();
-  const { data } = await supabaseAdmin
+  const { data: rows } = await supabaseAdmin
     .from("rate_limits")
     .select("count")
     .eq("ip", ip)
     .eq("endpoint", endpoint)
     .eq("window_start", windowStart)
-    .maybeSingle();
+    .limit(1);
+  const data = rows?.[0];
   if (data && data.count >= 30) return false;
   if (data) {
     await supabaseAdmin
@@ -84,6 +86,76 @@ async function checkRateLimit(ip: string, endpoint: string): Promise<boolean> {
     await supabaseAdmin.from("rate_limits").insert({ ip, endpoint, window_start: windowStart, count: 1 });
   }
   return true;
+}
+
+function money(n: number | null | undefined, currency = "FCFA") {
+  return `${Math.round(n ?? 0).toLocaleString("fr-FR")} ${currency}`;
+}
+
+async function getAdminContext(supabaseAdmin: Awaited<typeof import("@/integrations/supabase/client.server")>["supabaseAdmin"], shop: { id: string; currency: string }) {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const todayIso = today.toISOString();
+
+  const [convsToday, convsTotal, ordersToday, ordersTotal, hotLeads, products, latestConvs, views] = await Promise.all([
+    supabaseAdmin.from("conversations").select("id", { count: "exact", head: true }).eq("shop_id", shop.id).gte("created_at", todayIso),
+    supabaseAdmin.from("conversations").select("id", { count: "exact", head: true }).eq("shop_id", shop.id),
+    supabaseAdmin.from("orders").select("id,total,status,client_name,client_contact,created_at").eq("shop_id", shop.id).gte("created_at", todayIso).order("created_at", { ascending: false }),
+    supabaseAdmin.from("orders").select("id,total,status,client_name,client_contact,created_at").eq("shop_id", shop.id).order("created_at", { ascending: false }).limit(80),
+    supabaseAdmin.from("lead_scores").select("id", { count: "exact", head: true }).eq("shop_id", shop.id).gte("score", 7),
+    supabaseAdmin.from("products").select("id,name,price,stock,category,description,is_active").eq("shop_id", shop.id).order("created_at", { ascending: false }).limit(30),
+    supabaseAdmin.from("conversations").select("id,client_name,client_contact,emotion,created_at").eq("shop_id", shop.id).order("created_at", { ascending: false }).limit(8),
+    supabaseAdmin.from("product_views").select("product_id, products(name)").eq("shop_id", shop.id).limit(120),
+  ]);
+
+  const todayRevenue = (ordersToday.data ?? []).reduce((s, o) => s + Number(o.total ?? 0), 0);
+  const totalRevenue = (ordersTotal.data ?? []).reduce((s, o) => s + Number(o.total ?? 0), 0);
+  const productRows = products.data ?? [];
+  const lowStock = productRows.filter((p) => Number(p.stock ?? 0) <= 3 && p.is_active).slice(0, 8);
+  const viewCounts: Record<string, number> = {};
+  type ViewRow = { products: { name: string } | { name: string }[] | null };
+  ((views.data ?? []) as ViewRow[]).forEach((v) => {
+    const prod = Array.isArray(v.products) ? v.products[0] : v.products;
+    if (prod?.name) viewCounts[prod.name] = (viewCounts[prod.name] ?? 0) + 1;
+  });
+  const topViewed = Object.entries(viewCounts).sort((a, b) => b[1] - a[1]).slice(0, 5);
+
+  return `DONNÉES BUSINESS DISPONIBLES POUR LE DASHBOARD :
+- Chiffre d'affaires aujourd'hui : ${money(todayRevenue, shop.currency)}
+- Commandes aujourd'hui : ${ordersToday.data?.length ?? 0}
+- Conversations aujourd'hui : ${convsToday.count ?? 0}
+- Chiffre d'affaires total connu : ${money(totalRevenue, shop.currency)}
+- Commandes totales connues : ${ordersTotal.data?.length ?? 0}
+- Conversations totales : ${convsTotal.count ?? 0}
+- Leads chauds (score >= 7) : ${hotLeads.count ?? 0}
+- Produits au catalogue : ${productRows.length}
+- Produits stock bas : ${lowStock.map((p) => `${p.name} (${p.stock})`).join(", ") || "aucun dans les 30 derniers produits"}
+- Produits les plus consultés : ${topViewed.map(([name, n]) => `${name} (${n} vues)`).join(", ") || "pas encore de vues"}
+- Dernières commandes : ${(ordersToday.data ?? []).slice(0, 5).map((o) => `${o.client_name ?? "client"} · ${money(Number(o.total), shop.currency)} · ${o.status}`).join(" | ") || "aucune aujourd'hui"}
+- Dernières conversations : ${(latestConvs.data ?? []).map((c) => `${c.client_name ?? "Anonyme"} · ${c.emotion ?? "neutre"}`).join(" | ") || "aucune"}
+- Extraits catalogue utiles : ${productRows.slice(0, 12).map((p) => `${p.name} (${money(Number(p.price), shop.currency)}, stock ${p.stock})`).join(" | ") || "catalogue vide"}`;
+}
+
+function platformPrompt(emotion: string) {
+  return `Tu es Rachida, l'assistante officielle de la plateforme Rachida AI, pas la vendeuse de la Boutique Démo.
+Tu réponds aux visiteurs entrepreneurs qui veulent comprendre le SaaS.
+Interdiction de parler du catalogue démo, sac, boubou, karité, etc sauf si on te demande explicitement une démonstration boutique.
+Ne commence jamais par "Yaa son barka". Utilise un français clair, professionnel, naturel.
+Émotion détectée : ${emotion}. Adapte ton ton.
+
+CE QUE TU SAIS SUR RACHIDA AI :
+- Rachida AI est une vendeuse IA pour entreprises, boutiques et entrepreneurs du Burkina Faso et d'Afrique francophone.
+- Elle s'intègre sur un site, une page boutique offerte, WhatsApp ou des plateformes no-code.
+- Elle apprend le catalogue, prix, stock, FAQ, règles de remise, ton de marque et contacts.
+- Elle conseille les clients, recommande les produits, négocie dans les limites autorisées, suit les leads, détecte l'émotion, analyse les images/preuves Mobile Money et aide à augmenter les ventes.
+- Le dashboard permet de voir conversations, leads chauds, commandes, chiffre d'affaires, catalogue, FAQ, diagnostic d'installation et page boutique offerte.
+- Pour les non-développeurs : lien boutique offert, invitation webmaster, guide WordPress/Wix/Shopify/Webflow/Squarespace, diagnostic automatique.
+
+RÈGLES :
+- Réponse courte et utile, 2 à 5 phrases.
+- Si on demande "comment ça marche", explique côté commerçant, côté client, et installation sans code.
+- Si on demande le prix, dis que la beta peut être gratuite/à valider selon l'offre, sans inventer un tarif fixe.
+- Ne dis pas que tu ne peux pas aider si la réponse est dans ces informations.`;
 }
 
 export const Route = createFileRoute("/api/public/rachida-chat")({
@@ -99,46 +171,74 @@ export const Route = createFileRoute("/api/public/rachida-chat")({
         if (!body?.shopSlug || !Array.isArray(body.messages)) {
           return new Response("bad request", { status: 400, headers: corsHeaders });
         }
+        const mode = body.mode ?? "storefront";
+        const isStorefront = mode === "storefront";
         const key = process.env.LOVABLE_API_KEY;
         if (!key) return new Response("missing key", { status: 500, headers: corsHeaders });
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-        const { data: shop } = await supabaseAdmin
+        const { data: shops } = await supabaseAdmin
           .from("shops")
           .select("*")
           .eq("slug", body.shopSlug)
-          .maybeSingle();
+          .order("created_at", { ascending: false })
+          .limit(1);
+        const shop = shops?.[0] ?? (mode === "platform" ? {
+          id: "00000000-0000-0000-0000-000000000000",
+          slug: "platform",
+          name: "Rachida AI",
+          owner_id: "",
+          color: "#7c5cfc",
+          currency: "FCFA",
+          greeting: "Bonjour, je suis Rachida.",
+          max_remise: 0,
+          rachida_name: "Rachida",
+          system_prompt_extra: null,
+          whatsapp: null,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        } : null);
         if (!shop) return new Response("shop not found", { status: 404, headers: corsHeaders });
+
+        if (mode === "admin") {
+          const auth = request.headers.get("authorization") || "";
+          const token = auth.toLowerCase().startsWith("bearer ") ? auth.slice(7) : "";
+          const { data: userData, error: authError } = token ? await supabaseAdmin.auth.getUser(token) : { data: { user: null }, error: null };
+          if (authError || !userData.user || userData.user.id !== shop.owner_id) {
+            return new Response("unauthorized", { status: 401, headers: corsHeaders });
+          }
+        }
 
         const lastUser = [...body.messages].reverse().find((m) => m.role === "user")?.content ?? "";
         const criteria = extractCriteria(lastUser);
         const emotion = detectEmotion(lastUser);
         const language = detectLanguage(lastUser);
 
-        // FAQ first — instant answer if match
+        // FAQ first — instant answer if match (only for real customer conversations)
         const { data: faqs } = await supabaseAdmin
           .from("faq")
           .select("question, answer, keywords")
           .eq("shop_id", shop.id);
         const lowerLast = lastUser.toLowerCase();
-        const faqMatch = (faqs ?? []).find((f) => {
+        const faqMatch = isStorefront ? (faqs ?? []).find((f) => {
           const kws = (f.keywords ?? "").toLowerCase().split(/[,;\s]+/).filter(Boolean);
           if (kws.some((k) => k && lowerLast.includes(k))) return true;
           const qWords = f.question.toLowerCase().split(/\W+/).filter((w) => w.length > 4);
           const hits = qWords.filter((w) => lowerLast.includes(w)).length;
           return hits >= 2;
-        });
+        }) : undefined;
 
         // Customer memory
         type CustomerProfile = { customer_name: string | null; language: string | null; budget_max: number | null; notes: string | null; total_conversations: number | null };
         let customerProfile: CustomerProfile | null = null;
         if (body.clientContact) {
-          const { data: prof } = await supabaseAdmin
+          const { data: profRows } = await supabaseAdmin
             .from("customer_profiles")
             .select("customer_name, language, budget_max, notes, total_conversations")
             .eq("shop_id", shop.id)
             .eq("customer_contact", body.clientContact)
-            .maybeSingle();
+            .limit(1);
+          const prof = profRows?.[0] ?? null;
           customerProfile = prof;
         }
 
@@ -152,8 +252,8 @@ export const Route = createFileRoute("/api/public/rachida-chat")({
 
         // Conversation persistence
         let conversationId = body.conversationId;
-        if (!conversationId) {
-          const { data: conv } = await supabaseAdmin
+        if (isStorefront && !conversationId) {
+          const { data: convRows } = await supabaseAdmin
             .from("conversations")
             .insert({
               shop_id: shop.id,
@@ -162,15 +262,16 @@ export const Route = createFileRoute("/api/public/rachida-chat")({
               emotion,
             })
             .select("id")
-            .single();
+            .limit(1);
+          const conv = convRows?.[0];
           conversationId = conv?.id;
-        } else {
+        } else if (isStorefront && conversationId) {
           await supabaseAdmin
             .from("conversations")
             .update({ emotion, client_name: body.clientName, client_contact: body.clientContact })
             .eq("id", conversationId);
         }
-        if (conversationId && lastUser) {
+        if (isStorefront && conversationId && lastUser) {
           await supabaseAdmin.from("messages").insert({
             conversation_id: conversationId,
             role: "user",
@@ -179,7 +280,7 @@ export const Route = createFileRoute("/api/public/rachida-chat")({
         }
 
         // Track product views
-        if (products?.length && conversationId) {
+        if (isStorefront && products?.length && conversationId) {
           await supabaseAdmin.from("product_views").insert(
             products.slice(0, 5).map((p) => ({ shop_id: shop.id, product_id: p.id, conversation_id: conversationId! })),
           );
@@ -187,7 +288,7 @@ export const Route = createFileRoute("/api/public/rachida-chat")({
 
         // Lead scoring
         const lead = scoreLead(body.messages);
-        if (conversationId) {
+        if (isStorefront && conversationId) {
           await supabaseAdmin
             .from("lead_scores")
             .upsert(
@@ -197,7 +298,7 @@ export const Route = createFileRoute("/api/public/rachida-chat")({
         }
 
         // Update customer profile
-        if (body.clientContact) {
+        if (isStorefront && body.clientContact) {
           await supabaseAdmin.from("customer_profiles").upsert(
             {
               shop_id: shop.id,
@@ -249,13 +350,33 @@ export const Route = createFileRoute("/api/public/rachida-chat")({
 
         const langInstruction =
           language === "moore"
-            ? "Le client a écrit en Mooré. Réponds en Mooré simple si tu sais, sinon en français en commençant par 'Yaa son barka'."
+            ? "Le client a écrit en Mooré. Réponds en Mooré simple si tu sais, sinon en français. Ne répète pas automatiquement 'Yaa son barka'."
             : language === "dioula"
-              ? "Le client a écrit en Dioula. Réponds en Dioula simple si tu sais, sinon en français en commençant par 'I ni ce'."
+              ? "Le client a écrit en Dioula. Réponds en Dioula simple si tu sais, sinon en français. Ne répète pas automatiquement 'I ni ce'."
               : "";
 
-        const systemPrompt = `Tu es ${shop.rachida_name}, vendeuse IA chaleureuse et professionnelle de la boutique "${shop.name}" au Burkina Faso.
-Tu parles français naturel, chaleureux, avec parfois une touche locale ("akwaaba", "yaa son barka") sans en abuser.
+        const adminContext = mode === "admin" ? await getAdminContext(supabaseAdmin, shop) : "";
+
+        const systemPrompt = mode === "platform"
+          ? platformPrompt(emotion)
+          : mode === "admin"
+            ? `Tu es ${shop.rachida_name}, assistante business IA du commerçant propriétaire de "${shop.name}".
+Tu n'es PAS une vendeuse parlant à un client : tu es dans l'admin/dashboard. Tu dois aider le patron à piloter l'entreprise.
+Ne commence jamais par "Yaa son barka". Français naturel, direct, professionnel.
+Tu as accès aux données ci-dessous : utilise-les pour répondre aux questions de chiffre d'affaires, commandes, conversations, leads, catalogue, stock, top produits.
+Si le patron demande "combien", donne le chiffre exact disponible. Ne dis jamais que tu n'as pas la capacité si la donnée est dans le contexte.
+Tu peux aussi : proposer de nouveaux produits, écrire des descriptions produits, améliorer une fiche produit, créer une FAQ, suggérer des relances clients, analyser les leads chauds, écrire des messages WhatsApp de suivi.
+Si une donnée n'existe pas encore, dis clairement "pas encore de donnée enregistrée" puis propose quoi faire.
+
+${adminContext}
+
+RÈGLES :
+- Réponds en 2 à 6 phrases, ou en liste claire si demandé.
+- Pour les montants, utilise ${shop.currency}.
+- Quand tu proposes une description produit, donne une version prête à copier.
+- Ne parle pas comme si tu vendais au client final.`
+            : `Tu es ${shop.rachida_name}, vendeuse IA chaleureuse et professionnelle de la boutique "${shop.name}" au Burkina Faso.
+Tu parles français naturel et chaleureux. Ne commence PAS chaque message par "Yaa son barka" ou une salutation locale. Utilise une touche locale seulement si le client l'utilise ou si c'est vraiment pertinent.
 Émotion détectée : ${emotion} (score lead actuel : ${lead.score}/10 — ${lead.reasons}). Adapte ton ton.
 Devise : ${shop.currency}. Remise maximum autorisée : ${shop.max_remise}%.
 WhatsApp boutique : ${shop.whatsapp ?? "non configuré"}.
@@ -271,6 +392,7 @@ RÈGLES :
 - Si client hésite sur le prix, propose UNE remise max ${shop.max_remise}% MAX, jamais plus.
 - Quand pertinent, propose UN upsell ou complément.
 - Si la question dépasse tes compétences, propose le transfert WhatsApp humain : "${shop.whatsapp ?? ""}".
+- Ne salue pas à chaque réponse ; continue naturellement la conversation.
 - Reste concise (2-4 phrases max sauf si une liste est demandée).
 ${shop.system_prompt_extra ?? ""}`;
 
@@ -284,7 +406,7 @@ ${shop.system_prompt_extra ?? ""}`;
             ...body.messages.map((m) => ({ role: m.role, content: m.content })),
           ] as ModelMessage[],
           onFinish: async ({ text }) => {
-            if (conversationId && text) {
+            if (isStorefront && conversationId && text) {
               await supabaseAdmin.from("messages").insert({
                 conversation_id: conversationId,
                 role: "assistant",

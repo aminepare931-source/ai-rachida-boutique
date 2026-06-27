@@ -23,11 +23,13 @@ export const Route = createFileRoute("/api/public/rachida-search")({
           return new Response("bad request", { status: 400, headers: corsHeaders });
         }
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-        const { data: shop } = await supabaseAdmin
+        const { data: shops } = await supabaseAdmin
           .from("shops")
           .select("id")
           .eq("slug", body.shopSlug)
-          .maybeSingle();
+          .order("created_at", { ascending: false })
+          .limit(1);
+        const shop = shops?.[0];
         if (!shop) return new Response("shop not found", { status: 404, headers: corsHeaders });
 
         let q = supabaseAdmin
