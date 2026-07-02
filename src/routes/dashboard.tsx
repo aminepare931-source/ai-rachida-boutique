@@ -14,6 +14,7 @@ import { checkInstall } from "@/lib/install-checker.functions";
 import { motion, AnimatePresence } from "framer-motion";
 import { AreaChart, Area, ResponsiveContainer, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 import { RachidaWidget } from "@/components/RachidaWidget";
+import { SmartImportModal } from "@/components/SmartImportModal";
 
 export const Route = createFileRoute("/dashboard")({
   head: () => ({ meta: [{ title: "Dashboard — Rachida AI" }] }),
