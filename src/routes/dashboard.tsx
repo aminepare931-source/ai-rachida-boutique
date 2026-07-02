@@ -565,6 +565,8 @@ function ShopTab({ shop, onUpdated }: { shop: Shop; onUpdated: (s: Shop) => void
 function CatalogTab({ shopId }: { shopId: string }) {
   const [items, setItems] = useState<Product[]>([]);
   const [editing, setEditing] = useState<Partial<Product> | null>(null);
+  const [smartOpen, setSmartOpen] = useState(false);
+  const [showCsv, setShowCsv] = useState(false);
 
   const load = useCallback(async () => {
     const { data } = await supabase.from("products").select("*").eq("shop_id", shopId).order("created_at", { ascending: false });
@@ -605,7 +607,7 @@ function CatalogTab({ shopId }: { shopId: string }) {
         stock: parseInt(o.stock || "0") || 0, description: o.description || null,
       };
     }).filter((r) => r.name);
-    if (!rows.length) return toast.error("CSV vide ou sans colonne 'name'");
+    if (!rows.length) return toast.error("Fichier vide ou sans colonne 'name'");
     const { error } = await supabase.from("products").insert(rows);
     if (error) return toast.error(error.message);
     toast.success(`${rows.length} produits importés`); void load();
@@ -615,14 +617,32 @@ function CatalogTab({ shopId }: { shopId: string }) {
     <div className="space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-2">
         <h1 className="text-3xl font-bold tracking-tight">Catalogue <span className="text-white/30 text-lg ml-2">{items.length}</span></h1>
-        <div className="flex gap-2">
-          <label className="btn-ghost cursor-pointer"><Upload size={14} /> Importer CSV
-            <input type="file" accept=".csv" hidden onChange={(e) => e.target.files?.[0] && importCSV(e.target.files[0])} />
-          </label>
-          <button onClick={() => setEditing({ is_active: true, stock: 1 })} className="btn-neon"><Plus size={14} /> Produit</button>
+        <div className="flex gap-2 flex-wrap">
+          <button onClick={() => setSmartOpen(true)} className="btn-neon">
+            <Sparkles size={14} /> Ajout intelligent
+          </button>
+          <button onClick={() => setEditing({ is_active: true, stock: 1 })} className="btn-ghost"><Plus size={14} /> Un par un</button>
+          <button onClick={() => setShowCsv((v) => !v)} className="text-xs text-white/40 hover:text-white/70 px-2">
+            {showCsv ? "Masquer" : "Import avancé (fichier)"}
+          </button>
         </div>
       </div>
-      <p className="text-xs text-white/40">CSV : <code className="text-violet-300">name,price,category,gender,color,image_url,stock,description</code></p>
+      <p className="text-sm text-white/50">
+        Prends une photo de tes produits, colle une liste WhatsApp, ou parle à Rachida — elle range tout pour toi. Pas besoin de connaître Excel.
+      </p>
+      {showCsv && (
+        <div className="p-3 rounded-xl bg-white/[0.02] border border-white/10 text-xs text-white/50 flex flex-wrap items-center gap-3">
+          <label className="btn-ghost cursor-pointer !text-xs"><Upload size={14} /> Fichier CSV / Excel exporté
+            <input type="file" accept=".csv,text/csv" hidden onChange={(e) => e.target.files?.[0] && importCSV(e.target.files[0])} />
+          </label>
+          <span>Colonnes : <code className="text-violet-300">name,price,category,gender,color,image_url,stock,description</code></span>
+        </div>
+      )}
+
+      {smartOpen && (
+        <SmartImportModal shopId={shopId} onClose={() => setSmartOpen(false)} onImported={() => void load()} />
+      )}
+
 
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
         {items.map((p) => (
