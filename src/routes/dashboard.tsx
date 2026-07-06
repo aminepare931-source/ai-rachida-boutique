@@ -210,6 +210,17 @@ function Dashboard() {
   );
 }
 
+/* ---------- Tools wrapper: loads a small product sample for context ---------- */
+function ToolsTabWrapper({ shop }: { shop: Shop }) {
+  const [sample, setSample] = useState<string[]>([]);
+  useEffect(() => {
+    supabase.from("products").select("name").eq("shop_id", shop.id).eq("is_active", true).limit(8)
+      .then(({ data }) => setSample((data || []).map((p) => p.name).filter(Boolean) as string[]));
+  }, [shop.id]);
+  return <RachidaToolsTab shopName={shop.name} whatsapp={shop.whatsapp} sampleProducts={sample} />;
+}
+
+
 /* ---------- Overview ---------- */
 function OverviewTab({ shopId, currency }: { shopId: string; currency: string }) {
   const [stats, setStats] = useState({ convs: 0, orders: 0, revenue: 0, hotLeads: 0 });
