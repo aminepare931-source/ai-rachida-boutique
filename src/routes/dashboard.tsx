@@ -198,6 +198,8 @@ function Dashboard() {
               {tab === "faq" && <FaqTab shopId={shop.id} />}
               {tab === "orders" && <OrdersTab shopId={shop.id} currency={shop.currency} />}
               {tab === "integration" && <IntegrationTab shop={shop} />}
+              {tab === "tools" && <ToolsTabWrapper shop={shop} />}
+              {tab === "mirror" && <MirrorTab shopId={shop.id} />}
             </motion.div>
           </AnimatePresence>
         </main>
