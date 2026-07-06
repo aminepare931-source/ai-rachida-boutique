@@ -7,7 +7,7 @@ import { Toaster } from "@/components/ui/sonner";
 import {
   Bot, Settings, Package, MessageSquare, ShoppingBag, Code, LogOut, Plus, Trash2, Upload,
   LayoutDashboard, Users, HelpCircle, Sparkles, TrendingUp, Flame,
-  CheckCircle2, XCircle, Loader2, Mail, Globe, Copy, ExternalLink,
+  CheckCircle2, XCircle, Loader2, Mail, Globe, Globe2, Copy, ExternalLink, QrCode, Share2, Wand2,
 } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { checkInstall } from "@/lib/install-checker.functions";
@@ -15,6 +15,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { AreaChart, Area, ResponsiveContainer, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 import { RachidaWidget } from "@/components/RachidaWidget";
 import { SmartImportModal } from "@/components/SmartImportModal";
+import { RachidaToolsTab } from "@/components/RachidaToolsTab";
+import { MirrorTab } from "@/components/MirrorTab";
 
 export const Route = createFileRoute("/dashboard")({
   head: () => ({ meta: [{ title: "Dashboard — Rachida AI" }] }),
