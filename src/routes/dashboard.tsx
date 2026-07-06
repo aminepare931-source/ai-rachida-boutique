@@ -955,7 +955,7 @@ Merci !`
       <GlassCard>
         <h3 className="font-semibold mb-2 flex items-center gap-2"><Sparkles className="size-4 text-pink-300" /> Pas de site web ?</h3>
         <p className="text-sm text-white/60 mb-3">
-          Votre boutique en ligne offerte est déjà prête, avec Rachida intégrée. Partagez simplement le lien :
+          Ta boutique en ligne offerte est déjà prête, avec Rachida intégrée. Partage simplement le lien :
         </p>
         <div className="flex gap-2 flex-wrap items-center">
           <code className="flex-1 min-w-[200px] bg-black/40 p-2.5 rounded-lg text-xs text-cyan-300 border border-white/5 break-all">
@@ -968,6 +968,38 @@ Merci !`
           <Link to="/shop/$slug" params={{ slug: shop.slug }} target="_blank" className="btn-neon">
             <ExternalLink className="size-4" /> Ouvrir
           </Link>
+        </div>
+      </GlassCard>
+
+      {/* QR code + partage rapide */}
+      <GlassCard>
+        <h3 className="font-semibold mb-2 flex items-center gap-2"><QrCode className="size-4 text-cyan-300" /> QR code & partage rapide</h3>
+        <p className="text-sm text-white/60 mb-3">Imprime-le sur ton étal, ta carte de visite, un flyer. Un scan → ta boutique s'ouvre avec Rachida.</p>
+        <div className="flex gap-4 flex-wrap items-center">
+          <img
+            src={`https://api.qrserver.com/v1/create-qr-code/?size=220x220&margin=10&data=${encodeURIComponent(`${origin}/shop/${shop.slug}`)}`}
+            alt="QR code boutique"
+            className="w-40 h-40 rounded-xl bg-white p-2"
+          />
+          <div className="flex-1 min-w-[200px] space-y-2">
+            <a
+              href={`https://api.qrserver.com/v1/create-qr-code/?size=800x800&margin=20&data=${encodeURIComponent(`${origin}/shop/${shop.slug}`)}`}
+              download={`rachida-qr-${shop.slug}.png`}
+              target="_blank"
+              rel="noreferrer"
+              className="btn-neon inline-flex"
+            ><QrCode className="size-4" /> Télécharger QR haute qualité</a>
+            {shop.whatsapp && (
+              <a
+                href={`https://wa.me/${shop.whatsapp.replace(/\D/g, "")}?text=${encodeURIComponent(`Salut 👋 Voici ma boutique : ${origin}/shop/${shop.slug}`)}`}
+                target="_blank" rel="noreferrer" className="btn-ghost inline-flex"
+              ><Share2 className="size-4" /> Partager sur WhatsApp</a>
+            )}
+            <a
+              href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(`${origin}/shop/${shop.slug}`)}`}
+              target="_blank" rel="noreferrer" className="btn-ghost inline-flex"
+            ><Share2 className="size-4" /> Partager sur Facebook</a>
+          </div>
         </div>
       </GlassCard>
 
