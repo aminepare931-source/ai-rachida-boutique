@@ -43,6 +43,8 @@ const TABS = [
   { key: "leads", label: "Leads", icon: Flame },
   { key: "catalog", label: "Catalogue", icon: Package },
   { key: "orders", label: "Commandes", icon: ShoppingBag },
+  { key: "tools", label: "Outils IA", icon: Wand2 },
+  { key: "mirror", label: "Site 1-clic", icon: Globe2 },
   { key: "faq", label: "FAQ", icon: HelpCircle },
   { key: "shop", label: "IA & Boutique", icon: Sparkles },
   { key: "integration", label: "Intégration", icon: Code },
