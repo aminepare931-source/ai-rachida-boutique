@@ -314,6 +314,53 @@ export type Database = {
           },
         ]
       }
+      mirrors: {
+        Row: {
+          cached_html: string | null
+          created_at: string
+          id: string
+          last_error: string | null
+          shop_id: string
+          slug: string
+          source_url: string
+          status: string
+          title: string | null
+          updated_at: string
+        }
+        Insert: {
+          cached_html?: string | null
+          created_at?: string
+          id?: string
+          last_error?: string | null
+          shop_id: string
+          slug: string
+          source_url: string
+          status?: string
+          title?: string | null
+          updated_at?: string
+        }
+        Update: {
+          cached_html?: string | null
+          created_at?: string
+          id?: string
+          last_error?: string | null
+          shop_id?: string
+          slug?: string
+          source_url?: string
+          status?: string
+          title?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mirrors_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       orders: {
         Row: {
           cart: Json

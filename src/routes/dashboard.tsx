@@ -7,7 +7,7 @@ import { Toaster } from "@/components/ui/sonner";
 import {
   Bot, Settings, Package, MessageSquare, ShoppingBag, Code, LogOut, Plus, Trash2, Upload,
   LayoutDashboard, Users, HelpCircle, Sparkles, TrendingUp, Flame,
-  CheckCircle2, XCircle, Loader2, Mail, Globe, Copy, ExternalLink,
+  CheckCircle2, XCircle, Loader2, Mail, Globe, Globe2, Copy, ExternalLink, QrCode, Share2, Wand2,
 } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { checkInstall } from "@/lib/install-checker.functions";
@@ -15,6 +15,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { AreaChart, Area, ResponsiveContainer, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 import { RachidaWidget } from "@/components/RachidaWidget";
 import { SmartImportModal } from "@/components/SmartImportModal";
+import { RachidaToolsTab } from "@/components/RachidaToolsTab";
+import { MirrorTab } from "@/components/MirrorTab";
 
 export const Route = createFileRoute("/dashboard")({
   head: () => ({ meta: [{ title: "Dashboard — Rachida AI" }] }),
@@ -41,6 +43,8 @@ const TABS = [
   { key: "leads", label: "Leads", icon: Flame },
   { key: "catalog", label: "Catalogue", icon: Package },
   { key: "orders", label: "Commandes", icon: ShoppingBag },
+  { key: "tools", label: "Outils IA", icon: Wand2 },
+  { key: "mirror", label: "Site 1-clic", icon: Globe2 },
   { key: "faq", label: "FAQ", icon: HelpCircle },
   { key: "shop", label: "IA & Boutique", icon: Sparkles },
   { key: "integration", label: "Intégration", icon: Code },
@@ -194,6 +198,8 @@ function Dashboard() {
               {tab === "faq" && <FaqTab shopId={shop.id} />}
               {tab === "orders" && <OrdersTab shopId={shop.id} currency={shop.currency} />}
               {tab === "integration" && <IntegrationTab shop={shop} />}
+              {tab === "tools" && <ToolsTabWrapper shop={shop} />}
+              {tab === "mirror" && <MirrorTab shopId={shop.id} />}
             </motion.div>
           </AnimatePresence>
         </main>
@@ -203,6 +209,17 @@ function Dashboard() {
     </div>
   );
 }
+
+/* ---------- Tools wrapper: loads a small product sample for context ---------- */
+function ToolsTabWrapper({ shop }: { shop: Shop }) {
+  const [sample, setSample] = useState<string[]>([]);
+  useEffect(() => {
+    supabase.from("products").select("name").eq("shop_id", shop.id).eq("is_active", true).limit(8)
+      .then(({ data }) => setSample((data || []).map((p) => p.name).filter(Boolean) as string[]));
+  }, [shop.id]);
+  return <RachidaToolsTab shopName={shop.name} whatsapp={shop.whatsapp} sampleProducts={sample} />;
+}
+
 
 /* ---------- Overview ---------- */
 function OverviewTab({ shopId, currency }: { shopId: string; currency: string }) {
@@ -938,7 +955,7 @@ Merci !`
       <GlassCard>
         <h3 className="font-semibold mb-2 flex items-center gap-2"><Sparkles className="size-4 text-pink-300" /> Pas de site web ?</h3>
         <p className="text-sm text-white/60 mb-3">
-          Votre boutique en ligne offerte est déjà prête, avec Rachida intégrée. Partagez simplement le lien :
+          Ta boutique en ligne offerte est déjà prête, avec Rachida intégrée. Partage simplement le lien :
         </p>
         <div className="flex gap-2 flex-wrap items-center">
           <code className="flex-1 min-w-[200px] bg-black/40 p-2.5 rounded-lg text-xs text-cyan-300 border border-white/5 break-all">
@@ -951,6 +968,38 @@ Merci !`
           <Link to="/shop/$slug" params={{ slug: shop.slug }} target="_blank" className="btn-neon">
             <ExternalLink className="size-4" /> Ouvrir
           </Link>
+        </div>
+      </GlassCard>
+
+      {/* QR code + partage rapide */}
+      <GlassCard>
+        <h3 className="font-semibold mb-2 flex items-center gap-2"><QrCode className="size-4 text-cyan-300" /> QR code & partage rapide</h3>
+        <p className="text-sm text-white/60 mb-3">Imprime-le sur ton étal, ta carte de visite, un flyer. Un scan → ta boutique s'ouvre avec Rachida.</p>
+        <div className="flex gap-4 flex-wrap items-center">
+          <img
+            src={`https://api.qrserver.com/v1/create-qr-code/?size=220x220&margin=10&data=${encodeURIComponent(`${origin}/shop/${shop.slug}`)}`}
+            alt="QR code boutique"
+            className="w-40 h-40 rounded-xl bg-white p-2"
+          />
+          <div className="flex-1 min-w-[200px] space-y-2">
+            <a
+              href={`https://api.qrserver.com/v1/create-qr-code/?size=800x800&margin=20&data=${encodeURIComponent(`${origin}/shop/${shop.slug}`)}`}
+              download={`rachida-qr-${shop.slug}.png`}
+              target="_blank"
+              rel="noreferrer"
+              className="btn-neon inline-flex"
+            ><QrCode className="size-4" /> Télécharger QR haute qualité</a>
+            {shop.whatsapp && (
+              <a
+                href={`https://wa.me/${shop.whatsapp.replace(/\D/g, "")}?text=${encodeURIComponent(`Salut 👋 Voici ma boutique : ${origin}/shop/${shop.slug}`)}`}
+                target="_blank" rel="noreferrer" className="btn-ghost inline-flex"
+              ><Share2 className="size-4" /> Partager sur WhatsApp</a>
+            )}
+            <a
+              href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(`${origin}/shop/${shop.slug}`)}`}
+              target="_blank" rel="noreferrer" className="btn-ghost inline-flex"
+            ><Share2 className="size-4" /> Partager sur Facebook</a>
+          </div>
         </div>
       </GlassCard>
 

@@ -13,10 +13,12 @@ import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ShopSlugRouteImport } from './routes/shop.$slug'
+import { Route as MSlugRouteImport } from './routes/m.$slug'
 import { Route as ApiPublicShopConfigRouteImport } from './routes/api/public/shop-config'
 import { Route as ApiPublicRachidaVisionRouteImport } from './routes/api/public/rachida-vision'
 import { Route as ApiPublicRachidaSearchRouteImport } from './routes/api/public/rachida-search'
 import { Route as ApiPublicRachidaChatRouteImport } from './routes/api/public/rachida-chat'
+import { Route as ApiPublicMirrorRouteImport } from './routes/api/public/mirror'
 import { Route as ApiPublicHooksDailyReportRouteImport } from './routes/api/public/hooks/daily-report'
 
 const DashboardRoute = DashboardRouteImport.update({
@@ -39,6 +41,11 @@ const ShopSlugRoute = ShopSlugRouteImport.update({
   path: '/shop/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MSlugRoute = MSlugRouteImport.update({
+  id: '/m/$slug',
+  path: '/m/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicShopConfigRoute = ApiPublicShopConfigRouteImport.update({
   id: '/api/public/shop-config',
   path: '/api/public/shop-config',
@@ -59,6 +66,11 @@ const ApiPublicRachidaChatRoute = ApiPublicRachidaChatRouteImport.update({
   path: '/api/public/rachida-chat',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicMirrorRoute = ApiPublicMirrorRouteImport.update({
+  id: '/api/public/mirror',
+  path: '/api/public/mirror',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicHooksDailyReportRoute =
   ApiPublicHooksDailyReportRouteImport.update({
     id: '/api/public/hooks/daily-report',
@@ -70,7 +82,9 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/dashboard': typeof DashboardRoute
+  '/m/$slug': typeof MSlugRoute
   '/shop/$slug': typeof ShopSlugRoute
+  '/api/public/mirror': typeof ApiPublicMirrorRoute
   '/api/public/rachida-chat': typeof ApiPublicRachidaChatRoute
   '/api/public/rachida-search': typeof ApiPublicRachidaSearchRoute
   '/api/public/rachida-vision': typeof ApiPublicRachidaVisionRoute
@@ -81,7 +95,9 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/dashboard': typeof DashboardRoute
+  '/m/$slug': typeof MSlugRoute
   '/shop/$slug': typeof ShopSlugRoute
+  '/api/public/mirror': typeof ApiPublicMirrorRoute
   '/api/public/rachida-chat': typeof ApiPublicRachidaChatRoute
   '/api/public/rachida-search': typeof ApiPublicRachidaSearchRoute
   '/api/public/rachida-vision': typeof ApiPublicRachidaVisionRoute
@@ -93,7 +109,9 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/dashboard': typeof DashboardRoute
+  '/m/$slug': typeof MSlugRoute
   '/shop/$slug': typeof ShopSlugRoute
+  '/api/public/mirror': typeof ApiPublicMirrorRoute
   '/api/public/rachida-chat': typeof ApiPublicRachidaChatRoute
   '/api/public/rachida-search': typeof ApiPublicRachidaSearchRoute
   '/api/public/rachida-vision': typeof ApiPublicRachidaVisionRoute
@@ -106,7 +124,9 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/dashboard'
+    | '/m/$slug'
     | '/shop/$slug'
+    | '/api/public/mirror'
     | '/api/public/rachida-chat'
     | '/api/public/rachida-search'
     | '/api/public/rachida-vision'
@@ -117,7 +137,9 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/dashboard'
+    | '/m/$slug'
     | '/shop/$slug'
+    | '/api/public/mirror'
     | '/api/public/rachida-chat'
     | '/api/public/rachida-search'
     | '/api/public/rachida-vision'
@@ -128,7 +150,9 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/dashboard'
+    | '/m/$slug'
     | '/shop/$slug'
+    | '/api/public/mirror'
     | '/api/public/rachida-chat'
     | '/api/public/rachida-search'
     | '/api/public/rachida-vision'
@@ -140,7 +164,9 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthRoute: typeof AuthRoute
   DashboardRoute: typeof DashboardRoute
+  MSlugRoute: typeof MSlugRoute
   ShopSlugRoute: typeof ShopSlugRoute
+  ApiPublicMirrorRoute: typeof ApiPublicMirrorRoute
   ApiPublicRachidaChatRoute: typeof ApiPublicRachidaChatRoute
   ApiPublicRachidaSearchRoute: typeof ApiPublicRachidaSearchRoute
   ApiPublicRachidaVisionRoute: typeof ApiPublicRachidaVisionRoute
@@ -178,6 +204,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ShopSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/m/$slug': {
+      id: '/m/$slug'
+      path: '/m/$slug'
+      fullPath: '/m/$slug'
+      preLoaderRoute: typeof MSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/shop-config': {
       id: '/api/public/shop-config'
       path: '/api/public/shop-config'
@@ -206,6 +239,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicRachidaChatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/mirror': {
+      id: '/api/public/mirror'
+      path: '/api/public/mirror'
+      fullPath: '/api/public/mirror'
+      preLoaderRoute: typeof ApiPublicMirrorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/daily-report': {
       id: '/api/public/hooks/daily-report'
       path: '/api/public/hooks/daily-report'
@@ -220,7 +260,9 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRoute: AuthRoute,
   DashboardRoute: DashboardRoute,
+  MSlugRoute: MSlugRoute,
   ShopSlugRoute: ShopSlugRoute,
+  ApiPublicMirrorRoute: ApiPublicMirrorRoute,
   ApiPublicRachidaChatRoute: ApiPublicRachidaChatRoute,
   ApiPublicRachidaSearchRoute: ApiPublicRachidaSearchRoute,
   ApiPublicRachidaVisionRoute: ApiPublicRachidaVisionRoute,
@@ -230,13 +272,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
