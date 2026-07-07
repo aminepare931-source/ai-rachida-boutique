@@ -705,6 +705,7 @@ function CatalogTab({ shopId }: { shopId: string }) {
             <Field label="Stock"><input type="number" className="input-neon" value={editing.stock ?? 0} onChange={(e) => setEditing({ ...editing, stock: parseInt(e.target.value) || 0 })} /></Field>
           </div>
           <Field label="URL image"><input className="input-neon" value={editing.image_url ?? ""} onChange={(e) => setEditing({ ...editing, image_url: e.target.value })} /></Field>
+          <PhotoRetoucher current={editing.image_url ?? ""} productName={editing.name ?? "produit"} onDone={(url) => setEditing({ ...editing, image_url: url })} />
           <Field label="Description"><textarea className="input-neon" rows={3} value={editing.description ?? ""} onChange={(e) => setEditing({ ...editing, description: e.target.value })} /></Field>
           <div className="flex gap-2 justify-end">
             <button onClick={() => setEditing(null)} className="btn-ghost">Annuler</button>
