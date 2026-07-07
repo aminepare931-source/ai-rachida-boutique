@@ -8,15 +8,20 @@ import {
   Bot, Settings, Package, MessageSquare, ShoppingBag, Code, LogOut, Plus, Trash2, Upload,
   LayoutDashboard, Users, HelpCircle, Sparkles, TrendingUp, Flame,
   CheckCircle2, XCircle, Loader2, Mail, Globe, Globe2, Copy, ExternalLink, QrCode, Share2, Wand2,
+  Wallet, Megaphone, Image as ImageIcon,
 } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { checkInstall } from "@/lib/install-checker.functions";
+import { retouchProductPhoto } from "@/lib/rachida-photo.functions";
 import { motion, AnimatePresence } from "framer-motion";
 import { AreaChart, Area, ResponsiveContainer, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 import { RachidaWidget } from "@/components/RachidaWidget";
 import { SmartImportModal } from "@/components/SmartImportModal";
 import { RachidaToolsTab } from "@/components/RachidaToolsTab";
 import { MirrorTab } from "@/components/MirrorTab";
+import { PaymentsTab } from "@/components/PaymentsTab";
+import { MarketingTab } from "@/components/MarketingTab";
+import { OnboardingWizard } from "@/components/OnboardingWizard";
 
 export const Route = createFileRoute("/dashboard")({
   head: () => ({ meta: [{ title: "Dashboard — Rachida AI" }] }),
@@ -27,6 +32,7 @@ type Shop = {
   id: string; slug: string; name: string; whatsapp: string | null; color: string;
   greeting: string; max_remise: number; rachida_name: string; currency: string;
   system_prompt_extra: string | null;
+  onboarding_done?: boolean;
 };
 type Product = {
   id: string; name: string; price: number; category: string | null; gender: string | null;
@@ -43,6 +49,8 @@ const TABS = [
   { key: "leads", label: "Leads", icon: Flame },
   { key: "catalog", label: "Catalogue", icon: Package },
   { key: "orders", label: "Commandes", icon: ShoppingBag },
+  { key: "payments", label: "Paiements", icon: Wallet },
+  { key: "marketing", label: "Marketing", icon: Megaphone },
   { key: "tools", label: "Outils IA", icon: Wand2 },
   { key: "mirror", label: "Site 1-clic", icon: Globe2 },
   { key: "faq", label: "FAQ", icon: HelpCircle },
@@ -200,10 +208,15 @@ function Dashboard() {
               {tab === "integration" && <IntegrationTab shop={shop} />}
               {tab === "tools" && <ToolsTabWrapper shop={shop} />}
               {tab === "mirror" && <MirrorTab shopId={shop.id} />}
+              {tab === "payments" && <PaymentsTab shopId={shop.id} />}
+              {tab === "marketing" && <MarketingTab shopId={shop.id} whatsapp={shop.whatsapp} />}
             </motion.div>
           </AnimatePresence>
         </main>
       </div>
+      {shop.onboarding_done === false && (
+        <OnboardingWizard shop={shop} onDone={() => setShop({ ...shop, onboarding_done: true })} />
+      )}
       <Style />
       <RachidaWidget shop={shop.slug} mode="admin" />
     </div>
