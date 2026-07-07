@@ -1064,3 +1064,51 @@ function Style() {
     `}</style>
   );
 }
+
+function PhotoRetoucher({ current, productName, onDone }: { current: string; productName: string; onDone: (url: string) => void }) {
+  const retouch = useServerFn(retouchProductPhoto);
+  const [busy, setBusy] = useState(false);
+
+  const handleFile = async (file: File) => {
+    setBusy(true);
+    try {
+      const b64 = await new Promise<string>((res, rej) => {
+        const r = new FileReader();
+        r.onload = () => res(String(r.result));
+        r.onerror = () => rej(new Error("Lecture impossible"));
+        r.readAsDataURL(file);
+      });
+      const out = await retouch({ data: { imageBase64: b64, productName } });
+      onDone(out.image);
+      toast.success("Photo retouchée ✨");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Erreur retouche");
+    } finally { setBusy(false); }
+  };
+
+  const retouchExisting = async () => {
+    if (!current) return toast.error("Ajoute une image d'abord");
+    setBusy(true);
+    try {
+      const out = await retouch({ data: { imageBase64: current, productName } });
+      onDone(out.image);
+      toast.success("Photo retouchée ✨");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Erreur retouche");
+    } finally { setBusy(false); }
+  };
+
+  return (
+    <div className="flex gap-2 flex-wrap items-center">
+      <label className="btn-ghost cursor-pointer !text-xs">
+        <ImageIcon size={14} /> {busy ? "…" : "Photo → belle photo IA"}
+        <input type="file" accept="image/*" hidden disabled={busy} onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])} />
+      </label>
+      {current && (
+        <button type="button" onClick={retouchExisting} disabled={busy} className="btn-ghost !text-xs disabled:opacity-50">
+          <Sparkles size={14} /> Retoucher l'image actuelle
+        </button>
+      )}
+    </div>
+  );
+}
