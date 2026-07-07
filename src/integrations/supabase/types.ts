@@ -14,6 +14,109 @@ export type Database = {
   }
   public: {
     Tables: {
+      abandoned_carts: {
+        Row: {
+          cart: Json
+          conversation_id: string | null
+          created_at: string
+          customer_contact: string | null
+          customer_name: string | null
+          id: string
+          recovered: boolean
+          reminded_at: string | null
+          shop_id: string
+          total: number
+          updated_at: string
+        }
+        Insert: {
+          cart?: Json
+          conversation_id?: string | null
+          created_at?: string
+          customer_contact?: string | null
+          customer_name?: string | null
+          id?: string
+          recovered?: boolean
+          reminded_at?: string | null
+          shop_id: string
+          total?: number
+          updated_at?: string
+        }
+        Update: {
+          cart?: Json
+          conversation_id?: string | null
+          created_at?: string
+          customer_contact?: string | null
+          customer_name?: string | null
+          id?: string
+          recovered?: boolean
+          reminded_at?: string | null
+          shop_id?: string
+          total?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "abandoned_carts_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      campaigns: {
+        Row: {
+          channel: string
+          created_at: string
+          id: string
+          message: string
+          name: string
+          scheduled_at: string | null
+          sent_at: string | null
+          sent_count: number
+          shop_id: string
+          status: string
+          target_filter: Json
+          updated_at: string
+        }
+        Insert: {
+          channel?: string
+          created_at?: string
+          id?: string
+          message: string
+          name: string
+          scheduled_at?: string | null
+          sent_at?: string | null
+          sent_count?: number
+          shop_id: string
+          status?: string
+          target_filter?: Json
+          updated_at?: string
+        }
+        Update: {
+          channel?: string
+          created_at?: string
+          id?: string
+          message?: string
+          name?: string
+          scheduled_at?: string | null
+          sent_at?: string | null
+          sent_count?: number
+          shop_id?: string
+          status?: string
+          target_filter?: Json
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaigns_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       conversations: {
         Row: {
           client_contact: string | null
@@ -581,6 +684,56 @@ export type Database = {
           },
         ]
       }
+      promo_codes: {
+        Row: {
+          active: boolean
+          code: string
+          created_at: string
+          expires_at: string | null
+          id: string
+          kind: string
+          max_uses: number | null
+          shop_id: string
+          updated_at: string
+          used_count: number
+          value: number
+        }
+        Insert: {
+          active?: boolean
+          code: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          kind?: string
+          max_uses?: number | null
+          shop_id: string
+          updated_at?: string
+          used_count?: number
+          value?: number
+        }
+        Update: {
+          active?: boolean
+          code?: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          kind?: string
+          max_uses?: number | null
+          shop_id?: string
+          updated_at?: string
+          used_count?: number
+          value?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "promo_codes_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       rate_limits: {
         Row: {
           count: number
@@ -605,16 +758,66 @@ export type Database = {
         }
         Relationships: []
       }
+      referrals: {
+        Row: {
+          code: string
+          created_at: string
+          id: string
+          invited_contact: string | null
+          referrer_contact: string
+          reward_points: number
+          shop_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          id?: string
+          invited_contact?: string | null
+          referrer_contact: string
+          reward_points?: number
+          shop_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          id?: string
+          invited_contact?: string | null
+          referrer_contact?: string
+          reward_points?: number
+          shop_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "referrals_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       shops: {
         Row: {
+          business_hours: Json
           color: string
           created_at: string
           currency: string
+          delivery_zones: Json
           greeting: string
           id: string
+          logo_url: string | null
           max_remise: number
           name: string
+          onboarding_done: boolean
+          onboarding_step: number
           owner_id: string
+          payment_methods: Json
           rachida_name: string
           slug: string
           system_prompt_extra: string | null
@@ -622,14 +825,20 @@ export type Database = {
           whatsapp: string | null
         }
         Insert: {
+          business_hours?: Json
           color?: string
           created_at?: string
           currency?: string
+          delivery_zones?: Json
           greeting?: string
           id?: string
+          logo_url?: string | null
           max_remise?: number
           name: string
+          onboarding_done?: boolean
+          onboarding_step?: number
           owner_id: string
+          payment_methods?: Json
           rachida_name?: string
           slug: string
           system_prompt_extra?: string | null
@@ -637,14 +846,20 @@ export type Database = {
           whatsapp?: string | null
         }
         Update: {
+          business_hours?: Json
           color?: string
           created_at?: string
           currency?: string
+          delivery_zones?: Json
           greeting?: string
           id?: string
+          logo_url?: string | null
           max_remise?: number
           name?: string
+          onboarding_done?: boolean
+          onboarding_step?: number
           owner_id?: string
+          payment_methods?: Json
           rachida_name?: string
           slug?: string
           system_prompt_extra?: string | null
