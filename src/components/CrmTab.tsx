@@ -4,8 +4,8 @@ import { toast } from "sonner";
 import { MessageCircle, Plus, Trash2, Users } from "lucide-react";
 
 type Customer = {
-  id: string; name: string | null; contact: string | null;
-  total_spent: number | null; orders_count: number | null; tags: string[] | null;
+  id: string; customer_name: string | null; customer_contact: string;
+  total_spent: number; orders_count: number; tags: string[];
   last_order_at: string | null; notes: string | null;
 };
 type Segment = { id: string; name: string; color: string };
@@ -18,13 +18,20 @@ export function CrmTab({ shopId, whatsapp }: { shopId: string; whatsapp: string 
   const [newSeg, setNewSeg] = useState("");
 
   const load = async () => {
-    const [{ data: c }, { data: s }] = await Promise.all([
-      supabase.from("customer_profiles").select("id,name,contact,total_spent,orders_count,tags,last_order_at,notes")
-        .eq("shop_id", shopId).order("total_spent", { ascending: false }).limit(200),
+    // customer_profiles has no orders_count/total_spent/last_order_at directly; join with loyalty via contact.
+    const [{ data: profiles }, { data: loyalty }, { data: segs }] = await Promise.all([
+      supabase.from("customer_profiles").select("id,customer_name,customer_contact,tags,notes").eq("shop_id", shopId).limit(300),
+      supabase.from("loyalty").select("customer_contact,total_spent,orders_count,last_order_at").eq("shop_id", shopId),
       supabase.from("customer_segments").select("id,name,color").eq("shop_id", shopId),
     ]);
-    setCustomers((c as Customer[]) || []);
-    setSegments((s as Segment[]) || []);
+    const byContact = new Map<string, { total_spent: number; orders_count: number; last_order_at: string | null }>();
+    for (const l of loyalty || []) byContact.set(l.customer_contact, { total_spent: l.total_spent || 0, orders_count: l.orders_count || 0, last_order_at: l.last_order_at });
+    const merged: Customer[] = (profiles || []).map((p) => {
+      const stats = byContact.get(p.customer_contact) || { total_spent: 0, orders_count: 0, last_order_at: null };
+      return { id: p.id, customer_name: p.customer_name, customer_contact: p.customer_contact, tags: p.tags || [], notes: p.notes, ...stats };
+    }).sort((a, b) => b.total_spent - a.total_spent);
+    setCustomers(merged);
+    setSegments((segs as Segment[]) || []);
   };
   useEffect(() => { void load(); }, [shopId]);
 

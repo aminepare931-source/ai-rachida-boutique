@@ -16,13 +16,16 @@ export function LoyaltyTab({ shopId }: { shopId: string }) {
     (async () => {
       const { data: shop } = await supabase.from("shops").select("loyalty_enabled, loyalty_points_per_unit, loyalty_thresholds").eq("id", shopId).limit(1);
       const s = shop?.[0];
+      let currentRate = 1;
       if (s) {
         setEnabled(!!s.loyalty_enabled);
-        setRate(Number(s.loyalty_points_per_unit) || 1);
+        currentRate = Number(s.loyalty_points_per_unit) || 1;
+        setRate(currentRate);
         setThresholds(Array.isArray(s.loyalty_thresholds) ? (s.loyalty_thresholds as unknown as Threshold[]) : []);
       }
-      const { data: l } = await supabase.from("loyalty").select("id, customer_contact, points").eq("shop_id", shopId).order("points", { ascending: false }).limit(50);
-      setMembers((l as Array<{ id: string; customer_contact: string; points: number }>) || []);
+      const { data: l } = await supabase.from("loyalty").select("id, customer_contact, total_spent").eq("shop_id", shopId).order("total_spent", { ascending: false }).limit(50);
+      const rows = (l as Array<{ id: string; customer_contact: string; total_spent: number | null }> | null) || [];
+      setMembers(rows.map((r) => ({ id: r.id, customer_contact: r.customer_contact, points: Math.floor(((r.total_spent || 0) / 1000) * currentRate) })));
     })();
   }, [shopId]);
 
