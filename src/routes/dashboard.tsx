@@ -8,7 +8,7 @@ import {
   Bot, Settings, Package, MessageSquare, ShoppingBag, Code, LogOut, Plus, Trash2, Upload,
   LayoutDashboard, Users, HelpCircle, Sparkles, TrendingUp, Flame,
   CheckCircle2, XCircle, Loader2, Mail, Globe, Globe2, Copy, ExternalLink, QrCode, Share2, Wand2,
-  Wallet, Megaphone, Image as ImageIcon,
+  Wallet, Megaphone, Image as ImageIcon, Award, CalendarClock,
 } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { checkInstall } from "@/lib/install-checker.functions";
@@ -22,6 +22,10 @@ import { MirrorTab } from "@/components/MirrorTab";
 import { PaymentsTab } from "@/components/PaymentsTab";
 import { MarketingTab } from "@/components/MarketingTab";
 import { OnboardingWizard } from "@/components/OnboardingWizard";
+import { CreativeTab } from "@/components/CreativeTab";
+import { LoyaltyTab } from "@/components/LoyaltyTab";
+import { ScheduleTab } from "@/components/ScheduleTab";
+import { CrmTab } from "@/components/CrmTab";
 
 export const Route = createFileRoute("/dashboard")({
   head: () => ({ meta: [{ title: "Dashboard — Rachida AI" }] }),
@@ -49,8 +53,12 @@ const TABS = [
   { key: "leads", label: "Leads", icon: Flame },
   { key: "catalog", label: "Catalogue", icon: Package },
   { key: "orders", label: "Commandes", icon: ShoppingBag },
+  { key: "crm", label: "Clients (CRM)", icon: Users },
+  { key: "loyalty", label: "Fidélité", icon: Award },
   { key: "payments", label: "Paiements", icon: Wallet },
   { key: "marketing", label: "Marketing", icon: Megaphone },
+  { key: "schedule", label: "Agenda posts", icon: CalendarClock },
+  { key: "creative", label: "Créativité IA", icon: ImageIcon },
   { key: "tools", label: "Outils IA", icon: Wand2 },
   { key: "mirror", label: "Site 1-clic", icon: Globe2 },
   { key: "faq", label: "FAQ", icon: HelpCircle },
@@ -210,7 +218,10 @@ function Dashboard() {
               {tab === "mirror" && <MirrorTab shopId={shop.id} />}
               {tab === "payments" && <PaymentsTab shopId={shop.id} />}
               {tab === "marketing" && <MarketingTab shopId={shop.id} whatsapp={shop.whatsapp} />}
-            </motion.div>
+              {tab === "creative" && <CreativeTab shopId={shop.id} whatsapp={shop.whatsapp} />}
+              {tab === "loyalty" && <LoyaltyTab shopId={shop.id} />}
+              {tab === "schedule" && <ScheduleTab shopId={shop.id} whatsapp={shop.whatsapp} />}
+              {tab === "crm" && <CrmTab shopId={shop.id} whatsapp={shop.whatsapp} />}
           </AnimatePresence>
         </main>
       </div>
