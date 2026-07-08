@@ -170,6 +170,7 @@ export type Database = {
           notes: string | null
           preferences: Json | null
           shop_id: string
+          tags: string[]
           total_conversations: number | null
           updated_at: string
         }
@@ -184,6 +185,7 @@ export type Database = {
           notes?: string | null
           preferences?: Json | null
           shop_id: string
+          tags?: string[]
           total_conversations?: number | null
           updated_at?: string
         }
@@ -198,12 +200,51 @@ export type Database = {
           notes?: string | null
           preferences?: Json | null
           shop_id?: string
+          tags?: string[]
           total_conversations?: number | null
           updated_at?: string
         }
         Relationships: [
           {
             foreignKeyName: "customer_profiles_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      customer_segments: {
+        Row: {
+          color: string
+          created_at: string
+          criteria: Json
+          id: string
+          name: string
+          shop_id: string
+          updated_at: string
+        }
+        Insert: {
+          color?: string
+          created_at?: string
+          criteria?: Json
+          id?: string
+          name: string
+          shop_id: string
+          updated_at?: string
+        }
+        Update: {
+          color?: string
+          created_at?: string
+          criteria?: Json
+          id?: string
+          name?: string
+          shop_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_segments_shop_id_fkey"
             columns: ["shop_id"]
             isOneToOne: false
             referencedRelation: "shops"
@@ -289,6 +330,47 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "faq_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      flyers: {
+        Row: {
+          caption: string | null
+          created_at: string
+          id: string
+          image_url: string | null
+          prompt: string
+          shop_id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          caption?: string | null
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          prompt: string
+          shop_id: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          caption?: string | null
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          prompt?: string
+          shop_id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "flyers_shop_id_fkey"
             columns: ["shop_id"]
             isOneToOne: false
             referencedRelation: "shops"
@@ -802,6 +884,50 @@ export type Database = {
           },
         ]
       }
+      scheduled_posts: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          media_url: string | null
+          platform: string
+          scheduled_for: string
+          shop_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          media_url?: string | null
+          platform: string
+          scheduled_for: string
+          shop_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          media_url?: string | null
+          platform?: string
+          scheduled_for?: string
+          shop_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scheduled_posts_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       shops: {
         Row: {
           business_hours: Json
@@ -812,6 +938,9 @@ export type Database = {
           greeting: string
           id: string
           logo_url: string | null
+          loyalty_enabled: boolean
+          loyalty_points_per_unit: number
+          loyalty_thresholds: Json
           max_remise: number
           name: string
           onboarding_done: boolean
@@ -833,6 +962,9 @@ export type Database = {
           greeting?: string
           id?: string
           logo_url?: string | null
+          loyalty_enabled?: boolean
+          loyalty_points_per_unit?: number
+          loyalty_thresholds?: Json
           max_remise?: number
           name: string
           onboarding_done?: boolean
@@ -854,6 +986,9 @@ export type Database = {
           greeting?: string
           id?: string
           logo_url?: string | null
+          loyalty_enabled?: boolean
+          loyalty_points_per_unit?: number
+          loyalty_thresholds?: Json
           max_remise?: number
           name?: string
           onboarding_done?: boolean
