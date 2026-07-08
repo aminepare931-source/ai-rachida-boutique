@@ -59,12 +59,12 @@ export function CrmTab({ shopId, whatsapp }: { shopId: string; whatsapp: string 
 
   const filtered = useMemo(() => customers.filter((c) => {
     if (filter && !(c.tags || []).includes(filter)) return false;
-    if (q && !((c.name || "") + " " + (c.contact || "")).toLowerCase().includes(q.toLowerCase())) return false;
+    if (q && !((c.customer_name || "") + " " + (c.customer_contact || "")).toLowerCase().includes(q.toLowerCase())) return false;
     return true;
   }), [customers, filter, q]);
 
   const waSend = (c: Customer) => {
-    const phone = (c.contact || "").replace(/\D/g, "") || (whatsapp || "").replace(/\D/g, "");
+    const phone = (c.customer_contact || "").replace(/\D/g, "") || (whatsapp || "").replace(/\D/g, "");
     if (!phone) return toast.error("Aucun numéro");
     window.open(`https://wa.me/${phone}`, "_blank");
   };
@@ -109,8 +109,8 @@ export function CrmTab({ shopId, whatsapp }: { shopId: string; whatsapp: string 
               <div key={c.id} className="p-3 rounded-lg bg-black/30 border border-white/5">
                 <div className="flex flex-wrap gap-2 items-start">
                   <div className="flex-1 min-w-[200px]">
-                    <div className="font-medium">{c.name || c.contact || "Client anonyme"}</div>
-                    <div className="text-xs text-white/50">{c.contact}</div>
+                    <div className="font-medium">{c.customer_name || c.customer_contact || "Client anonyme"}</div>
+                    <div className="text-xs text-white/50">{c.customer_contact}</div>
                     <div className="text-xs text-white/50 mt-1">
                       {c.orders_count || 0} commandes • {(c.total_spent || 0).toLocaleString()} FCFA
                       {c.last_order_at && " • dernier " + new Date(c.last_order_at).toLocaleDateString("fr-FR")}
