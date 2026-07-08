@@ -222,6 +222,7 @@ function Dashboard() {
               {tab === "loyalty" && <LoyaltyTab shopId={shop.id} />}
               {tab === "schedule" && <ScheduleTab shopId={shop.id} whatsapp={shop.whatsapp} />}
               {tab === "crm" && <CrmTab shopId={shop.id} whatsapp={shop.whatsapp} />}
+            </motion.div>
           </AnimatePresence>
         </main>
       </div>
