@@ -26,6 +26,7 @@ import { CreativeTab } from "@/components/CreativeTab";
 import { LoyaltyTab } from "@/components/LoyaltyTab";
 import { ScheduleTab } from "@/components/ScheduleTab";
 import { CrmTab } from "@/components/CrmTab";
+import { InstallationsTab } from "@/components/InstallationsTab";
 
 export const Route = createFileRoute("/dashboard")({
   head: () => ({ meta: [{ title: "Dashboard — Rachida AI" }] }),
@@ -87,6 +88,7 @@ const TAB_GROUPS = [
     items: [
       { key: "mirror", label: "Site prêt en 1 clic", icon: Globe2 },
       { key: "integration", label: "Coller sur mon site", icon: Code },
+      { key: "installations", label: "Sites qui m'utilisent", icon: CheckCircle2 },
     ],
   },
 ] as const;
@@ -258,6 +260,7 @@ function Dashboard() {
               {tab === "loyalty" && <LoyaltyTab shopId={shop.id} />}
               {tab === "schedule" && <ScheduleTab shopId={shop.id} whatsapp={shop.whatsapp} />}
               {tab === "crm" && <CrmTab shopId={shop.id} whatsapp={shop.whatsapp} />}
+              {tab === "installations" && <InstallationsTab shopId={shop.id} shopSlug={shop.slug} />}
             </motion.div>
           </AnimatePresence>
         </main>

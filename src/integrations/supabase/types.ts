@@ -378,6 +378,71 @@ export type Database = {
           },
         ]
       }
+      installations: {
+        Row: {
+          created_at: string
+          first_seen_at: string
+          hits: number
+          id: string
+          last_error: string | null
+          last_seen_at: string
+          parent_host: string
+          parent_url: string
+          scraped_at: string | null
+          shop_id: string | null
+          shop_slug: string
+          site_info: Json
+          status: string
+          title: string | null
+          updated_at: string
+          user_agent: string | null
+        }
+        Insert: {
+          created_at?: string
+          first_seen_at?: string
+          hits?: number
+          id?: string
+          last_error?: string | null
+          last_seen_at?: string
+          parent_host: string
+          parent_url: string
+          scraped_at?: string | null
+          shop_id?: string | null
+          shop_slug: string
+          site_info?: Json
+          status?: string
+          title?: string | null
+          updated_at?: string
+          user_agent?: string | null
+        }
+        Update: {
+          created_at?: string
+          first_seen_at?: string
+          hits?: number
+          id?: string
+          last_error?: string | null
+          last_seen_at?: string
+          parent_host?: string
+          parent_url?: string
+          scraped_at?: string | null
+          shop_id?: string | null
+          shop_slug?: string
+          site_info?: Json
+          status?: string
+          title?: string | null
+          updated_at?: string
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "installations_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lead_scores: {
         Row: {
           conversation_id: string
