@@ -90,9 +90,11 @@ const TAB_GROUPS = [
     ],
   },
 ] as const;
-type TabItem = { key: TabKey; label: string; icon: typeof LayoutDashboard };
-const TAB_GROUPS_TYPED: { title: string; items: TabItem[] }[] = TAB_GROUPS as unknown as { title: string; items: TabItem[] }[];
-const TABS_TYPED: TabItem[] = TABS as unknown as TabItem[];
+
+type TabItem = { key: string; label: string; icon: typeof LayoutDashboard };
+const TAB_GROUPS_T = TAB_GROUPS as ReadonlyArray<{ title: string; items: ReadonlyArray<TabItem> }>;
+const TABS: ReadonlyArray<TabItem> = TAB_GROUPS_T.flatMap((g) => g.items);
+type TabKey = string;
 function Dashboard() {
   const nav = useNavigate();
   const [session, setSession] = useState<Session | null>(null);
