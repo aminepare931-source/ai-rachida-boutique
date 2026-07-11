@@ -47,27 +47,54 @@ type Order = { id: string; client_name: string | null; client_contact: string | 
 type LeadScore = { id: string; conversation_id: string; score: number; reasons: string | null; status: string | null };
 type Faq = { id: string; question: string; answer: string; keywords: string | null };
 
-const TABS = [
-  { key: "overview", label: "Vue d'ensemble", icon: LayoutDashboard },
-  { key: "conversations", label: "Conversations", icon: MessageSquare },
-  { key: "leads", label: "Leads", icon: Flame },
-  { key: "catalog", label: "Catalogue", icon: Package },
-  { key: "orders", label: "Commandes", icon: ShoppingBag },
-  { key: "crm", label: "Clients (CRM)", icon: Users },
-  { key: "loyalty", label: "Fidélité", icon: Award },
-  { key: "payments", label: "Paiements", icon: Wallet },
-  { key: "marketing", label: "Marketing", icon: Megaphone },
-  { key: "schedule", label: "Agenda posts", icon: CalendarClock },
-  { key: "creative", label: "Créativité IA", icon: ImageIcon },
-  { key: "tools", label: "Outils IA", icon: Wand2 },
-  { key: "mirror", label: "Site 1-clic", icon: Globe2 },
-  { key: "faq", label: "FAQ", icon: HelpCircle },
-  { key: "shop", label: "IA & Boutique", icon: Sparkles },
-  { key: "integration", label: "Intégration", icon: Code },
+const TAB_GROUPS = [
+  {
+    title: "Accueil",
+    items: [
+      { key: "overview", label: "Vue d'ensemble", icon: LayoutDashboard },
+    ],
+  },
+  {
+    title: "Mes ventes",
+    items: [
+      { key: "conversations", label: "Conversations", icon: MessageSquare },
+      { key: "leads", label: "Clients chauds", icon: Flame },
+      { key: "orders", label: "Commandes", icon: ShoppingBag },
+      { key: "crm", label: "Mes clients", icon: Users },
+    ],
+  },
+  {
+    title: "Ma boutique",
+    items: [
+      { key: "catalog", label: "Produits", icon: Package },
+      { key: "shop", label: "Rachida & boutique", icon: Sparkles },
+      { key: "faq", label: "Questions fréquentes", icon: HelpCircle },
+      { key: "payments", label: "Paiements", icon: Wallet },
+    ],
+  },
+  {
+    title: "Faire grandir mes ventes",
+    items: [
+      { key: "marketing", label: "Promos & pubs", icon: Megaphone },
+      { key: "loyalty", label: "Fidélité", icon: Award },
+      { key: "creative", label: "Affiches & voix IA", icon: ImageIcon },
+      { key: "schedule", label: "Agenda posts", icon: CalendarClock },
+      { key: "tools", label: "Autres outils IA", icon: Wand2 },
+    ],
+  },
+  {
+    title: "Installer Rachida",
+    items: [
+      { key: "mirror", label: "Site prêt en 1 clic", icon: Globe2 },
+      { key: "integration", label: "Coller sur mon site", icon: Code },
+    ],
+  },
 ] as const;
 
-type TabKey = (typeof TABS)[number]["key"];
-
+type TabItem = { key: string; label: string; icon: typeof LayoutDashboard };
+const TAB_GROUPS_T = TAB_GROUPS as ReadonlyArray<{ title: string; items: ReadonlyArray<TabItem> }>;
+const TABS: ReadonlyArray<TabItem> = TAB_GROUPS_T.flatMap((g) => g.items);
+type TabKey = string;
 function Dashboard() {
   const nav = useNavigate();
   const [session, setSession] = useState<Session | null>(null);
@@ -147,30 +174,39 @@ function Dashboard() {
             Rachida
           </Link>
 
-          <nav className="flex-1 px-3 space-y-1">
-            {TABS.map((t) => {
-              const Icon = t.icon;
-              const active = tab === t.key;
-              return (
-                <button
-                  key={t.key}
-                  onClick={() => setTab(t.key)}
-                  className={`relative w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
-                    active ? "text-white" : "text-white/50 hover:text-white/90 hover:bg-white/5"
-                  }`}
-                >
-                  {active && (
-                    <motion.div
-                      layoutId="active-tab"
-                      className="absolute inset-0 rounded-xl bg-gradient-to-r from-violet-500/20 to-cyan-500/10 border border-violet-400/30"
-                      transition={{ type: "spring", stiffness: 400, damping: 30 }}
-                    />
-                  )}
-                  <Icon size={16} className="relative z-10" />
-                  <span className="relative z-10">{t.label}</span>
-                </button>
-              );
-            })}
+          <nav className="flex-1 px-3 space-y-4 overflow-y-auto pb-4">
+            {TAB_GROUPS_T.map((group) => (
+              <div key={group.title}>
+                <div className="px-3 pb-1 text-[10px] uppercase tracking-wider text-white/30 font-semibold">
+                  {group.title}
+                </div>
+                <div className="space-y-1">
+                  {group.items.map((t) => {
+                    const Icon = t.icon;
+                    const active = tab === t.key;
+                    return (
+                      <button
+                        key={t.key}
+                        onClick={() => setTab(t.key)}
+                        className={`relative w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium transition-all ${
+                          active ? "text-white" : "text-white/50 hover:text-white/90 hover:bg-white/5"
+                        }`}
+                      >
+                        {active && (
+                          <motion.div
+                            layoutId="active-tab"
+                            className="absolute inset-0 rounded-xl bg-gradient-to-r from-violet-500/20 to-cyan-500/10 border border-violet-400/30"
+                            transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                          />
+                        )}
+                        <Icon size={16} className="relative z-10" />
+                        <span className="relative z-10">{t.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
           </nav>
 
           <div className="p-4 border-t border-white/5">
