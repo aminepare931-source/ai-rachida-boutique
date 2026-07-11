@@ -47,25 +47,51 @@ type Order = { id: string; client_name: string | null; client_contact: string | 
 type LeadScore = { id: string; conversation_id: string; score: number; reasons: string | null; status: string | null };
 type Faq = { id: string; question: string; answer: string; keywords: string | null };
 
-const TABS = [
-  { key: "overview", label: "Vue d'ensemble", icon: LayoutDashboard },
-  { key: "conversations", label: "Conversations", icon: MessageSquare },
-  { key: "leads", label: "Leads", icon: Flame },
-  { key: "catalog", label: "Catalogue", icon: Package },
-  { key: "orders", label: "Commandes", icon: ShoppingBag },
-  { key: "crm", label: "Clients (CRM)", icon: Users },
-  { key: "loyalty", label: "Fidélité", icon: Award },
-  { key: "payments", label: "Paiements", icon: Wallet },
-  { key: "marketing", label: "Marketing", icon: Megaphone },
-  { key: "schedule", label: "Agenda posts", icon: CalendarClock },
-  { key: "creative", label: "Créativité IA", icon: ImageIcon },
-  { key: "tools", label: "Outils IA", icon: Wand2 },
-  { key: "mirror", label: "Site 1-clic", icon: Globe2 },
-  { key: "faq", label: "FAQ", icon: HelpCircle },
-  { key: "shop", label: "IA & Boutique", icon: Sparkles },
-  { key: "integration", label: "Intégration", icon: Code },
+const TAB_GROUPS = [
+  {
+    title: "Accueil",
+    items: [
+      { key: "overview", label: "Vue d'ensemble", icon: LayoutDashboard },
+    ],
+  },
+  {
+    title: "Mes ventes",
+    items: [
+      { key: "conversations", label: "Conversations", icon: MessageSquare },
+      { key: "leads", label: "Clients chauds", icon: Flame },
+      { key: "orders", label: "Commandes", icon: ShoppingBag },
+      { key: "crm", label: "Mes clients", icon: Users },
+    ],
+  },
+  {
+    title: "Ma boutique",
+    items: [
+      { key: "catalog", label: "Produits", icon: Package },
+      { key: "shop", label: "Rachida & boutique", icon: Sparkles },
+      { key: "faq", label: "Questions fréquentes", icon: HelpCircle },
+      { key: "payments", label: "Paiements", icon: Wallet },
+    ],
+  },
+  {
+    title: "Faire grandir mes ventes",
+    items: [
+      { key: "marketing", label: "Promos & pubs", icon: Megaphone },
+      { key: "loyalty", label: "Fidélité", icon: Award },
+      { key: "creative", label: "Affiches & voix IA", icon: ImageIcon },
+      { key: "schedule", label: "Agenda posts", icon: CalendarClock },
+      { key: "tools", label: "Autres outils IA", icon: Wand2 },
+    ],
+  },
+  {
+    title: "Installer Rachida",
+    items: [
+      { key: "mirror", label: "Site prêt en 1 clic", icon: Globe2 },
+      { key: "integration", label: "Coller sur mon site", icon: Code },
+    ],
+  },
 ] as const;
 
+const TABS = TAB_GROUPS.flatMap((g) => g.items);
 type TabKey = (typeof TABS)[number]["key"];
 
 function Dashboard() {
