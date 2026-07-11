@@ -17,6 +17,7 @@ import { Route as MSlugRouteImport } from './routes/m.$slug'
 import { Route as ApiPublicShopConfigRouteImport } from './routes/api/public/shop-config'
 import { Route as ApiPublicRachidaVisionRouteImport } from './routes/api/public/rachida-vision'
 import { Route as ApiPublicRachidaSearchRouteImport } from './routes/api/public/rachida-search'
+import { Route as ApiPublicRachidaInstallPingRouteImport } from './routes/api/public/rachida-install-ping'
 import { Route as ApiPublicRachidaChatRouteImport } from './routes/api/public/rachida-chat'
 import { Route as ApiPublicMirrorRouteImport } from './routes/api/public/mirror'
 import { Route as ApiPublicHooksDailyReportRouteImport } from './routes/api/public/hooks/daily-report'
@@ -61,6 +62,12 @@ const ApiPublicRachidaSearchRoute = ApiPublicRachidaSearchRouteImport.update({
   path: '/api/public/rachida-search',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicRachidaInstallPingRoute =
+  ApiPublicRachidaInstallPingRouteImport.update({
+    id: '/api/public/rachida-install-ping',
+    path: '/api/public/rachida-install-ping',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicRachidaChatRoute = ApiPublicRachidaChatRouteImport.update({
   id: '/api/public/rachida-chat',
   path: '/api/public/rachida-chat',
@@ -86,6 +93,7 @@ export interface FileRoutesByFullPath {
   '/shop/$slug': typeof ShopSlugRoute
   '/api/public/mirror': typeof ApiPublicMirrorRoute
   '/api/public/rachida-chat': typeof ApiPublicRachidaChatRoute
+  '/api/public/rachida-install-ping': typeof ApiPublicRachidaInstallPingRoute
   '/api/public/rachida-search': typeof ApiPublicRachidaSearchRoute
   '/api/public/rachida-vision': typeof ApiPublicRachidaVisionRoute
   '/api/public/shop-config': typeof ApiPublicShopConfigRoute
@@ -99,6 +107,7 @@ export interface FileRoutesByTo {
   '/shop/$slug': typeof ShopSlugRoute
   '/api/public/mirror': typeof ApiPublicMirrorRoute
   '/api/public/rachida-chat': typeof ApiPublicRachidaChatRoute
+  '/api/public/rachida-install-ping': typeof ApiPublicRachidaInstallPingRoute
   '/api/public/rachida-search': typeof ApiPublicRachidaSearchRoute
   '/api/public/rachida-vision': typeof ApiPublicRachidaVisionRoute
   '/api/public/shop-config': typeof ApiPublicShopConfigRoute
@@ -113,6 +122,7 @@ export interface FileRoutesById {
   '/shop/$slug': typeof ShopSlugRoute
   '/api/public/mirror': typeof ApiPublicMirrorRoute
   '/api/public/rachida-chat': typeof ApiPublicRachidaChatRoute
+  '/api/public/rachida-install-ping': typeof ApiPublicRachidaInstallPingRoute
   '/api/public/rachida-search': typeof ApiPublicRachidaSearchRoute
   '/api/public/rachida-vision': typeof ApiPublicRachidaVisionRoute
   '/api/public/shop-config': typeof ApiPublicShopConfigRoute
@@ -128,6 +138,7 @@ export interface FileRouteTypes {
     | '/shop/$slug'
     | '/api/public/mirror'
     | '/api/public/rachida-chat'
+    | '/api/public/rachida-install-ping'
     | '/api/public/rachida-search'
     | '/api/public/rachida-vision'
     | '/api/public/shop-config'
@@ -141,6 +152,7 @@ export interface FileRouteTypes {
     | '/shop/$slug'
     | '/api/public/mirror'
     | '/api/public/rachida-chat'
+    | '/api/public/rachida-install-ping'
     | '/api/public/rachida-search'
     | '/api/public/rachida-vision'
     | '/api/public/shop-config'
@@ -154,6 +166,7 @@ export interface FileRouteTypes {
     | '/shop/$slug'
     | '/api/public/mirror'
     | '/api/public/rachida-chat'
+    | '/api/public/rachida-install-ping'
     | '/api/public/rachida-search'
     | '/api/public/rachida-vision'
     | '/api/public/shop-config'
@@ -168,6 +181,7 @@ export interface RootRouteChildren {
   ShopSlugRoute: typeof ShopSlugRoute
   ApiPublicMirrorRoute: typeof ApiPublicMirrorRoute
   ApiPublicRachidaChatRoute: typeof ApiPublicRachidaChatRoute
+  ApiPublicRachidaInstallPingRoute: typeof ApiPublicRachidaInstallPingRoute
   ApiPublicRachidaSearchRoute: typeof ApiPublicRachidaSearchRoute
   ApiPublicRachidaVisionRoute: typeof ApiPublicRachidaVisionRoute
   ApiPublicShopConfigRoute: typeof ApiPublicShopConfigRoute
@@ -232,6 +246,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicRachidaSearchRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/rachida-install-ping': {
+      id: '/api/public/rachida-install-ping'
+      path: '/api/public/rachida-install-ping'
+      fullPath: '/api/public/rachida-install-ping'
+      preLoaderRoute: typeof ApiPublicRachidaInstallPingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/rachida-chat': {
       id: '/api/public/rachida-chat'
       path: '/api/public/rachida-chat'
@@ -264,6 +285,7 @@ const rootRouteChildren: RootRouteChildren = {
   ShopSlugRoute: ShopSlugRoute,
   ApiPublicMirrorRoute: ApiPublicMirrorRoute,
   ApiPublicRachidaChatRoute: ApiPublicRachidaChatRoute,
+  ApiPublicRachidaInstallPingRoute: ApiPublicRachidaInstallPingRoute,
   ApiPublicRachidaSearchRoute: ApiPublicRachidaSearchRoute,
   ApiPublicRachidaVisionRoute: ApiPublicRachidaVisionRoute,
   ApiPublicShopConfigRoute: ApiPublicShopConfigRoute,

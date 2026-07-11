@@ -419,6 +419,22 @@
   };
   render();
 
+  // Install beacon — signals to the shop owner (admin) that Rachida has been embedded on this site.
+  try {
+    var parentUrl = (window.location && window.location.href) || '';
+    if (parentUrl && !/^https?:\/\/(localhost|127\.|0\.0\.0\.0)/i.test(parentUrl)) {
+      var payload = JSON.stringify({ shopSlug: shopSlug, parentUrl: parentUrl, userAgent: navigator.userAgent || '' });
+      var beaconUrl = baseUrl + '/api/public/rachida-install-ping';
+      var sent = false;
+      if (navigator.sendBeacon) {
+        try { sent = navigator.sendBeacon(beaconUrl, new Blob([payload], { type: 'application/json' })); } catch (e) {}
+      }
+      if (!sent) {
+        fetch(beaconUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: payload, keepalive: true }).catch(function () {});
+      }
+    }
+  } catch (e) {}
+
   // Load real config (override defaults if found)
   fetch(baseUrl + '/api/public/shop-config?shop=' + encodeURIComponent(shopSlug))
     .then(function (r) { return r.ok ? r.json() : null; })
