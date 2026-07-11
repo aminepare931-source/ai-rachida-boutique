@@ -174,30 +174,39 @@ function Dashboard() {
             Rachida
           </Link>
 
-          <nav className="flex-1 px-3 space-y-1">
-            {TABS.map((t) => {
-              const Icon = t.icon;
-              const active = tab === t.key;
-              return (
-                <button
-                  key={t.key}
-                  onClick={() => setTab(t.key)}
-                  className={`relative w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
-                    active ? "text-white" : "text-white/50 hover:text-white/90 hover:bg-white/5"
-                  }`}
-                >
-                  {active && (
-                    <motion.div
-                      layoutId="active-tab"
-                      className="absolute inset-0 rounded-xl bg-gradient-to-r from-violet-500/20 to-cyan-500/10 border border-violet-400/30"
-                      transition={{ type: "spring", stiffness: 400, damping: 30 }}
-                    />
-                  )}
-                  <Icon size={16} className="relative z-10" />
-                  <span className="relative z-10">{t.label}</span>
-                </button>
-              );
-            })}
+          <nav className="flex-1 px-3 space-y-4 overflow-y-auto pb-4">
+            {TAB_GROUPS_T.map((group) => (
+              <div key={group.title}>
+                <div className="px-3 pb-1 text-[10px] uppercase tracking-wider text-white/30 font-semibold">
+                  {group.title}
+                </div>
+                <div className="space-y-1">
+                  {group.items.map((t) => {
+                    const Icon = t.icon;
+                    const active = tab === t.key;
+                    return (
+                      <button
+                        key={t.key}
+                        onClick={() => setTab(t.key)}
+                        className={`relative w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium transition-all ${
+                          active ? "text-white" : "text-white/50 hover:text-white/90 hover:bg-white/5"
+                        }`}
+                      >
+                        {active && (
+                          <motion.div
+                            layoutId="active-tab"
+                            className="absolute inset-0 rounded-xl bg-gradient-to-r from-violet-500/20 to-cyan-500/10 border border-violet-400/30"
+                            transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                          />
+                        )}
+                        <Icon size={16} className="relative z-10" />
+                        <span className="relative z-10">{t.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
           </nav>
 
           <div className="p-4 border-t border-white/5">
