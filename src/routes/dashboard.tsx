@@ -90,10 +90,9 @@ const TAB_GROUPS = [
     ],
   },
 ] as const;
-
-const TABS = TAB_GROUPS.flatMap((g) => g.items);
-type TabKey = (typeof TABS)[number]["key"];
-
+type TabItem = { key: TabKey; label: string; icon: typeof LayoutDashboard };
+const TAB_GROUPS_TYPED: { title: string; items: TabItem[] }[] = TAB_GROUPS as unknown as { title: string; items: TabItem[] }[];
+const TABS_TYPED: TabItem[] = TABS as unknown as TabItem[];
 function Dashboard() {
   const nav = useNavigate();
   const [session, setSession] = useState<Session | null>(null);
