@@ -406,8 +406,10 @@ WhatsApp boutique : ${shop.whatsapp ?? "non configuré"}.
 ${langInstruction}
 
 ${memoryBlock}
-CATALOGUE FILTRÉ POUR CE MESSAGE :
+CATALOGUE ADMIN (produits enregistrés par le commerçant) :
 ${catalogText}
+${siteContextBlock}
+
 
 RÈGLES :
 - Recommande 1 à 3 produits maximum à la fois, avec nom + prix.
