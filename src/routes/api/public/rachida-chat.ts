@@ -18,6 +18,11 @@ type ChatBody = {
   messages: { role: "user" | "assistant" | "system"; content: string }[];
 };
 
+type CustomerProfileRow = { customer_name: string | null; language: string | null; budget_max: number | null; notes: string | null; total_conversations: number | null };
+type SiteProduct = { name: string; price?: number; image?: string; description?: string };
+type SiteInfo = { title?: string; description?: string; og_image?: string; products?: SiteProduct[] };
+
+
 function detectEmotion(text: string): string {
   const t = text.toLowerCase();
   if (/(merci|super|génial|parfait|content|heureux|aime|j'adore|trop bien)/.test(t)) return "positif";
