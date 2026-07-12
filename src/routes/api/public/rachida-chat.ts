@@ -349,7 +349,17 @@ export const Route = createFileRoute("/api/public/rachida-chat")({
 
         const catalogText = products && products.length
           ? products.map((p) => `- ${p.name} | ${p.price} ${shop.currency} | ${p.category ?? ""} ${p.gender ?? ""} ${p.color ?? ""} | stock:${p.stock}${p.description ? ` | ${p.description}` : ""}`).join("\n")
-          : "(aucun produit ne correspond exactement, propose une alternative et demande des précisions)";
+          : "(aucun produit dans l'admin de ce commerçant)";
+
+        const siteContextBlock = siteInfo
+          ? `\nSITE OÙ TU ES INTÉGRÉE (${parentHost}) :
+- Titre : ${siteInfo.title ?? "?"}
+- Description : ${siteInfo.description ?? "—"}
+${siteProducts.length ? `- Produits détectés sur ce site (source: page publique du site) :\n${siteProducts.slice(0, 20).map((p) => `  · ${p.name}${p.price != null ? ` — ${p.price}` : ""}${p.description ? ` — ${p.description.slice(0, 120)}` : ""}`).join("\n")}` : "- Aucun produit structuré détecté sur ce site."}
+
+IMPORTANT : Ce site peut avoir des produits DIFFÉRENTS de l'admin. Si le client demande un produit et qu'il apparaît sur CE SITE (montres, etc.) mais pas dans l'admin, confirme qu'il est disponible et propose de commander via WhatsApp. Ne dis JAMAIS "on n'a pas ce produit" si tu le vois listé ci-dessus.`
+          : "";
+
 
         const memoryBlock = customerProfile
           ? `MÉMOIRE CLIENT :
