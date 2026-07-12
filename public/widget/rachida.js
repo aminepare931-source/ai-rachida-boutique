@@ -352,6 +352,7 @@
         conversationId: state.conversationId,
         clientName: state.clientName,
         clientContact: state.clientContact,
+        parentUrl: (window.location && window.location.href) || null,
         messages: state.messages,
       }),
     });

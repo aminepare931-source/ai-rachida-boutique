@@ -14,8 +14,14 @@ type ChatBody = {
   conversationId?: string;
   clientName?: string;
   clientContact?: string;
+  parentUrl?: string | null;
   messages: { role: "user" | "assistant" | "system"; content: string }[];
 };
+
+type CustomerProfileRow = { customer_name: string | null; language: string | null; budget_max: number | null; notes: string | null; total_conversations: number | null };
+type SiteProduct = { name: string; price?: number; image?: string; description?: string };
+type SiteInfo = { title?: string; description?: string; og_image?: string; products?: SiteProduct[] };
+
 
 function detectEmotion(text: string): string {
   const t = text.toLowerCase();
@@ -214,13 +220,38 @@ export const Route = createFileRoute("/api/public/rachida-chat")({
         const emotion = detectEmotion(lastUser);
         const language = detectLanguage(lastUser);
 
-        // FAQ first — instant answer if match (only for real customer conversations)
-        const { data: faqs } = await supabaseAdmin
-          .from("faq")
-          .select("question, answer, keywords")
-          .eq("shop_id", shop.id);
+        // Parallel reads: FAQ, customer profile, filtered catalog, and site-scraped products (if embedded on external site)
+        let productsQuery = supabaseAdmin.from("products").select("id, name, description, price, category, gender, color, stock").eq("shop_id", shop.id).eq("is_active", true);
+        if (criteria.priceMax) productsQuery = productsQuery.lte("price", criteria.priceMax);
+        if (criteria.priceMin) productsQuery = productsQuery.gte("price", criteria.priceMin);
+        if (criteria.gender) productsQuery = productsQuery.eq("gender", criteria.gender);
+        if (criteria.color) productsQuery = productsQuery.ilike("color", `%${criteria.color}%`);
+
+        let parentHost = "";
+        if (body.parentUrl) {
+          try { parentHost = new URL(body.parentUrl).host; } catch {}
+        }
+
+        const [faqsRes, profRes, productsRes, installRes] = await Promise.all([
+          isStorefront
+            ? supabaseAdmin.from("faq").select("question, answer, keywords").eq("shop_id", shop.id)
+            : Promise.resolve({ data: [] as { question: string; answer: string; keywords: string | null }[] }),
+          body.clientContact
+            ? supabaseAdmin.from("customer_profiles")
+                .select("customer_name, language, budget_max, notes, total_conversations")
+                .eq("shop_id", shop.id).eq("customer_contact", body.clientContact).limit(1)
+            : Promise.resolve({ data: [] as CustomerProfileRow[] }),
+          productsQuery.limit(15),
+          isStorefront && parentHost
+            ? supabaseAdmin.from("installations")
+                .select("site_info")
+                .eq("shop_id", shop.id).eq("parent_host", parentHost).limit(1)
+            : Promise.resolve({ data: [] as { site_info: SiteInfo | null }[] }),
+        ]);
+
+        const faqs = faqsRes.data ?? [];
         const lowerLast = lastUser.toLowerCase();
-        const faqMatch = isStorefront ? (faqs ?? []).find((f) => {
+        const faqMatch = isStorefront ? faqs.find((f) => {
           const kws = (f.keywords ?? "").toLowerCase().split(/[,;\s]+/).filter(Boolean);
           if (kws.some((k) => k && lowerLast.includes(k))) return true;
           const qWords = f.question.toLowerCase().split(/\W+/).filter((w) => w.length > 4);
@@ -228,27 +259,10 @@ export const Route = createFileRoute("/api/public/rachida-chat")({
           return hits >= 2;
         }) : undefined;
 
-        // Customer memory
-        type CustomerProfile = { customer_name: string | null; language: string | null; budget_max: number | null; notes: string | null; total_conversations: number | null };
-        let customerProfile: CustomerProfile | null = null;
-        if (body.clientContact) {
-          const { data: profRows } = await supabaseAdmin
-            .from("customer_profiles")
-            .select("customer_name, language, budget_max, notes, total_conversations")
-            .eq("shop_id", shop.id)
-            .eq("customer_contact", body.clientContact)
-            .limit(1);
-          const prof = profRows?.[0] ?? null;
-          customerProfile = prof;
-        }
-
-        // Filter catalog
-        let q = supabaseAdmin.from("products").select("id, name, description, price, category, gender, color, stock").eq("shop_id", shop.id).eq("is_active", true);
-        if (criteria.priceMax) q = q.lte("price", criteria.priceMax);
-        if (criteria.priceMin) q = q.gte("price", criteria.priceMin);
-        if (criteria.gender) q = q.eq("gender", criteria.gender);
-        if (criteria.color) q = q.ilike("color", `%${criteria.color}%`);
-        const { data: products } = await q.limit(15);
+        const customerProfile = (profRes.data?.[0] ?? null) as CustomerProfileRow | null;
+        const products = productsRes.data;
+        const siteInfo = (installRes.data?.[0]?.site_info ?? null) as SiteInfo | null;
+        const siteProducts = siteInfo?.products ?? [];
 
         // Conversation persistence
         let conversationId = body.conversationId;
@@ -263,54 +277,53 @@ export const Route = createFileRoute("/api/public/rachida-chat")({
             })
             .select("id")
             .limit(1);
-          const conv = convRows?.[0];
-          conversationId = conv?.id;
-        } else if (isStorefront && conversationId) {
-          await supabaseAdmin
-            .from("conversations")
-            .update({ emotion, client_name: body.clientName, client_contact: body.clientContact })
-            .eq("id", conversationId);
-        }
-        if (isStorefront && conversationId && lastUser) {
-          await supabaseAdmin.from("messages").insert({
-            conversation_id: conversationId,
-            role: "user",
-            content: lastUser,
-          });
-        }
-
-        // Track product views
-        if (isStorefront && products?.length && conversationId) {
-          await supabaseAdmin.from("product_views").insert(
-            products.slice(0, 5).map((p) => ({ shop_id: shop.id, product_id: p.id, conversation_id: conversationId! })),
-          );
+          conversationId = convRows?.[0]?.id;
         }
 
         // Lead scoring
         const lead = scoreLead(body.messages);
-        if (isStorefront && conversationId) {
-          await supabaseAdmin
-            .from("lead_scores")
-            .upsert(
+
+        // Fire all follow-up writes in parallel (don't block response)
+        if (isStorefront) {
+          const writes: PromiseLike<unknown>[] = [];
+          if (conversationId && body.conversationId) {
+            writes.push(supabaseAdmin.from("conversations")
+              .update({ emotion, client_name: body.clientName, client_contact: body.clientContact })
+              .eq("id", conversationId));
+          }
+          if (conversationId && lastUser) {
+            writes.push(supabaseAdmin.from("messages").insert({
+              conversation_id: conversationId, role: "user", content: lastUser,
+            }));
+          }
+          if (products?.length && conversationId) {
+            writes.push(supabaseAdmin.from("product_views").insert(
+              products.slice(0, 5).map((p) => ({ shop_id: shop.id, product_id: p.id, conversation_id: conversationId! })),
+            ));
+          }
+          if (conversationId) {
+            writes.push(supabaseAdmin.from("lead_scores").upsert(
               { shop_id: shop.id, conversation_id: conversationId, score: lead.score, reasons: lead.reasons },
               { onConflict: "conversation_id" },
-            );
+            ));
+          }
+          if (body.clientContact) {
+            writes.push(supabaseAdmin.from("customer_profiles").upsert(
+              {
+                shop_id: shop.id,
+                customer_contact: body.clientContact,
+                customer_name: body.clientName ?? customerProfile?.customer_name ?? null,
+                language,
+                last_seen_at: new Date().toISOString(),
+                total_conversations: (customerProfile?.total_conversations ?? 0) + (body.conversationId ? 0 : 1),
+              },
+              { onConflict: "shop_id,customer_contact" },
+            ));
+          }
+          // don't await — let them run in the background
+          void Promise.all(writes).catch(() => {});
         }
 
-        // Update customer profile
-        if (isStorefront && body.clientContact) {
-          await supabaseAdmin.from("customer_profiles").upsert(
-            {
-              shop_id: shop.id,
-              customer_contact: body.clientContact,
-              customer_name: body.clientName ?? customerProfile?.customer_name ?? null,
-              language,
-              last_seen_at: new Date().toISOString(),
-              total_conversations: (customerProfile?.total_conversations ?? 0) + (body.conversationId ? 0 : 1),
-            },
-            { onConflict: "shop_id,customer_contact" },
-          );
-        }
 
         // FAQ short-circuit (still log message but skip IA)
         if (faqMatch) {
@@ -336,7 +349,17 @@ export const Route = createFileRoute("/api/public/rachida-chat")({
 
         const catalogText = products && products.length
           ? products.map((p) => `- ${p.name} | ${p.price} ${shop.currency} | ${p.category ?? ""} ${p.gender ?? ""} ${p.color ?? ""} | stock:${p.stock}${p.description ? ` | ${p.description}` : ""}`).join("\n")
-          : "(aucun produit ne correspond exactement, propose une alternative et demande des précisions)";
+          : "(aucun produit dans l'admin de ce commerçant)";
+
+        const siteContextBlock = siteInfo
+          ? `\nSITE OÙ TU ES INTÉGRÉE (${parentHost}) :
+- Titre : ${siteInfo.title ?? "?"}
+- Description : ${siteInfo.description ?? "—"}
+${siteProducts.length ? `- Produits détectés sur ce site (source: page publique du site) :\n${siteProducts.slice(0, 20).map((p) => `  · ${p.name}${p.price != null ? ` — ${p.price}` : ""}${p.description ? ` — ${p.description.slice(0, 120)}` : ""}`).join("\n")}` : "- Aucun produit structuré détecté sur ce site."}
+
+IMPORTANT : Ce site peut avoir des produits DIFFÉRENTS de l'admin. Si le client demande un produit et qu'il apparaît sur CE SITE (montres, etc.) mais pas dans l'admin, confirme qu'il est disponible et propose de commander via WhatsApp. Ne dis JAMAIS "on n'a pas ce produit" si tu le vois listé ci-dessus.`
+          : "";
+
 
         const memoryBlock = customerProfile
           ? `MÉMOIRE CLIENT :
@@ -383,8 +406,10 @@ WhatsApp boutique : ${shop.whatsapp ?? "non configuré"}.
 ${langInstruction}
 
 ${memoryBlock}
-CATALOGUE FILTRÉ POUR CE MESSAGE :
+CATALOGUE ADMIN (produits enregistrés par le commerçant) :
 ${catalogText}
+${siteContextBlock}
+
 
 RÈGLES :
 - Recommande 1 à 3 produits maximum à la fois, avec nom + prix.
