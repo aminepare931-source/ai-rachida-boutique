@@ -14,6 +14,7 @@ type ChatBody = {
   conversationId?: string;
   clientName?: string;
   clientContact?: string;
+  parentUrl?: string | null;
   messages: { role: "user" | "assistant" | "system"; content: string }[];
 };
 
