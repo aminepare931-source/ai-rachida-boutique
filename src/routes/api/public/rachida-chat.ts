@@ -215,13 +215,38 @@ export const Route = createFileRoute("/api/public/rachida-chat")({
         const emotion = detectEmotion(lastUser);
         const language = detectLanguage(lastUser);
 
-        // FAQ first — instant answer if match (only for real customer conversations)
-        const { data: faqs } = await supabaseAdmin
-          .from("faq")
-          .select("question, answer, keywords")
-          .eq("shop_id", shop.id);
+        // Parallel reads: FAQ, customer profile, filtered catalog, and site-scraped products (if embedded on external site)
+        let productsQuery = supabaseAdmin.from("products").select("id, name, description, price, category, gender, color, stock").eq("shop_id", shop.id).eq("is_active", true);
+        if (criteria.priceMax) productsQuery = productsQuery.lte("price", criteria.priceMax);
+        if (criteria.priceMin) productsQuery = productsQuery.gte("price", criteria.priceMin);
+        if (criteria.gender) productsQuery = productsQuery.eq("gender", criteria.gender);
+        if (criteria.color) productsQuery = productsQuery.ilike("color", `%${criteria.color}%`);
+
+        let parentHost = "";
+        if (body.parentUrl) {
+          try { parentHost = new URL(body.parentUrl).host; } catch {}
+        }
+
+        const [faqsRes, profRes, productsRes, installRes] = await Promise.all([
+          isStorefront
+            ? supabaseAdmin.from("faq").select("question, answer, keywords").eq("shop_id", shop.id)
+            : Promise.resolve({ data: [] as { question: string; answer: string; keywords: string | null }[] }),
+          body.clientContact
+            ? supabaseAdmin.from("customer_profiles")
+                .select("customer_name, language, budget_max, notes, total_conversations")
+                .eq("shop_id", shop.id).eq("customer_contact", body.clientContact).limit(1)
+            : Promise.resolve({ data: [] as CustomerProfileRow[] }),
+          productsQuery.limit(15),
+          isStorefront && parentHost
+            ? supabaseAdmin.from("installations")
+                .select("site_info")
+                .eq("shop_id", shop.id).eq("parent_host", parentHost).limit(1)
+            : Promise.resolve({ data: [] as { site_info: SiteInfo | null }[] }),
+        ]);
+
+        const faqs = faqsRes.data ?? [];
         const lowerLast = lastUser.toLowerCase();
-        const faqMatch = isStorefront ? (faqs ?? []).find((f) => {
+        const faqMatch = isStorefront ? faqs.find((f) => {
           const kws = (f.keywords ?? "").toLowerCase().split(/[,;\s]+/).filter(Boolean);
           if (kws.some((k) => k && lowerLast.includes(k))) return true;
           const qWords = f.question.toLowerCase().split(/\W+/).filter((w) => w.length > 4);
@@ -229,27 +254,10 @@ export const Route = createFileRoute("/api/public/rachida-chat")({
           return hits >= 2;
         }) : undefined;
 
-        // Customer memory
-        type CustomerProfile = { customer_name: string | null; language: string | null; budget_max: number | null; notes: string | null; total_conversations: number | null };
-        let customerProfile: CustomerProfile | null = null;
-        if (body.clientContact) {
-          const { data: profRows } = await supabaseAdmin
-            .from("customer_profiles")
-            .select("customer_name, language, budget_max, notes, total_conversations")
-            .eq("shop_id", shop.id)
-            .eq("customer_contact", body.clientContact)
-            .limit(1);
-          const prof = profRows?.[0] ?? null;
-          customerProfile = prof;
-        }
-
-        // Filter catalog
-        let q = supabaseAdmin.from("products").select("id, name, description, price, category, gender, color, stock").eq("shop_id", shop.id).eq("is_active", true);
-        if (criteria.priceMax) q = q.lte("price", criteria.priceMax);
-        if (criteria.priceMin) q = q.gte("price", criteria.priceMin);
-        if (criteria.gender) q = q.eq("gender", criteria.gender);
-        if (criteria.color) q = q.ilike("color", `%${criteria.color}%`);
-        const { data: products } = await q.limit(15);
+        const customerProfile = (profRes.data?.[0] ?? null) as CustomerProfileRow | null;
+        const products = productsRes.data;
+        const siteInfo = (installRes.data?.[0]?.site_info ?? null) as SiteInfo | null;
+        const siteProducts = siteInfo?.products ?? [];
 
         // Conversation persistence
         let conversationId = body.conversationId;
@@ -264,54 +272,53 @@ export const Route = createFileRoute("/api/public/rachida-chat")({
             })
             .select("id")
             .limit(1);
-          const conv = convRows?.[0];
-          conversationId = conv?.id;
-        } else if (isStorefront && conversationId) {
-          await supabaseAdmin
-            .from("conversations")
-            .update({ emotion, client_name: body.clientName, client_contact: body.clientContact })
-            .eq("id", conversationId);
-        }
-        if (isStorefront && conversationId && lastUser) {
-          await supabaseAdmin.from("messages").insert({
-            conversation_id: conversationId,
-            role: "user",
-            content: lastUser,
-          });
-        }
-
-        // Track product views
-        if (isStorefront && products?.length && conversationId) {
-          await supabaseAdmin.from("product_views").insert(
-            products.slice(0, 5).map((p) => ({ shop_id: shop.id, product_id: p.id, conversation_id: conversationId! })),
-          );
+          conversationId = convRows?.[0]?.id;
         }
 
         // Lead scoring
         const lead = scoreLead(body.messages);
-        if (isStorefront && conversationId) {
-          await supabaseAdmin
-            .from("lead_scores")
-            .upsert(
+
+        // Fire all follow-up writes in parallel (don't block response)
+        if (isStorefront) {
+          const writes: Promise<unknown>[] = [];
+          if (conversationId && body.conversationId) {
+            writes.push(supabaseAdmin.from("conversations")
+              .update({ emotion, client_name: body.clientName, client_contact: body.clientContact })
+              .eq("id", conversationId));
+          }
+          if (conversationId && lastUser) {
+            writes.push(supabaseAdmin.from("messages").insert({
+              conversation_id: conversationId, role: "user", content: lastUser,
+            }));
+          }
+          if (products?.length && conversationId) {
+            writes.push(supabaseAdmin.from("product_views").insert(
+              products.slice(0, 5).map((p) => ({ shop_id: shop.id, product_id: p.id, conversation_id: conversationId! })),
+            ));
+          }
+          if (conversationId) {
+            writes.push(supabaseAdmin.from("lead_scores").upsert(
               { shop_id: shop.id, conversation_id: conversationId, score: lead.score, reasons: lead.reasons },
               { onConflict: "conversation_id" },
-            );
+            ));
+          }
+          if (body.clientContact) {
+            writes.push(supabaseAdmin.from("customer_profiles").upsert(
+              {
+                shop_id: shop.id,
+                customer_contact: body.clientContact,
+                customer_name: body.clientName ?? customerProfile?.customer_name ?? null,
+                language,
+                last_seen_at: new Date().toISOString(),
+                total_conversations: (customerProfile?.total_conversations ?? 0) + (body.conversationId ? 0 : 1),
+              },
+              { onConflict: "shop_id,customer_contact" },
+            ));
+          }
+          // don't await — let them run in the background
+          void Promise.all(writes).catch(() => {});
         }
 
-        // Update customer profile
-        if (isStorefront && body.clientContact) {
-          await supabaseAdmin.from("customer_profiles").upsert(
-            {
-              shop_id: shop.id,
-              customer_contact: body.clientContact,
-              customer_name: body.clientName ?? customerProfile?.customer_name ?? null,
-              language,
-              last_seen_at: new Date().toISOString(),
-              total_conversations: (customerProfile?.total_conversations ?? 0) + (body.conversationId ? 0 : 1),
-            },
-            { onConflict: "shop_id,customer_contact" },
-          );
-        }
 
         // FAQ short-circuit (still log message but skip IA)
         if (faqMatch) {
