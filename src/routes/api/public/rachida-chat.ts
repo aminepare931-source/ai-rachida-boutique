@@ -285,7 +285,7 @@ export const Route = createFileRoute("/api/public/rachida-chat")({
 
         // Fire all follow-up writes in parallel (don't block response)
         if (isStorefront) {
-          const writes: Promise<unknown>[] = [];
+          const writes: PromiseLike<unknown>[] = [];
           if (conversationId && body.conversationId) {
             writes.push(supabaseAdmin.from("conversations")
               .update({ emotion, client_name: body.clientName, client_contact: body.clientContact })
