@@ -83,8 +83,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:title", content: "Rachida AI — La vendeuse IA des boutiques africaines" },
       { name: "twitter:description", content: "Rachida est une IA commerciale qui parle français, mooré et dioula. Elle conseille, négocie, vend et fidélise vos clients 24h/24." },
-      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/d22c0225-b7a2-4dd5-961d-0f6aff71ec9e" },
-      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/d22c0225-b7a2-4dd5-961d-0f6aff71ec9e" },
+      { property: "og:image", content: "https://ai-rachida-boutique.vercel.app/rachida-avatar.png" },
+      { name: "twitter:image", content: "https://ai-rachida-boutique.vercel.app/rachida-avatar.png" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },

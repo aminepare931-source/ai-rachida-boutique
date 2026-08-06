@@ -7,6 +7,7 @@ declare global {
   interface Window {
     RachidaWidgetConfig?: { mode: RachidaMode; avatarUrl: string };
     RachidaGetAuthToken?: () => Promise<string | null>;
+    RachidaOpen?: (message?: string) => void;
   }
 }
 

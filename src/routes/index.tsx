@@ -17,10 +17,9 @@ import {
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { ParticleSphere } from "@/components/landing/ParticleSphere";
-import { ChatDemo } from "@/components/landing/ChatDemo";
+import { RachidaWidget } from "@/components/RachidaWidget";
 import { SmoothScroll } from "@/components/landing/SmoothScroll";
 import { Counter } from "@/components/landing/Counter";
-import { RachidaWidget } from "@/components/RachidaWidget";
 import rachidaAvatar from "@/assets/rachida-avatar.png";
 import rachidaLogo from "@/assets/rachida-logo.png";
 
@@ -237,8 +236,24 @@ function DemoSection() {
           className="relative"
         >
           <div className="absolute -inset-10 bg-gradient-to-br from-[--color-neon-violet]/20 via-transparent to-[--color-neon-cyan]/20 blur-3xl -z-10" />
-          <div className="float">
-            <ChatDemo />
+          <div className="float glass-strong rounded-3xl p-8 sm:p-10 w-full max-w-md text-center">
+            <div className="mx-auto size-14 rounded-full bg-gradient-to-br from-[--color-neon-violet] to-[--color-neon-cyan] grid place-items-center mb-5">
+              <MessageSquare className="size-6 text-white" />
+            </div>
+            <h3 className="font-display font-semibold text-lg">Parle-lui, en vrai.</h3>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Ce n'est pas une animation : c'est la même IA (Gemini) qui répondra à vos clients. Pose-lui une vraie
+              question sur des chaussures, un prix, une livraison.
+            </p>
+            <button
+              type="button"
+              onClick={() =>
+                window.RachidaOpen?.("Salut, je cherche des chaussures noires homme à moins de 25 000 FCFA")
+              }
+              className="mt-6 inline-flex items-center gap-2 px-6 py-3 rounded-2xl font-semibold bg-primary text-primary-foreground glow-violet hover:scale-[1.03] transition"
+            >
+              Discuter avec Rachida <ArrowRight className="size-4" />
+            </button>
           </div>
         </motion.div>
       </div>
@@ -338,12 +353,11 @@ function StatsSection() {
   const stats = [
     { v: 24, suffix: "h/24", l: "Disponibilité" },
     { v: 3, suffix: "", l: "Langues parlées" },
-    { v: 92, suffix: "%", l: "Satisfaction pilotes" },
     { v: 2, suffix: " min", l: "Pour installer" },
   ];
   return (
     <section className="relative py-24 px-6">
-      <div className="mx-auto max-w-6xl glass-strong rounded-3xl p-10 sm:p-14 grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+      <div className="mx-auto max-w-4xl glass-strong rounded-3xl p-10 sm:p-14 grid grid-cols-1 sm:grid-cols-3 gap-8 text-center">
         {stats.map((s) => (
           <div key={s.l}>
             <div className="font-display font-bold text-4xl sm:text-5xl text-gradient-neon">
@@ -426,7 +440,7 @@ function NoCodeInstallSection() {
   const [origin, setOrigin] = useState("https://votre-domaine.com");
   useEffect(() => setOrigin(window.location.origin), []);
   const snippet = `<script src="${origin}/widget/rachida.js" data-shop="demo" defer></script>`;
-  const waNumber = "22670000000"; // numéro démo Rachida
+  const waNumber = "22655300868";
   const waText = encodeURIComponent("Bonjour Rachida, je veux activer mon assistante IA pour ma boutique 🙌");
   const waLink = `https://wa.me/${waNumber}?text=${waText}`;
   const shopLink = `${origin}/shop/demo`;
