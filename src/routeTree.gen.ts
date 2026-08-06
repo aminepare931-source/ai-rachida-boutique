@@ -9,22 +9,22 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as DashboardRouteImport } from './routes/dashboard'
-import { Route as AuthRouteImport } from './routes/auth'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as ShopSlugRouteImport } from './routes/shop.$slug'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as MSlugRouteImport } from './routes/m.$slug'
-import { Route as ApiPublicShopConfigRouteImport } from './routes/api/public/shop-config'
-import { Route as ApiPublicRachidaVisionRouteImport } from './routes/api/public/rachida-vision'
-import { Route as ApiPublicRachidaSearchRouteImport } from './routes/api/public/rachida-search'
-import { Route as ApiPublicRachidaInstallPingRouteImport } from './routes/api/public/rachida-install-ping'
-import { Route as ApiPublicRachidaChatRouteImport } from './routes/api/public/rachida-chat'
+import { Route as ShopSlugRouteImport } from './routes/shop.$slug'
 import { Route as ApiPublicMirrorRouteImport } from './routes/api/public/mirror'
+import { Route as ApiPublicRachidaChatRouteImport } from './routes/api/public/rachida-chat'
+import { Route as ApiPublicRachidaInstallPingRouteImport } from './routes/api/public/rachida-install-ping'
+import { Route as ApiPublicRachidaSearchRouteImport } from './routes/api/public/rachida-search'
+import { Route as ApiPublicRachidaVisionRouteImport } from './routes/api/public/rachida-vision'
+import { Route as ApiPublicShopConfigRouteImport } from './routes/api/public/shop-config'
 import { Route as ApiPublicHooksDailyReportRouteImport } from './routes/api/public/hooks/daily-report'
 
-const DashboardRoute = DashboardRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -32,14 +32,9 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ShopSlugRoute = ShopSlugRouteImport.update({
-  id: '/shop/$slug',
-  path: '/shop/$slug',
+const DashboardRoute = DashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MSlugRoute = MSlugRouteImport.update({
@@ -47,19 +42,19 @@ const MSlugRoute = MSlugRouteImport.update({
   path: '/m/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiPublicShopConfigRoute = ApiPublicShopConfigRouteImport.update({
-  id: '/api/public/shop-config',
-  path: '/api/public/shop-config',
+const ShopSlugRoute = ShopSlugRouteImport.update({
+  id: '/shop/$slug',
+  path: '/shop/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiPublicRachidaVisionRoute = ApiPublicRachidaVisionRouteImport.update({
-  id: '/api/public/rachida-vision',
-  path: '/api/public/rachida-vision',
+const ApiPublicMirrorRoute = ApiPublicMirrorRouteImport.update({
+  id: '/api/public/mirror',
+  path: '/api/public/mirror',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiPublicRachidaSearchRoute = ApiPublicRachidaSearchRouteImport.update({
-  id: '/api/public/rachida-search',
-  path: '/api/public/rachida-search',
+const ApiPublicRachidaChatRoute = ApiPublicRachidaChatRouteImport.update({
+  id: '/api/public/rachida-chat',
+  path: '/api/public/rachida-chat',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicRachidaInstallPingRoute =
@@ -68,14 +63,19 @@ const ApiPublicRachidaInstallPingRoute =
     path: '/api/public/rachida-install-ping',
     getParentRoute: () => rootRouteImport,
   } as any)
-const ApiPublicRachidaChatRoute = ApiPublicRachidaChatRouteImport.update({
-  id: '/api/public/rachida-chat',
-  path: '/api/public/rachida-chat',
+const ApiPublicRachidaSearchRoute = ApiPublicRachidaSearchRouteImport.update({
+  id: '/api/public/rachida-search',
+  path: '/api/public/rachida-search',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiPublicMirrorRoute = ApiPublicMirrorRouteImport.update({
-  id: '/api/public/mirror',
-  path: '/api/public/mirror',
+const ApiPublicRachidaVisionRoute = ApiPublicRachidaVisionRouteImport.update({
+  id: '/api/public/rachida-vision',
+  path: '/api/public/rachida-vision',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicShopConfigRoute = ApiPublicShopConfigRouteImport.update({
+  id: '/api/public/shop-config',
+  path: '/api/public/shop-config',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicHooksDailyReportRoute =
@@ -190,11 +190,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/dashboard': {
-      id: '/dashboard'
-      path: '/dashboard'
-      fullPath: '/dashboard'
-      preLoaderRoute: typeof DashboardRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth': {
@@ -204,18 +204,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/shop/$slug': {
-      id: '/shop/$slug'
-      path: '/shop/$slug'
-      fullPath: '/shop/$slug'
-      preLoaderRoute: typeof ShopSlugRouteImport
+    '/dashboard': {
+      id: '/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof DashboardRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/m/$slug': {
@@ -225,32 +218,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/shop-config': {
-      id: '/api/public/shop-config'
-      path: '/api/public/shop-config'
-      fullPath: '/api/public/shop-config'
-      preLoaderRoute: typeof ApiPublicShopConfigRouteImport
+    '/shop/$slug': {
+      id: '/shop/$slug'
+      path: '/shop/$slug'
+      fullPath: '/shop/$slug'
+      preLoaderRoute: typeof ShopSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/rachida-vision': {
-      id: '/api/public/rachida-vision'
-      path: '/api/public/rachida-vision'
-      fullPath: '/api/public/rachida-vision'
-      preLoaderRoute: typeof ApiPublicRachidaVisionRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/rachida-search': {
-      id: '/api/public/rachida-search'
-      path: '/api/public/rachida-search'
-      fullPath: '/api/public/rachida-search'
-      preLoaderRoute: typeof ApiPublicRachidaSearchRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/rachida-install-ping': {
-      id: '/api/public/rachida-install-ping'
-      path: '/api/public/rachida-install-ping'
-      fullPath: '/api/public/rachida-install-ping'
-      preLoaderRoute: typeof ApiPublicRachidaInstallPingRouteImport
+    '/api/public/mirror': {
+      id: '/api/public/mirror'
+      path: '/api/public/mirror'
+      fullPath: '/api/public/mirror'
+      preLoaderRoute: typeof ApiPublicMirrorRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/rachida-chat': {
@@ -260,11 +239,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicRachidaChatRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/mirror': {
-      id: '/api/public/mirror'
-      path: '/api/public/mirror'
-      fullPath: '/api/public/mirror'
-      preLoaderRoute: typeof ApiPublicMirrorRouteImport
+    '/api/public/rachida-install-ping': {
+      id: '/api/public/rachida-install-ping'
+      path: '/api/public/rachida-install-ping'
+      fullPath: '/api/public/rachida-install-ping'
+      preLoaderRoute: typeof ApiPublicRachidaInstallPingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/rachida-search': {
+      id: '/api/public/rachida-search'
+      path: '/api/public/rachida-search'
+      fullPath: '/api/public/rachida-search'
+      preLoaderRoute: typeof ApiPublicRachidaSearchRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/rachida-vision': {
+      id: '/api/public/rachida-vision'
+      path: '/api/public/rachida-vision'
+      fullPath: '/api/public/rachida-vision'
+      preLoaderRoute: typeof ApiPublicRachidaVisionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/shop-config': {
+      id: '/api/public/shop-config'
+      path: '/api/public/shop-config'
+      fullPath: '/api/public/shop-config'
+      preLoaderRoute: typeof ApiPublicShopConfigRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/hooks/daily-report': {
@@ -294,3 +294,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

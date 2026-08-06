@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { generateText } from "ai";
-import { createLovableAiGatewayProvider } from "@/lib/ai-gateway.server";
+import { geminiModel } from "@/lib/ai-gateway.server";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -24,9 +24,6 @@ export const Route = createFileRoute("/api/public/rachida-vision")({
         if (!body?.shopSlug || !body?.imageDataUrl) {
           return new Response("bad request", { status: 400, headers: corsHeaders });
         }
-        const key = process.env.LOVABLE_API_KEY;
-        if (!key) return new Response("missing key", { status: 500, headers: corsHeaders });
-
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
         const { data: shops } = await supabaseAdmin
           .from("shops")
@@ -45,9 +42,15 @@ export const Route = createFileRoute("/api/public/rachida-vision")({
               ? `Tu analyses une photo de produit envoyée par un client. Décris en français court (1 phrase) le produit visible et propose 3 mots-clés pour rechercher dans un catalogue. Format JSON: {"description": string, "keywords": string[]}. Réponds UNIQUEMENT le JSON.`
               : `Tu analyses une image envoyée par un client d'une boutique en ligne. Détermine si c'est: (a) une preuve de paiement Mobile Money, (b) une photo de produit, (c) autre. Puis donne une description courte. Format JSON: {"type": "payment_proof"|"product_photo"|"other", "description": string}. Réponds UNIQUEMENT le JSON.`;
 
-        const gateway = createLovableAiGatewayProvider(key);
+        let model;
+        try {
+          model = geminiModel();
+        } catch {
+          return new Response("missing key", { status: 500, headers: corsHeaders });
+        }
+
         const result = await generateText({
-          model: gateway("google/gemini-3-flash-preview"),
+          model,
           messages: [
             {
               role: "user",

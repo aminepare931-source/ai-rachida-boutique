@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { streamText, type ModelMessage } from "ai";
-import { createLovableAiGatewayProvider } from "@/lib/ai-gateway.server";
+import { geminiModel } from "@/lib/ai-gateway.server";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -179,8 +179,7 @@ export const Route = createFileRoute("/api/public/rachida-chat")({
         }
         const mode = body.mode ?? "storefront";
         const isStorefront = mode === "storefront";
-        const key = process.env.LOVABLE_API_KEY;
-        if (!key) return new Response("missing key", { status: 500, headers: corsHeaders });
+        if (!process.env.GEMINI_API_KEY) return new Response("missing key", { status: 500, headers: corsHeaders });
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
         const { data: shops } = await supabaseAdmin
@@ -421,8 +420,7 @@ RÈGLES :
 - Reste concise (2-4 phrases max sauf si une liste est demandée).
 ${shop.system_prompt_extra ?? ""}`;
 
-        const gateway = createLovableAiGatewayProvider(key);
-        const model = gateway("google/gemini-3-flash-preview");
+        const model = geminiModel();
 
         const result = streamText({
           model,

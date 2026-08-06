@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { generateText } from "ai";
-import { createLovableAiGatewayProvider } from "@/lib/ai-gateway.server";
+import { geminiModel } from "@/lib/ai-gateway.server";
 
 const InputSchema = z.object({
   shopId: z.string().uuid(),
@@ -55,11 +55,6 @@ export const smartImportProducts = createServerFn({ method: "POST" })
     if (shopErr) throw new Error(shopErr.message);
     if (!shops?.[0]) throw new Error("Boutique introuvable ou non autorisée");
 
-    const key = process.env.LOVABLE_API_KEY;
-    if (!key) throw new Error("Configuration IA manquante");
-
-    const gateway = createLovableAiGatewayProvider(key);
-
     const userContent =
       data.mode === "image" && data.imageDataUrl
         ? [
@@ -69,7 +64,7 @@ export const smartImportProducts = createServerFn({ method: "POST" })
         : [{ type: "text" as const, text: data.text ?? "" }];
 
     const result = await generateText({
-      model: gateway("google/gemini-3-flash-preview"),
+      model: geminiModel(),
       messages: [
         { role: "system", content: SYSTEM },
         { role: "user", content: userContent },

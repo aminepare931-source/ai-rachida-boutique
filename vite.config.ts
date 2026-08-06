@@ -1,15 +1,36 @@
-// @lovable.dev/vite-tanstack-config already includes the following — do NOT add them manually
-// or the app will break with duplicate plugins:
-//   - tanstackStart, viteReact, tailwindcss, tsConfigPaths, nitro (build-only using cloudflare as a default target),
-//     componentTagger (dev-only), VITE_* env injection, @ path alias, React/TanStack dedupe,
-//     error logger plugins, and sandbox detection (port/host/strictPort).
-// You can pass additional config via defineConfig({ vite: { ... }, etc... }) if needed.
-import { defineConfig } from "@lovable.dev/vite-tanstack-config";
+// Config Vite standard, sans dépendance à Lovable.
+// Remplace l'ancien "@lovable.dev/vite-tanstack-config", qui empaquetait en un seul
+// bloc : TanStack Start, le plugin React, Tailwind, tsconfig-paths, Nitro (preset
+// Cloudflare par défaut), un "componentTagger" dev-only propre à l'éditeur Lovable,
+// l'injection des variables VITE_*, et un logger d'erreurs propriétaire.
+// Ici on recompose la même chaîne avec les paquets officiels.
+//
+// Référence (recette officielle TanStack Start + Nitro sur Vercel) :
+// https://vercel.com/docs/frameworks/full-stack/tanstack-start
+import { defineConfig } from "vite";
+import { tanstackStart } from "@tanstack/react-start/plugin/vite";
+import viteReact from "@vitejs/plugin-react";
+import tailwindcss from "@tailwindcss/vite";
+import { nitro } from "nitro/vite";
 
 export default defineConfig({
-  tanstackStart: {
-    // Redirect TanStack Start's bundled server entry to src/server.ts (our SSR error wrapper).
-    // nitro/vite builds from this
-    server: { entry: "server" },
+  resolve: {
+    tsconfigPaths: true,
+  },
+  plugins: [
+    // L'ordre compte : tanstackStart() doit précéder viteReact().
+    tanstackStart(),
+    viteReact(),
+    tailwindcss(),
+    // Sans "preset" explicite : Vercel est auto-détecté au déploiement (zéro config).
+    // En local, Nitro utilise un serveur Node standard.
+    nitro(),
+  ],
+  environments: {
+    ssr: {
+      build: {
+        rollupOptions: { input: "./src/server.ts" },
+      },
+    },
   },
 });

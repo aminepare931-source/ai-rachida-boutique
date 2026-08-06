@@ -1,19 +1,11 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { createLovableAiGatewayProvider } from "@/lib/ai-gateway.server";
+import { geminiModel } from "@/lib/ai-gateway.server";
 import { generateText } from "ai";
 
-const MODEL = "google/gemini-2.5-flash";
-
-function gateway() {
-  const key = process.env.LOVABLE_API_KEY;
-  if (!key) throw new Error("LOVABLE_API_KEY manquant");
-  return createLovableAiGatewayProvider(key)(MODEL);
-}
-
 async function ask(system: string, prompt: string): Promise<string> {
-  const { text } = await generateText({ model: gateway(), system, prompt, temperature: 0.85 });
+  const { text } = await generateText({ model: geminiModel(), system, prompt, temperature: 0.85 });
   return text.trim();
 }
 

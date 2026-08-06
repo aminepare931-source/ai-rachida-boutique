@@ -8,11 +8,10 @@ import {
   Bot, Settings, Package, MessageSquare, ShoppingBag, Code, LogOut, Plus, Trash2, Upload,
   LayoutDashboard, Users, HelpCircle, Sparkles, TrendingUp, Flame,
   CheckCircle2, XCircle, Loader2, Mail, Globe, Globe2, Copy, ExternalLink, QrCode, Share2, Wand2,
-  Wallet, Megaphone, Image as ImageIcon, Award, CalendarClock,
+  Wallet, Megaphone, Award, CalendarClock,
 } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { checkInstall } from "@/lib/install-checker.functions";
-import { retouchProductPhoto } from "@/lib/rachida-photo.functions";
 import { motion, AnimatePresence } from "framer-motion";
 import { AreaChart, Area, ResponsiveContainer, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 import { RachidaWidget } from "@/components/RachidaWidget";
@@ -22,7 +21,6 @@ import { MirrorTab } from "@/components/MirrorTab";
 import { PaymentsTab } from "@/components/PaymentsTab";
 import { MarketingTab } from "@/components/MarketingTab";
 import { OnboardingWizard } from "@/components/OnboardingWizard";
-import { CreativeTab } from "@/components/CreativeTab";
 import { LoyaltyTab } from "@/components/LoyaltyTab";
 import { ScheduleTab } from "@/components/ScheduleTab";
 import { CrmTab } from "@/components/CrmTab";
@@ -78,7 +76,6 @@ const TAB_GROUPS = [
     items: [
       { key: "marketing", label: "Promos & pubs", icon: Megaphone },
       { key: "loyalty", label: "Fidélité", icon: Award },
-      { key: "creative", label: "Affiches & voix IA", icon: ImageIcon },
       { key: "schedule", label: "Agenda posts", icon: CalendarClock },
       { key: "tools", label: "Autres outils IA", icon: Wand2 },
     ],
@@ -256,7 +253,6 @@ function Dashboard() {
               {tab === "mirror" && <MirrorTab shopId={shop.id} />}
               {tab === "payments" && <PaymentsTab shopId={shop.id} />}
               {tab === "marketing" && <MarketingTab shopId={shop.id} whatsapp={shop.whatsapp} />}
-              {tab === "creative" && <CreativeTab shopId={shop.id} whatsapp={shop.whatsapp} />}
               {tab === "loyalty" && <LoyaltyTab shopId={shop.id} />}
               {tab === "schedule" && <ScheduleTab shopId={shop.id} whatsapp={shop.whatsapp} />}
               {tab === "crm" && <CrmTab shopId={shop.id} whatsapp={shop.whatsapp} />}
@@ -756,7 +752,6 @@ function CatalogTab({ shopId }: { shopId: string }) {
             <Field label="Stock"><input type="number" className="input-neon" value={editing.stock ?? 0} onChange={(e) => setEditing({ ...editing, stock: parseInt(e.target.value) || 0 })} /></Field>
           </div>
           <Field label="URL image"><input className="input-neon" value={editing.image_url ?? ""} onChange={(e) => setEditing({ ...editing, image_url: e.target.value })} /></Field>
-          <PhotoRetoucher current={editing.image_url ?? ""} productName={editing.name ?? "produit"} onDone={(url) => setEditing({ ...editing, image_url: url })} />
           <Field label="Description"><textarea className="input-neon" rows={3} value={editing.description ?? ""} onChange={(e) => setEditing({ ...editing, description: e.target.value })} /></Field>
           <div className="flex gap-2 justify-end">
             <button onClick={() => setEditing(null)} className="btn-ghost">Annuler</button>
@@ -1116,50 +1111,4 @@ function Style() {
   );
 }
 
-function PhotoRetoucher({ current, productName, onDone }: { current: string; productName: string; onDone: (url: string) => void }) {
-  const retouch = useServerFn(retouchProductPhoto);
-  const [busy, setBusy] = useState(false);
 
-  const handleFile = async (file: File) => {
-    setBusy(true);
-    try {
-      const b64 = await new Promise<string>((res, rej) => {
-        const r = new FileReader();
-        r.onload = () => res(String(r.result));
-        r.onerror = () => rej(new Error("Lecture impossible"));
-        r.readAsDataURL(file);
-      });
-      const out = await retouch({ data: { imageBase64: b64, productName } });
-      onDone(out.image);
-      toast.success("Photo retouchée ✨");
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Erreur retouche");
-    } finally { setBusy(false); }
-  };
-
-  const retouchExisting = async () => {
-    if (!current) return toast.error("Ajoute une image d'abord");
-    setBusy(true);
-    try {
-      const out = await retouch({ data: { imageBase64: current, productName } });
-      onDone(out.image);
-      toast.success("Photo retouchée ✨");
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Erreur retouche");
-    } finally { setBusy(false); }
-  };
-
-  return (
-    <div className="flex gap-2 flex-wrap items-center">
-      <label className="btn-ghost cursor-pointer !text-xs">
-        <ImageIcon size={14} /> {busy ? "…" : "Photo → belle photo IA"}
-        <input type="file" accept="image/*" hidden disabled={busy} onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])} />
-      </label>
-      {current && (
-        <button type="button" onClick={retouchExisting} disabled={busy} className="btn-ghost !text-xs disabled:opacity-50">
-          <Sparkles size={14} /> Retoucher l'image actuelle
-        </button>
-      )}
-    </div>
-  );
-}
