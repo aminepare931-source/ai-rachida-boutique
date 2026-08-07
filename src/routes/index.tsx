@@ -13,6 +13,8 @@ import {
   TrendingUp,
   Check,
   Copy,
+  MapPin,
+  Rocket,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -51,11 +53,11 @@ function Landing() {
       <div className="pointer-events-none fixed inset-0 grid-bg opacity-60" aria-hidden />
       <Nav />
       <Hero />
+      <AboutBlock />
       <LogoStrip />
       <MockupSection />
       <CapabilitiesSection />
       <HowItWorksSection />
-      <StatsSection />
       <LanguagesSection />
       <NoCodeInstallSection />
       <PricingSection />
@@ -100,84 +102,185 @@ function Nav() {
 
 function Hero() {
   return (
-    <section className="relative min-h-[100svh] flex items-center pt-32 pb-20 px-6">
+    <section className="relative min-h-[100svh] pt-36 pb-16 px-6 overflow-hidden">
       <div className="absolute inset-0 -z-0">
-        <div className="absolute inset-0 opacity-90">
+        <div className="absolute inset-0 opacity-70">
           <ParticleSphere />
         </div>
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background/40 to-background" />
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background/50 to-background" />
       </div>
 
-      <motion.img
-        src={rachidaAvatar}
-        alt="Rachida — vendeuse IA"
-        width={1024}
-        height={1024}
-        initial={{ opacity: 0, y: 30, scale: 0.95 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        transition={{ duration: 1.1, delay: 0.3, ease: [0.21, 0.47, 0.32, 0.98] }}
-        className="hidden lg:block absolute right-[4%] bottom-0 w-[36vw] max-w-[520px] pointer-events-none select-none drop-shadow-[0_30px_80px_rgba(139,92,246,0.45)]"
-      />
+      <div className="relative mx-auto max-w-6xl">
+        <div className="grid lg:grid-cols-2 gap-12 items-center">
+          {/* Colonne texte */}
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.7 }}
+          >
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full glass text-xs font-medium">
+              <span className="size-1.5 rounded-full bg-emerald-400 pulse-glow" />
+              Vendeuse IA · faite pour l'Afrique de l'Ouest
+            </div>
 
-      <div className="relative mx-auto max-w-5xl text-center">
+            <h1 className="mt-6 font-display font-bold text-5xl sm:text-6xl lg:text-7xl leading-[0.95] tracking-tight">
+              Votre équipe<br />
+              de vente IA,<br />
+              <span className="text-shiny-neon">à la demande.</span>
+            </h1>
+
+            <p className="mt-6 max-w-md text-base sm:text-lg text-muted-foreground">
+              Rachida comprend votre catalogue, conseille en français, mooré et dioula, négocie intelligemment et clôt
+              des ventes pendant que vous dormez.
+            </p>
+
+            <div className="mt-9 flex flex-wrap items-center gap-3">
+              <Link
+                to="/auth"
+                className="group inline-flex items-center gap-2 px-6 py-3.5 rounded-2xl font-semibold bg-primary text-primary-foreground glow-violet hover:scale-[1.03] transition"
+              >
+                Activer Rachida
+                <ArrowRight className="size-4 transition group-hover:translate-x-1" />
+              </Link>
+              <a
+                href="#capacites"
+                className="inline-flex items-center gap-2 px-6 py-3.5 rounded-2xl font-semibold glass hover:bg-white/5 transition"
+              >
+                Voir les capacités
+              </a>
+            </div>
+
+            {/* Cartes stats */}
+            <div className="mt-10 grid grid-cols-3 gap-3 max-w-md">
+              {[
+                { v: 24, suffix: "h/24", l: "Disponible" },
+                { v: 3, suffix: "", l: "Langues" },
+                { v: 2, suffix: " min", l: "Installation" },
+              ].map((s) => (
+                <div key={s.l} className="liquid-glass rounded-2xl px-3 py-4 text-center">
+                  <div className="font-display font-bold text-2xl">
+                    <Counter to={s.v} suffix={s.suffix} />
+                  </div>
+                  <div className="mt-1 text-[11px] text-muted-foreground uppercase tracking-wide">{s.l}</div>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+
+          {/* Visuel */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.92 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 1, delay: 0.2, ease: [0.21, 0.47, 0.32, 0.98] }}
+            className="relative flex justify-center lg:justify-end"
+          >
+            <div className="absolute inset-0 -z-10 flex items-center justify-center">
+              <div className="size-[70%] rounded-full bg-[--color-neon-violet]/30 blur-[100px]" />
+            </div>
+            <img
+              src={rachidaAvatar}
+              alt="Rachida — vendeuse IA"
+              width={1024}
+              height={1024}
+              className="float w-[70vw] max-w-sm lg:max-w-md drop-shadow-[0_40px_100px_rgba(139,92,246,0.5)]"
+            />
+
+            {/* Carte flottante — info IA */}
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.8 }}
+              className="hidden sm:block absolute top-2 right-0 liquid-glass rounded-2xl p-4 w-40"
+            >
+              <Sparkles className="size-4 text-[--color-neon-cyan]" />
+              <div className="mt-3 font-display font-bold text-lg">Gemini AI</div>
+              <div className="text-[11px] text-muted-foreground">Comprend photo, texte et intention d'achat</div>
+            </motion.div>
+
+            {/* Carte flottante — beta */}
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 1 }}
+              className="hidden sm:block absolute bottom-4 -left-4 liquid-glass rounded-2xl p-4 w-44"
+            >
+              <Rocket className="size-4 text-[--color-neon-violet]" />
+              <div className="mt-3 font-display font-bold text-lg">Beta ouverte</div>
+              <div className="text-[11px] text-muted-foreground mb-3">Gratuit, sans carte bancaire</div>
+              <Link
+                to="/auth"
+                className="inline-flex items-center gap-1 text-xs font-semibold text-[--color-neon-cyan] hover:underline"
+              >
+                Rejoindre <ArrowRight className="size-3" />
+              </Link>
+            </motion.div>
+          </motion.div>
+        </div>
+
+        <div className="mt-16 text-center text-xs text-muted-foreground/60 tracking-widest uppercase">
+          Installation en 2 min · sans code · 100% français
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function AboutBlock() {
+  return (
+    <section id="capacites-intro" className="relative py-20 px-6">
+      <motion.div {...fadeUp} className="mx-auto max-w-4xl text-center">
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full glass text-xs">
+          <MapPin className="size-3 text-[--color-neon-cyan]" /> Notre mission
+        </div>
+        <p className="mt-6 font-display font-semibold text-2xl sm:text-4xl leading-tight">
+          Nous <span className="text-shiny-neon">concevons</span> une vendeuse{" "}
+          <span className="text-shiny-neon">IA</span> pensée pour vos clients, pour que chaque{" "}
+          <span className="text-shiny-neon">conversation</span> se termine par une vente.
+        </p>
+      </motion.div>
+
+      <div className="mt-14 mx-auto max-w-5xl grid md:grid-cols-2 gap-5">
         <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full glass text-xs font-medium"
-        >
-          <span className="size-1.5 rounded-full bg-emerald-400 pulse-glow" />
-          Nouvelle génération · IA commerciale 2026
-        </motion.div>
-
-        <motion.h1
           initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.1 }}
-          className="mt-6 font-display font-bold text-5xl sm:text-6xl md:text-7xl lg:text-8xl leading-[0.95] tracking-tight"
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+          className="liquid-glass rounded-3xl p-8"
         >
-          La vendeuse IA<br />
-          qui <span className="text-shiny-neon">ne dort jamais.</span>
-        </motion.h1>
-
-        <motion.p
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.25 }}
-          className="mt-6 max-w-2xl mx-auto text-base sm:text-lg text-muted-foreground"
-        >
-          Rachida comprend votre catalogue, conseille en français, mooré et dioula, négocie intelligemment,
-          détecte les émotions et clôt des ventes pendant que vous dormez.
-        </motion.p>
-
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.4 }}
-          className="mt-9 flex flex-wrap items-center justify-center gap-3"
-        >
+          <MapPin className="size-5 text-[--color-neon-cyan]" />
+          <h3 className="mt-4 font-display font-bold text-2xl">
+            Pensée au <span className="text-shiny-neon">Burkina Faso.</span>
+          </h3>
+          <p className="mt-3 text-sm text-muted-foreground">
+            Conçue pour le marché ouest-africain : Mobile Money, livraison locale, français, mooré et dioula. Pas une
+            traduction d'un produit occidental.
+          </p>
           <Link
             to="/auth"
-            className="group inline-flex items-center gap-2 px-6 py-3.5 rounded-2xl font-semibold bg-primary text-primary-foreground glow-violet hover:scale-[1.03] transition"
+            className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-foreground hover:gap-3 transition-all"
           >
-            Activer Rachida sur mon site
-            <ArrowRight className="size-4 transition group-hover:translate-x-1" />
+            Activer Rachida <ArrowRight className="size-4" />
           </Link>
-          <a
-            href="#demo"
-            className="inline-flex items-center gap-2 px-6 py-3.5 rounded-2xl font-semibold glass hover:bg-white/5 transition"
-          >
-            Voir la démo live
-          </a>
         </motion.div>
 
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 1, delay: 0.7 }}
-          className="mt-14 text-xs text-muted-foreground/60 tracking-widest uppercase"
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6, delay: 0.1 }}
+          className="liquid-glass rounded-3xl p-8"
         >
-          Installation en 2 min · sans code · 100% français
+          <Rocket className="size-5 text-[--color-neon-violet]" />
+          <h3 className="mt-4 font-display font-bold text-2xl">
+            En <span className="text-shiny-neon">beta ouverte.</span>
+          </h3>
+          <p className="mt-3 text-sm text-muted-foreground">
+            Le produit se construit encore. Les premiers commerçants qui l'activent façonnent directement les
+            prochaines fonctionnalités.
+          </p>
+          <a href="#demo" className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-foreground hover:gap-3 transition-all">
+            Voir Rachida en action <ArrowRight className="size-4" />
+          </a>
         </motion.div>
       </div>
     </section>
@@ -187,12 +290,21 @@ function Hero() {
 function LogoStrip() {
   const items = ["Boutiques", "Restaurants", "Mode", "Cosmétique", "Électronique", "Services"];
   return (
-    <section className="relative py-10 border-y border-white/5">
-      <div className="mx-auto max-w-6xl px-6 flex flex-wrap items-center justify-center gap-x-10 gap-y-3 text-sm text-muted-foreground/70">
-        <span className="text-xs uppercase tracking-widest">Pensé pour</span>
-        {items.map((i) => (
-          <span key={i} className="font-display font-medium">{i}</span>
-        ))}
+    <section className="relative py-14 border-y border-white/5">
+      <div className="mx-auto max-w-6xl px-6">
+        <div className="text-center text-xs uppercase tracking-widest text-muted-foreground/60 mb-6">
+          Pensée pour tous les commerces
+        </div>
+        <div className="flex flex-wrap items-center justify-center gap-3">
+          {items.map((i) => (
+            <span
+              key={i}
+              className="glass rounded-full px-4 py-2 text-sm font-display font-medium text-muted-foreground/90"
+            >
+              {i}
+            </span>
+          ))}
+        </div>
       </div>
     </section>
   );
@@ -336,54 +448,55 @@ function MockupSection() {
 
 function CapabilitiesSection() {
   const caps = [
-    {
-      icon: Brain,
-      title: "Cerveau commercial",
-      desc: "Analyse budget, besoin, historique. Recommande le bon produit, au bon moment.",
-      span: "md:col-span-2 md:row-span-2",
-      glow: "from-[--color-neon-violet]/30",
-    },
-    { icon: HeartHandshake, title: "Négociation intelligente", desc: "Remise plafonnée par boutique. Justifiée à chaque fois.", glow: "from-[--color-neon-cyan]/30" },
-    { icon: Eye, title: "Vision IA", desc: "Lit les preuves Mobile Money, identifie un produit par photo.", glow: "from-[--color-neon-pink]/30" },
-    { icon: Languages, title: "FR · Mooré · Dioula", desc: "Détecte la langue du client et répond automatiquement.", glow: "from-[--color-neon-gold]/30" },
-    { icon: ShoppingBag, title: "Panier conversationnel", desc: "Ajoute, modifie, valide — sans quitter le chat.", glow: "from-[--color-neon-violet]/30" },
-    { icon: Zap, title: "Relances & fidélité", desc: "Relance en cas d'absence, suit la fidélité, recommande au bon moment.", glow: "from-[--color-neon-cyan]/30" },
+    { icon: Brain, title: "Cerveau commercial", desc: "Analyse budget, besoin, historique. Recommande le bon produit, au bon moment." },
+    { icon: HeartHandshake, title: "Négociation intelligente", desc: "Remise plafonnée par boutique. Justifiée à chaque fois." },
+    { icon: Eye, title: "Vision IA", desc: "Lit les preuves Mobile Money, identifie un produit par photo." },
+    { icon: Languages, title: "FR · Mooré · Dioula", desc: "Détecte la langue du client et répond automatiquement." },
+    { icon: ShoppingBag, title: "Panier conversationnel", desc: "Ajoute, modifie, valide — sans quitter le chat." },
+    { icon: Zap, title: "Relances & fidélité", desc: "Relance en cas d'absence, suit la fidélité, recommande au bon moment." },
   ];
   return (
     <section id="capacites" className="relative py-32 px-6">
-      <motion.div {...fadeUp} className="max-w-3xl mx-auto text-center">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full glass text-xs">
-          <Sparkles className="size-3 text-[--color-neon-violet]" /> Capacités
-        </div>
-        <h2 className="mt-4 font-display font-bold text-4xl sm:text-5xl">
-          Une plateforme, <span className="text-gradient-neon">six talents.</span>
-        </h2>
-        <p className="mt-4 text-muted-foreground text-lg">
-          Pensée comme une commerciale d'élite. Pas comme un widget de plus.
-        </p>
-      </motion.div>
-
-      <div className="mt-14 mx-auto max-w-6xl grid grid-cols-1 md:grid-cols-4 gap-4 auto-rows-[180px]">
-        {caps.map((c, i) => (
-          <motion.div
-            key={c.title}
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-60px" }}
-            transition={{ duration: 0.5, delay: i * 0.05 }}
-            whileHover={{ y: -4 }}
-            className={`group relative liquid-glass rounded-3xl p-6 overflow-hidden ${c.span ?? ""}`}
-          >
-            <div className={`absolute -inset-x-10 -top-20 h-40 bg-gradient-to-b ${c.glow} to-transparent blur-2xl opacity-50 group-hover:opacity-90 transition`} />
-            <div className="relative">
-              <div className="grid place-items-center size-11 rounded-xl glass-strong">
-                <c.icon className="size-5 text-[--color-neon-cyan]" />
-              </div>
-              <h3 className="mt-4 font-display font-semibold text-xl">{c.title}</h3>
-              <p className="mt-2 text-sm text-muted-foreground">{c.desc}</p>
+      <div className="mx-auto max-w-6xl">
+        <motion.div {...fadeUp} className="flex flex-wrap items-end justify-between gap-6 mb-14">
+          <div>
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full glass text-xs">
+              <Sparkles className="size-3 text-[--color-neon-violet]" /> Capacités
             </div>
-          </motion.div>
-        ))}
+            <h2 className="mt-4 font-display font-bold text-4xl sm:text-5xl max-w-xl">
+              Un service complet, <span className="text-shiny-neon">pas un widget de plus.</span>
+            </h2>
+          </div>
+          <p className="max-w-xs text-muted-foreground">
+            Pensée comme une commerciale d'élite, capable de tenir une boutique entière du premier message à la
+            commande.
+          </p>
+        </motion.div>
+
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
+          {caps.map((c, i) => (
+            <motion.div
+              key={c.title}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-60px" }}
+              transition={{ duration: 0.5, delay: i * 0.05 }}
+              whileHover={{ y: -4 }}
+              className="liquid-glass rounded-3xl p-7"
+            >
+              <div className="flex items-start justify-between">
+                <div className="grid place-items-center size-11 rounded-xl glass-strong">
+                  <c.icon className="size-5 text-[--color-neon-cyan]" />
+                </div>
+                <span className="font-mono text-xs text-muted-foreground/50">
+                  {String(i + 1).padStart(2, "0")}
+                </span>
+              </div>
+              <h3 className="mt-5 font-display font-semibold text-xl">{c.title}</h3>
+              <p className="mt-2 text-sm text-muted-foreground">{c.desc}</p>
+            </motion.div>
+          ))}
+        </div>
       </div>
     </section>
   );
@@ -422,27 +535,6 @@ function HowItWorksSection() {
   );
 }
 
-function StatsSection() {
-  const stats = [
-    { v: 24, suffix: "h/24", l: "Disponibilité" },
-    { v: 3, suffix: "", l: "Langues parlées" },
-    { v: 2, suffix: " min", l: "Pour installer" },
-  ];
-  return (
-    <section className="relative py-24 px-6">
-      <div className="mx-auto max-w-4xl glass-strong rounded-3xl p-10 sm:p-14 grid grid-cols-1 sm:grid-cols-3 gap-8 text-center">
-        {stats.map((s) => (
-          <div key={s.l}>
-            <div className="font-display font-bold text-4xl sm:text-5xl text-gradient-neon">
-              <Counter to={s.v} suffix={s.suffix} />
-            </div>
-            <div className="mt-2 text-xs uppercase tracking-widest text-muted-foreground">{s.l}</div>
-          </div>
-        ))}
-      </div>
-    </section>
-  );
-}
 
 function LanguagesSection() {
   const langs = [
