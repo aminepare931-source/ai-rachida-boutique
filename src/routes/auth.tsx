@@ -1,5 +1,5 @@
-import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { createFileRoute, useNavigate, useSearch, Link } from "@tanstack/react-router";
+import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,15 +7,22 @@ import { toast } from "sonner";
 import { Toaster } from "@/components/ui/sonner";
 import { ParticleSphere } from "@/components/landing/ParticleSphere";
 import rachidaLogo from "@/assets/rachida-logo.png";
+import { useEffect } from "react";
+
+type AuthSearch = { mode?: "login" | "signup" };
 
 export const Route = createFileRoute("/auth")({
   head: () => ({ meta: [{ title: "Connexion — Rachida AI" }] }),
+  validateSearch: (search: Record<string, unknown>): AuthSearch => ({
+    mode: search.mode === "signup" ? "signup" : "login",
+  }),
   component: AuthPage,
 });
 
 function AuthPage() {
   const nav = useNavigate();
-  const [mode, setMode] = useState<"login" | "signup">("login");
+  const { mode: initialMode } = useSearch({ from: "/auth" });
+  const [mode, setMode] = useState<"login" | "signup">(initialMode ?? "login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);

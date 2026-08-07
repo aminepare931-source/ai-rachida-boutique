@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { streamText, type ModelMessage } from "ai";
-import { geminiModel, noThinking } from "@/lib/ai-gateway.server";
+import { geminiModel, noThinking, GENEROUS_MAX_TOKENS } from "@/lib/ai-gateway.server";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -425,11 +425,19 @@ ${shop.system_prompt_extra ?? ""}`;
         const result = streamText({
           model,
           providerOptions: noThinking,
+          maxOutputTokens: GENEROUS_MAX_TOKENS,
           messages: [
             { role: "system", content: systemPrompt },
             ...body.messages.map((m) => ({ role: m.role, content: m.content })),
           ] as ModelMessage[],
-          onFinish: async ({ text }) => {
+          onFinish: async ({ text, finishReason, usage }) => {
+            if (!text) {
+              console.error("[rachida-chat] Réponse IA vide", {
+                finishReason,
+                usage,
+                model: process.env.GEMINI_TEXT_MODEL || "gemini-2.5-flash-lite (défaut)",
+              });
+            }
             if (isStorefront && conversationId && text) {
               await supabaseAdmin.from("messages").insert({
                 conversation_id: conversationId,

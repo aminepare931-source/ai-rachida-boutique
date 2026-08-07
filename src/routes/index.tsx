@@ -85,11 +85,11 @@ function Nav() {
           <a href="#comment" className="hover:text-foreground transition">Comment ça marche</a>
         </nav>
         <div className="flex items-center gap-2">
-          <Link to="/auth" className="hidden sm:inline-flex px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground">
+          <Link to="/auth" search={{ mode: "login" }} className="hidden sm:inline-flex px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground">
             Connexion
           </Link>
           <Link
-            to="/auth"
+            to="/auth" search={{ mode: "signup" }}
             className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium bg-primary text-primary-foreground hover:scale-[1.02] transition glow-violet"
           >
             Démarrer <ArrowRight className="size-3.5" />
@@ -136,7 +136,7 @@ function Hero() {
 
             <div className="mt-9 flex flex-wrap items-center gap-3">
               <Link
-                to="/auth"
+                to="/auth" search={{ mode: "signup" }}
                 className="group inline-flex items-center gap-2 px-6 py-3.5 rounded-2xl font-semibold bg-primary text-primary-foreground glow-violet hover:scale-[1.03] transition"
               >
                 Activer Rachida
@@ -208,7 +208,7 @@ function Hero() {
               <div className="mt-3 font-display font-bold text-lg">Beta ouverte</div>
               <div className="text-[11px] text-muted-foreground mb-3">Gratuit, sans carte bancaire</div>
               <Link
-                to="/auth"
+                to="/auth" search={{ mode: "signup" }}
                 className="inline-flex items-center gap-1 text-xs font-semibold text-[--color-neon-cyan] hover:underline"
               >
                 Rejoindre <ArrowRight className="size-3" />
@@ -256,7 +256,7 @@ function AboutBlock() {
             traduction d'un produit occidental.
           </p>
           <Link
-            to="/auth"
+            to="/auth" search={{ mode: "signup" }}
             className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-foreground hover:gap-3 transition-all"
           >
             Activer Rachida <ArrowRight className="size-4" />
@@ -431,7 +431,7 @@ function MockupSection() {
                     Chiffres illustratifs — votre vrai tableau de bord affiche vos données réelles dès l'activation.
                   </p>
                   <Link
-                    to="/auth"
+                    to="/auth" search={{ mode: "signup" }}
                     className="mt-auto pt-5 w-full inline-flex items-center justify-center gap-2 px-6 py-3 rounded-2xl font-semibold glass hover:bg-white/5 transition"
                   >
                     Voir le vrai tableau de bord <ArrowRight className="size-4" />
@@ -624,7 +624,7 @@ function PricingSection() {
           ))}
         </ul>
         <Link
-          to="/auth"
+          to="/auth" search={{ mode: "signup" }}
           className="mt-8 inline-flex w-full items-center justify-center gap-2 px-6 py-3 rounded-2xl font-semibold bg-primary text-primary-foreground glow-violet hover:scale-[1.02] transition"
         >
           Activer Rachida <ArrowRight className="size-4" />
@@ -655,7 +655,7 @@ function FinalCta() {
             Gratuit pendant la beta. Aucune carte bancaire requise.
           </p>
           <Link
-            to="/auth"
+            to="/auth" search={{ mode: "signup" }}
             className="mt-9 inline-flex items-center gap-2 px-7 py-4 rounded-2xl font-semibold bg-primary text-primary-foreground glow-violet hover:scale-[1.03] transition"
           >
             Activer Rachida <ArrowRight className="size-4" />

@@ -10,10 +10,12 @@
 // dans les variables d'environnement sans toucher au code.
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
 
-// Modèle par défaut si GEMINI_TEXT_MODEL n'est pas défini. "gemini-2.5-flash" est un
-// identifiant stable au moment de l'écriture ; les modèles "3.x Flash" plus récents
-// sont aussi éligibles au niveau gratuit — à confirmer avant mise en prod.
-const DEFAULT_TEXT_MODEL = process.env.GEMINI_TEXT_MODEL || "gemini-2.5-flash";
+// Modèle par défaut si GEMINI_TEXT_MODEL n'est pas défini. On utilise la variante
+// "Flash-Lite" plutôt que "Flash" : contrairement à Flash, Flash-Lite n'a PAS le
+// raisonnement interne ("thinking") activé par défaut, ce qui évite la classe de bug
+// "réponse vide" (les jetons de réflexion qui grignotent tout le budget de sortie).
+// Reste éligible au niveau gratuit — à reconfirmer sur https://ai.google.dev/gemini-api/docs/models
+const DEFAULT_TEXT_MODEL = process.env.GEMINI_TEXT_MODEL || "gemini-2.5-flash-lite";
 
 export function createGeminiProvider(apiKey: string) {
   return createGoogleGenerativeAI({ apiKey });
@@ -38,3 +40,9 @@ export function geminiModel(modelId: string = DEFAULT_TEXT_MODEL) {
  * Référence : https://ai.google.dev/gemini-api/docs/thinking
  */
 export const noThinking = { google: { thinkingConfig: { thinkingBudget: 0 } } };
+
+/**
+ * Filet de sécurité supplémentaire : un maxOutputTokens généreux et explicite, pour
+ * ne jamais dépendre d'une valeur par défaut trop basse côté fournisseur.
+ */
+export const GENEROUS_MAX_TOKENS = 2048;
