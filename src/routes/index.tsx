@@ -52,12 +52,13 @@ function Landing() {
       <Nav />
       <Hero />
       <LogoStrip />
-      <DemoSection />
+      <MockupSection />
       <CapabilitiesSection />
       <HowItWorksSection />
       <StatsSection />
       <LanguagesSection />
       <NoCodeInstallSection />
+      <PricingSection />
       <FinalCta />
       <Footer />
       <RachidaWidget shop="demo" mode="platform" />
@@ -136,7 +137,7 @@ function Hero() {
           className="mt-6 font-display font-bold text-5xl sm:text-6xl md:text-7xl lg:text-8xl leading-[0.95] tracking-tight"
         >
           La vendeuse IA<br />
-          qui <span className="text-gradient-neon">ne dort jamais.</span>
+          qui <span className="text-shiny-neon">ne dort jamais.</span>
         </motion.h1>
 
         <motion.p
@@ -197,20 +198,22 @@ function LogoStrip() {
   );
 }
 
-function DemoSection() {
+function MockupSection() {
+  const [tab, setTab] = useState<"chat" | "dashboard">("chat");
+
   return (
     <section id="demo" className="relative py-32 px-6">
-      <div className="mx-auto max-w-6xl grid md:grid-cols-2 gap-16 items-center">
+      <div className="mx-auto max-w-6xl grid lg:grid-cols-2 gap-16 items-center">
         <motion.div {...fadeUp}>
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full glass text-xs">
-            <MessageSquare className="size-3 text-[--color-neon-cyan]" /> Démo live
+            <MessageSquare className="size-3 text-[--color-neon-cyan]" /> En conditions réelles
           </div>
           <h2 className="mt-4 font-display font-bold text-4xl sm:text-5xl leading-tight">
-            Elle parle comme une <span className="text-gradient-neon">vraie vendeuse.</span>
+            Elle parle comme une <span className="text-shiny-neon">vraie vendeuse.</span>
           </h2>
           <p className="mt-5 text-muted-foreground text-lg">
             Pas un chatbot scripté. Rachida lit l'intention, détecte la frustration, propose une remise dans la limite
-            que vous fixez, et clôt la vente naturellement.
+            que vous fixez, et clôt la vente naturellement — pendant que vous, vous gardez un œil sur vos ventes.
           </p>
           <ul className="mt-6 space-y-3 text-sm">
             {[
@@ -229,31 +232,101 @@ function DemoSection() {
         </motion.div>
 
         <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
+          initial={{ opacity: 0, scale: 0.96 }}
           whileInView={{ opacity: 1, scale: 1 }}
           viewport={{ once: true }}
           transition={{ duration: 0.7 }}
           className="relative"
         >
           <div className="absolute -inset-10 bg-gradient-to-br from-[--color-neon-violet]/20 via-transparent to-[--color-neon-cyan]/20 blur-3xl -z-10" />
-          <div className="float glass-strong rounded-3xl p-8 sm:p-10 w-full max-w-md text-center">
-            <div className="mx-auto size-14 rounded-full bg-gradient-to-br from-[--color-neon-violet] to-[--color-neon-cyan] grid place-items-center mb-5">
-              <MessageSquare className="size-6 text-white" />
+          <div className="liquid-glass rounded-3xl overflow-hidden">
+            {/* Barre de titre style macOS */}
+            <div className="flex items-center justify-between px-4 h-10 bg-black/30 border-b border-white/10">
+              <div className="flex items-center gap-1.5">
+                <span className="size-2.5 rounded-full bg-[#ff5f57]" />
+                <span className="size-2.5 rounded-full bg-[#febc2e]" />
+                <span className="size-2.5 rounded-full bg-[#28c840]" />
+              </div>
+              <span className="text-xs text-white/50">
+                Rachida — {tab === "chat" ? "Conversation" : "Tableau de bord"}
+              </span>
+              <span className="w-12" aria-hidden />
             </div>
-            <h3 className="font-display font-semibold text-lg">Parle-lui, en vrai.</h3>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Ce n'est pas une animation : c'est la même IA (Gemini) qui répondra à vos clients. Pose-lui une vraie
-              question sur des chaussures, un prix, une livraison.
-            </p>
-            <button
-              type="button"
-              onClick={() =>
-                window.RachidaOpen?.("Salut, je cherche des chaussures noires homme à moins de 25 000 FCFA")
-              }
-              className="mt-6 inline-flex items-center gap-2 px-6 py-3 rounded-2xl font-semibold bg-primary text-primary-foreground glow-violet hover:scale-[1.03] transition"
-            >
-              Discuter avec Rachida <ArrowRight className="size-4" />
-            </button>
+
+            {/* Onglets */}
+            <div className="flex border-b border-white/10 text-xs font-medium">
+              <button
+                type="button"
+                onClick={() => setTab("chat")}
+                className={`flex-1 py-2.5 transition ${tab === "chat" ? "text-foreground bg-white/5" : "text-muted-foreground hover:text-foreground"}`}
+              >
+                Conversation
+              </button>
+              <button
+                type="button"
+                onClick={() => setTab("dashboard")}
+                className={`flex-1 py-2.5 transition ${tab === "dashboard" ? "text-foreground bg-white/5" : "text-muted-foreground hover:text-foreground"}`}
+              >
+                Tableau de bord
+              </button>
+            </div>
+
+            {/* Contenu */}
+            <div className="p-6 sm:p-7 min-h-[340px] flex flex-col">
+              {tab === "chat" ? (
+                <div className="flex-1 flex flex-col">
+                  <p className="text-[11px] uppercase tracking-widest text-muted-foreground/60 mb-4">
+                    Exemple d'échange
+                  </p>
+                  <div className="space-y-3 flex-1">
+                    <div className="max-w-[85%] rounded-2xl rounded-tl-sm glass px-4 py-2.5 text-sm">
+                      Bonjour, vous avez des sneakers noires pour homme en dessous de 25 000 FCFA ?
+                    </div>
+                    <div className="max-w-[85%] ml-auto rounded-2xl rounded-tr-sm bg-primary/20 px-4 py-2.5 text-sm">
+                      Oui ! J'ai deux modèles à 22 500 et 24 000 FCFA, taille 40 à 44 en stock. Vous voulez que je vous
+                      les montre ?
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      window.RachidaOpen?.("Salut, je cherche des chaussures noires homme à moins de 25 000 FCFA")
+                    }
+                    className="mt-5 w-full inline-flex items-center justify-center gap-2 px-6 py-3 rounded-2xl font-semibold bg-primary text-primary-foreground glow-violet hover:scale-[1.02] transition"
+                  >
+                    Continuer la conversation, en vrai <ArrowRight className="size-4" />
+                  </button>
+                </div>
+              ) : (
+                <div className="flex-1 flex flex-col">
+                  <p className="text-[11px] uppercase tracking-widest text-muted-foreground/60 mb-4">
+                    Aperçu — données d'exemple
+                  </p>
+                  <div className="grid grid-cols-2 gap-3">
+                    {[
+                      { l: "Ventes du jour", v: "184 500 FCFA" },
+                      { l: "Commandes", v: "12" },
+                      { l: "Conversations actives", v: "5" },
+                      { l: "Leads chauds", v: "3" },
+                    ].map((s) => (
+                      <div key={s.l} className="glass rounded-xl p-4">
+                        <div className="text-xs text-muted-foreground">{s.l}</div>
+                        <div className="mt-1 font-display font-semibold text-xl">{s.v}</div>
+                      </div>
+                    ))}
+                  </div>
+                  <p className="mt-5 text-xs text-muted-foreground">
+                    Chiffres illustratifs — votre vrai tableau de bord affiche vos données réelles dès l'activation.
+                  </p>
+                  <Link
+                    to="/auth"
+                    className="mt-auto pt-5 w-full inline-flex items-center justify-center gap-2 px-6 py-3 rounded-2xl font-semibold glass hover:bg-white/5 transition"
+                  >
+                    Voir le vrai tableau de bord <ArrowRight className="size-4" />
+                  </Link>
+                </div>
+              )}
+            </div>
           </div>
         </motion.div>
       </div>
@@ -299,7 +372,7 @@ function CapabilitiesSection() {
             viewport={{ once: true, margin: "-60px" }}
             transition={{ duration: 0.5, delay: i * 0.05 }}
             whileHover={{ y: -4 }}
-            className={`group relative glass rounded-3xl p-6 overflow-hidden ${c.span ?? ""}`}
+            className={`group relative liquid-glass rounded-3xl p-6 overflow-hidden ${c.span ?? ""}`}
           >
             <div className={`absolute -inset-x-10 -top-20 h-40 bg-gradient-to-b ${c.glow} to-transparent blur-2xl opacity-50 group-hover:opacity-90 transition`} />
             <div className="relative">
@@ -408,18 +481,83 @@ function LanguagesSection() {
   );
 }
 
+function PricingSection() {
+  return (
+    <section className="relative py-24 px-6 overflow-hidden">
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 flex justify-center opacity-[0.05] select-none"
+      >
+        <span className="font-display font-extrabold text-[16vw] leading-none tracking-tight whitespace-nowrap">
+          Rachida.ai
+        </span>
+      </div>
+      <motion.div {...fadeUp} className="relative max-w-3xl mx-auto text-center">
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full glass text-xs">
+          <Sparkles className="size-3 text-[--color-neon-violet]" /> Tarifs
+        </div>
+        <h2 className="mt-4 font-display font-bold text-4xl sm:text-5xl">
+          Un seul palier, <span className="text-shiny-neon">pour l'instant.</span>
+        </h2>
+        <p className="mt-4 text-muted-foreground text-lg">
+          On construit encore. Tant que c'est le cas, c'est gratuit — pas de carte bancaire, pas de surprise.
+        </p>
+      </motion.div>
+
+      <motion.div
+        initial={{ opacity: 0, y: 30 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.6 }}
+        className="relative mt-12 mx-auto max-w-sm liquid-glass rounded-[2rem] p-8 text-center"
+      >
+        <div className="text-sm text-muted-foreground">Beta</div>
+        <div className="mt-2 font-display font-semibold text-5xl">Gratuit</div>
+        <p className="mt-3 text-sm text-muted-foreground min-h-10">
+          Pour les commerçants qui activent Rachida pendant la phase beta.
+        </p>
+        <ul className="mt-6 space-y-3 text-sm text-left">
+          {[
+            "Rachida sur votre site, WhatsApp ou page boutique",
+            "Catalogue, panier et commandes illimités",
+            "FR · Mooré · Dioula",
+            "Tableau de bord temps réel",
+          ].map((f) => (
+            <li key={f} className="flex items-start gap-3">
+              <span className="mt-0.5 grid place-items-center size-5 rounded-full bg-white/10 shrink-0">
+                <Check className="size-3" />
+              </span>
+              {f}
+            </li>
+          ))}
+        </ul>
+        <Link
+          to="/auth"
+          className="mt-8 inline-flex w-full items-center justify-center gap-2 px-6 py-3 rounded-2xl font-semibold bg-primary text-primary-foreground glow-violet hover:scale-[1.02] transition"
+        >
+          Activer Rachida <ArrowRight className="size-4" />
+        </Link>
+      </motion.div>
+    </section>
+  );
+}
+
 function FinalCta() {
   return (
     <section className="relative py-32 px-6">
       <motion.div
         {...fadeUp}
-        className="relative mx-auto max-w-4xl glass-strong rounded-[2.5rem] p-12 sm:p-20 text-center overflow-hidden"
+        className="relative mx-auto max-w-4xl liquid-glass rounded-[2.5rem] p-12 sm:p-20 text-center overflow-hidden"
       >
-        <div className="absolute -top-40 left-1/2 -translate-x-1/2 size-[600px] bg-[--color-neon-violet]/20 blur-[120px] rounded-full" />
+        <div
+          aria-hidden
+          className="absolute -top-40 left-1/2 -translate-x-1/2 size-[600px] rounded-full opacity-30"
+          style={{ background: "radial-gradient(circle, rgba(255,255,255,0.5), transparent 70%)" }}
+        />
         <div className="relative">
           <h2 className="font-display font-bold text-4xl sm:text-6xl leading-tight">
             Donnez à votre boutique<br />
-            <span className="text-gradient-neon">une vraie vendeuse.</span>
+            <span className="text-shiny-neon">une vraie vendeuse.</span>
           </h2>
           <p className="mt-5 text-muted-foreground text-lg max-w-xl mx-auto">
             Gratuit pendant la beta. Aucune carte bancaire requise.
