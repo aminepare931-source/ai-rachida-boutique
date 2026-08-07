@@ -28,3 +28,13 @@ export function geminiModel(modelId: string = DEFAULT_TEXT_MODEL) {
   if (!key) throw new Error("GEMINI_API_KEY manquant. Ajoute-le dans tes variables d'environnement (clé gratuite sur https://aistudio.google.com/app/apikey).");
   return createGeminiProvider(key)(modelId);
 }
+
+/**
+ * IMPORTANT — Gemini 2.5/3 Flash a le "thinking" (raisonnement interne) activé par
+ * défaut. Ces jetons de réflexion consomment le budget de sortie AVANT le texte
+ * visible : sans ce réglage, la réponse peut arriver vide (finishReason "MAX_TOKENS",
+ * sans erreur). On le désactive ici car un chat de vente n'a pas besoin de raisonnement
+ * profond — passe ceci en `providerOptions` sur CHAQUE appel generateText/streamText.
+ * Référence : https://ai.google.dev/gemini-api/docs/thinking
+ */
+export const noThinking = { google: { thinkingConfig: { thinkingBudget: 0 } } };

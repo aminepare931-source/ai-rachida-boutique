@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { generateText } from "ai";
-import { geminiModel } from "@/lib/ai-gateway.server";
+import { geminiModel, noThinking } from "@/lib/ai-gateway.server";
 
 const InputSchema = z.object({
   shopId: z.string().uuid(),
@@ -65,6 +65,7 @@ export const smartImportProducts = createServerFn({ method: "POST" })
 
     const result = await generateText({
       model: geminiModel(),
+      providerOptions: noThinking,
       messages: [
         { role: "system", content: SYSTEM },
         { role: "user", content: userContent },

@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { streamText, type ModelMessage } from "ai";
-import { geminiModel } from "@/lib/ai-gateway.server";
+import { geminiModel, noThinking } from "@/lib/ai-gateway.server";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -424,6 +424,7 @@ ${shop.system_prompt_extra ?? ""}`;
 
         const result = streamText({
           model,
+          providerOptions: noThinking,
           messages: [
             { role: "system", content: systemPrompt },
             ...body.messages.map((m) => ({ role: m.role, content: m.content })),

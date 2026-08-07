@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { generateText } from "ai";
-import { geminiModel } from "@/lib/ai-gateway.server";
+import { geminiModel, noThinking } from "@/lib/ai-gateway.server";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -51,6 +51,7 @@ export const Route = createFileRoute("/api/public/rachida-vision")({
 
         const result = await generateText({
           model,
+          providerOptions: noThinking,
           messages: [
             {
               role: "user",
