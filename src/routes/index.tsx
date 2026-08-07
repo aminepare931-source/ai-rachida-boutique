@@ -283,7 +283,7 @@ function CapabilitiesSection() {
           <Sparkles className="size-3 text-[--color-neon-violet]" /> Capacités
         </div>
         <h2 className="mt-4 font-display font-bold text-4xl sm:text-5xl">
-          Une plateforme, <span className="text-gradient-neon">douze talents.</span>
+          Une plateforme, <span className="text-gradient-neon">six talents.</span>
         </h2>
         <p className="mt-4 text-muted-foreground text-lg">
           Pensée comme une commerciale d'élite. Pas comme un widget de plus.
@@ -507,9 +507,9 @@ function NoCodeInstallSection() {
           className="glass rounded-3xl p-6 flex flex-col"
         >
           <div className="size-10 grid place-items-center rounded-xl bg-gradient-to-br from-[--color-neon-violet] to-[--color-neon-cyan] font-display font-bold">2</div>
-          <h3 className="mt-4 font-display font-semibold text-lg">Lien WhatsApp prêt</h3>
+          <h3 className="mt-4 font-display font-semibold text-lg">Activation par WhatsApp</h3>
           <p className="mt-2 text-sm text-muted-foreground flex-1">
-            On vous génère un numéro WhatsApp connecté à Rachida. Partagez-le sur vos statuts, votre bio Instagram, vos affiches.
+            Écrivez-nous sur WhatsApp et notre équipe connecte Rachida à votre boutique, sans configuration technique de votre côté.
           </p>
           <a
             href={waLink}

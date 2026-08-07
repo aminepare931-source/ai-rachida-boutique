@@ -30,7 +30,10 @@ export const Route = createFileRoute("/api/public/rachida-search")({
           .order("created_at", { ascending: false })
           .limit(1);
         const shop = shops?.[0];
-        if (!shop) return new Response("shop not found", { status: 404, headers: corsHeaders });
+        if (!shop) {
+          if (body.shopSlug === "demo") return Response.json({ products: [] }, { headers: corsHeaders });
+          return new Response("shop not found", { status: 404, headers: corsHeaders });
+        }
 
         let q = supabaseAdmin
           .from("products")

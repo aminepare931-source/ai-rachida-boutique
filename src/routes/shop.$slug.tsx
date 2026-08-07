@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { ShoppingBag, Star, Truck, ShieldCheck, ArrowLeft } from "lucide-react";
+import { ShoppingBag, Truck, ShieldCheck, ArrowLeft } from "lucide-react";
 import rachidaAvatar from "@/assets/rachida-avatar.png";
 import rachidaLogo from "@/assets/rachida-logo.png";
 import { RachidaWidget } from "@/components/RachidaWidget";
@@ -95,9 +95,8 @@ function ShopPage() {
               Parcourez le catalogue et discutez avec Rachida en bas à droite — elle conseille, négocie et finalise la commande.
             </p>
             <div className="mt-6 flex flex-wrap gap-4 text-xs text-muted-foreground">
-              <span className="inline-flex items-center gap-1.5"><Truck className="size-3.5 text-[--color-neon-cyan]" /> Livraison Ouagadougou</span>
+              <span className="inline-flex items-center gap-1.5"><Truck className="size-3.5 text-[--color-neon-cyan]" /> Livraison rapide</span>
               <span className="inline-flex items-center gap-1.5"><ShieldCheck className="size-3.5 text-[--color-neon-cyan]" /> Mobile Money</span>
-              <span className="inline-flex items-center gap-1.5"><Star className="size-3.5 text-[--color-neon-cyan]" /> 4.9/5 clients</span>
             </div>
           </div>
           <div className="relative">
