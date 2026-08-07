@@ -140,6 +140,73 @@
     0 10px 40px -8px color-mix(in oklab, var(--color-neon-cyan) 50%, transparent);
 }
 
+/* ----- Inputs & boutons du dashboard (utilisés dans une dizaine de fichiers) ----- */
+
+@utility input-neon {
+  width: 100%;
+  background: color-mix(in oklab, white 4%, transparent);
+  border: 1px solid color-mix(in oklab, white 12%, transparent);
+  border-radius: var(--radius-lg);
+  padding: 0.65rem 0.9rem;
+  color: var(--color-foreground);
+  font-size: 0.9rem;
+  transition: border-color 0.2s ease, background 0.2s ease;
+  &::placeholder {
+    color: var(--color-muted-foreground);
+  }
+  &:focus {
+    outline: none;
+    border-color: color-mix(in oklab, var(--color-neon-violet) 50%, transparent);
+    background: color-mix(in oklab, white 6%, transparent);
+  }
+}
+
+@utility btn-neon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.65rem 1.1rem;
+  border-radius: var(--radius-lg);
+  font-weight: 600;
+  font-size: 0.85rem;
+  background: var(--color-primary);
+  color: var(--color-primary-foreground);
+  box-shadow:
+    0 0 0 1px color-mix(in oklab, var(--color-neon-violet) 30%, transparent),
+    0 10px 30px -8px color-mix(in oklab, var(--color-neon-violet) 55%, transparent);
+  transition: transform 0.15s ease, opacity 0.15s ease;
+  &:hover {
+    transform: scale(1.02);
+  }
+  &:disabled {
+    opacity: 0.6;
+    transform: none;
+  }
+}
+
+@utility btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.6rem 1rem;
+  border-radius: var(--radius-lg);
+  font-weight: 500;
+  font-size: 0.85rem;
+  background: color-mix(in oklab, white 5%, transparent);
+  border: 1px solid color-mix(in oklab, white 10%, transparent);
+  color: var(--color-foreground);
+  transition: background 0.2s ease, border-color 0.2s ease;
+  &:hover {
+    background: color-mix(in oklab, white 9%, transparent);
+    border-color: color-mix(in oklab, white 18%, transparent);
+  }
+  &:disabled {
+    opacity: 0.6;
+  }
+}
+
 @utility text-gradient-neon {
   background: linear-gradient(
     100deg,

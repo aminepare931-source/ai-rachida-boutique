@@ -1,13 +1,11 @@
 import { createFileRoute, useNavigate, useSearch, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Eye, EyeOff, Rocket, Store } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Toaster } from "@/components/ui/sonner";
-import { ParticleSphere } from "@/components/landing/ParticleSphere";
 import rachidaLogo from "@/assets/rachida-logo.png";
-import { useEffect } from "react";
 
 type AuthSearch = { mode?: "login" | "signup" };
 
@@ -19,12 +17,19 @@ export const Route = createFileRoute("/auth")({
   component: AuthPage,
 });
 
+const BUSINESS_TYPES = ["Boutique", "Restaurant", "Autre"] as const;
+
 function AuthPage() {
   const nav = useNavigate();
   const { mode: initialMode } = useSearch({ from: "/auth" });
   const [mode, setMode] = useState<"login" | "signup">(initialMode ?? "login");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [businessType, setBusinessType] = useState<(typeof BUSINESS_TYPES)[number]>("Boutique");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [agreed, setAgreed] = useState(false);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -35,13 +40,20 @@ function AuthPage() {
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
+    if (mode === "signup" && !agreed) {
+      toast.error("Merci d'accepter les conditions d'utilisation.");
+      return;
+    }
     setLoading(true);
     try {
       if (mode === "signup") {
         const { error } = await supabase.auth.signUp({
           email,
           password,
-          options: { emailRedirectTo: window.location.origin + "/dashboard" },
+          options: {
+            emailRedirectTo: window.location.origin + "/dashboard",
+            data: { first_name: firstName, last_name: lastName, business_type: businessType },
+          },
         });
         if (error) throw error;
         toast.success("Compte créé. Bienvenue dans Rachida.");
@@ -58,45 +70,53 @@ function AuthPage() {
     }
   }
 
+  const isSignup = mode === "signup";
+
   return (
-    <div className="relative h-[100svh] min-h-[640px] overflow-hidden bg-background text-foreground grid grid-rows-[auto_1fr_auto]">
+    <div className="min-h-screen grid lg:grid-cols-2 bg-background text-foreground">
       <Toaster />
 
-      {/* Fond plein écran */}
-      <div className="fixed inset-0 -z-10">
-        <ParticleSphere />
-        {/* Scrim : plus sombre à droite, là où vit le panneau */}
-        <div
-          className="absolute inset-0"
-          style={{
-            backgroundImage:
-              "linear-gradient(to right, transparent 0%, transparent 40%, rgba(10,10,14,0.55) 70%, rgba(10,10,14,0.85) 100%), linear-gradient(to bottom, rgba(10,10,14,0.5) 0%, transparent 25%, transparent 75%, rgba(10,10,14,0.7) 100%)",
-          }}
-        />
+      {/* Panneau visuel */}
+      <div className="relative hidden lg:block overflow-hidden bg-[#0c0a14]">
+        <div className="absolute -top-24 -left-24 size-[420px] rounded-full bg-gradient-to-br from-[--color-neon-violet] to-transparent opacity-40 blur-3xl" />
+        <div className="absolute top-1/3 -right-20 size-[360px] rounded-full bg-gradient-to-br from-[--color-neon-cyan] to-transparent opacity-25 blur-3xl" />
+        <div className="absolute bottom-0 left-1/4 size-[300px] rounded-full bg-gradient-to-br from-[--color-neon-violet] to-transparent opacity-30 blur-3xl" />
+        <div className="absolute inset-0 grid-bg opacity-30" />
+
+        <div className="relative h-full flex flex-col justify-between p-10">
+          <Link to="/" className="inline-flex items-center gap-2 font-display font-semibold">
+            <img src={rachidaLogo} alt="Rachida AI" className="size-8 object-contain" />
+            Rachida<span className="text-gradient-neon">.ai</span>
+          </Link>
+
+          <div>
+            <h2 className="font-display font-bold text-4xl xl:text-5xl leading-[1.05]">
+              Discutez.<br />Vendez.<br />Grandissez.
+            </h2>
+            <p className="mt-4 max-w-sm text-muted-foreground">
+              Une vendeuse IA pensée pour les commerces du Burkina Faso, disponible 24h/24 en français, mooré et
+              dioula.
+            </p>
+
+            <div className="mt-8 liquid-glass rounded-2xl p-4 max-w-sm flex items-start gap-3">
+              <span className="grid place-items-center size-9 rounded-xl bg-white/10 shrink-0">
+                <Rocket className="size-4 text-[--color-neon-cyan]" />
+              </span>
+              <p className="text-sm text-muted-foreground">
+                En beta ouverte : gratuit, sans carte bancaire, et vos retours façonnent directement le produit.
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
 
-      {/* Barre du haut */}
-      <header className="relative z-10 flex items-center justify-between px-6 sm:px-10 py-6">
-        <Link to="/" className="flex items-center gap-2 font-display font-semibold text-sm tracking-tight">
-          <img src={rachidaLogo} alt="Rachida AI" className="size-7 object-contain" />
-          Rachida<span className="text-gradient-neon">.ai</span>
-        </Link>
-        <Link to="/" className="text-xs text-muted-foreground hover:text-foreground transition tracking-wide uppercase">
-          Retour au site
-        </Link>
-      </header>
-
-      {/* Corps : panneau aligné à droite */}
-      <div className="relative z-10 flex items-center justify-center sm:justify-end px-6 sm:px-10">
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="w-full max-w-sm"
-        >
-          <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full glass text-[11px] font-medium uppercase tracking-widest text-muted-foreground">
-            {mode === "login" ? "Connexion" : "Nouvelle boutique"}
-          </span>
+      {/* Panneau formulaire */}
+      <div className="flex items-center justify-center px-6 py-12">
+        <div className="w-full max-w-sm">
+          <Link to="/" className="lg:hidden inline-flex items-center gap-2 font-display font-semibold mb-8">
+            <img src={rachidaLogo} alt="Rachida AI" className="size-7 object-contain" />
+            Rachida<span className="text-gradient-neon">.ai</span>
+          </Link>
 
           <AnimatePresence mode="wait">
             <motion.div
@@ -106,22 +126,45 @@ function AuthPage() {
               exit={{ opacity: 0, y: -8 }}
               transition={{ duration: 0.25 }}
             >
-              <h1 className="mt-6 font-display font-bold text-4xl sm:text-5xl leading-[0.95]">
-                {mode === "login" ? "Bon retour." : "Créer ma boutique."}
+              <h1 className="font-display font-bold text-3xl">
+                {isSignup ? "Créer votre compte" : "Bon retour."}
               </h1>
-              <p className="mt-3 text-sm text-muted-foreground">
-                {mode === "login"
-                  ? "Reprends là où Rachida s'est arrêtée."
-                  : "30 secondes. Pas de carte bancaire."}
+              <p className="mt-1.5 text-sm text-muted-foreground">
+                {isSignup ? "Activez Rachida — c'est gratuit pendant la beta." : "Connectez-vous à votre tableau de bord."}
               </p>
             </motion.div>
           </AnimatePresence>
 
-          <form onSubmit={submit} className="mt-9 space-y-4">
+          <form onSubmit={submit} className="mt-8 space-y-4">
+            {isSignup && (
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label htmlFor="firstName" className="text-xs font-medium text-muted-foreground">Prénom</label>
+                  <input
+                    id="firstName"
+                    required
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                    placeholder="Awa"
+                    className="input-neon mt-1.5"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="lastName" className="text-xs font-medium text-muted-foreground">Nom</label>
+                  <input
+                    id="lastName"
+                    required
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                    placeholder="Ouédraogo"
+                    className="input-neon mt-1.5"
+                  />
+                </div>
+              </div>
+            )}
+
             <div>
-              <label htmlFor="email" className="text-[11px] uppercase tracking-widest text-muted-foreground">
-                Email
-              </label>
+              <label htmlFor="email" className="text-xs font-medium text-muted-foreground">Adresse email</label>
               <input
                 id="email"
                 type="email"
@@ -129,52 +172,88 @@ function AuthPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="toi@boutique.bf"
-                className="w-full mt-2 bg-transparent border-0 border-b border-white/20 focus:border-[--color-neon-cyan] focus:outline-none transition py-2.5 text-base"
+                className="input-neon mt-1.5"
               />
             </div>
+
             <div>
-              <label htmlFor="password" className="text-[11px] uppercase tracking-widest text-muted-foreground">
-                Mot de passe
-              </label>
-              <input
-                id="password"
-                type="password"
-                required
-                minLength={6}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                className="w-full mt-2 bg-transparent border-0 border-b border-white/20 focus:border-[--color-neon-cyan] focus:outline-none transition py-2.5 text-base"
-              />
+              <label htmlFor="password" className="text-xs font-medium text-muted-foreground">Mot de passe</label>
+              <div className="relative mt-1.5">
+                <input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  required
+                  minLength={6}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder={isSignup ? "Créer un mot de passe" : "••••••••"}
+                  className="input-neon pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((v) => !v)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+                >
+                  {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                </button>
+              </div>
             </div>
+
+            {isSignup && (
+              <div>
+                <div className="text-xs font-medium text-muted-foreground mb-2">Type de commerce</div>
+                <div className="flex gap-2">
+                  {BUSINESS_TYPES.map((t) => (
+                    <button
+                      key={t}
+                      type="button"
+                      onClick={() => setBusinessType(t)}
+                      className={`flex-1 inline-flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-medium border transition ${
+                        businessType === t
+                          ? "border-[--color-neon-violet] bg-[--color-neon-violet]/10 text-foreground"
+                          : "border-white/10 text-muted-foreground hover:border-white/20"
+                      }`}
+                    >
+                      <Store className="size-3" /> {t}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {isSignup && (
+              <label className="flex items-start gap-2.5 text-xs text-muted-foreground cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={agreed}
+                  onChange={(e) => setAgreed(e.target.checked)}
+                  className="mt-0.5 size-3.5 rounded border-white/20 bg-transparent accent-[--color-neon-violet]"
+                />
+                J'accepte les conditions d'utilisation de Rachida AI.
+              </label>
+            )}
+
             <button
               disabled={loading}
               className="w-full inline-flex items-center justify-center gap-2 py-3.5 rounded-xl font-semibold bg-primary text-primary-foreground glow-violet hover:scale-[1.01] transition disabled:opacity-60"
             >
-              {loading ? "Un instant..." : mode === "login" ? "Se connecter" : "Créer mon compte"}
+              {loading ? "Un instant..." : isSignup ? "Créer mon compte" : "Se connecter"}
               {!loading && <ArrowRight className="size-4" />}
             </button>
           </form>
 
-          <button
-            onClick={() => setMode(mode === "login" ? "signup" : "login")}
-            className="mt-6 text-sm text-muted-foreground hover:text-foreground w-full text-center"
-          >
-            {mode === "login" ? "Pas encore de compte ? " : "Déjà inscrit ? "}
-            <span className="text-gradient-neon font-medium">
-              {mode === "login" ? "Créer ma boutique →" : "Se connecter →"}
-            </span>
-          </button>
-        </motion.div>
+          <p className="mt-6 text-center text-sm text-muted-foreground">
+            {isSignup ? "Déjà un compte ? " : "Pas encore de compte ? "}
+            <button
+              onClick={() => setMode(isSignup ? "login" : "signup")}
+              className="text-gradient-neon font-medium"
+            >
+              {isSignup ? "Se connecter" : "Créer mon compte"}
+            </button>
+          </p>
+        </div>
       </div>
-
-      {/* Pied légal */}
-      <footer className="relative z-10 border-t border-white/10 px-6 py-5 text-center">
-        <p className="text-xs text-muted-foreground">
-          En créant un compte, tu acceptes que Rachida AI stocke tes données de boutique pour faire fonctionner le
-          service.
-        </p>
-      </footer>
     </div>
   );
 }
