@@ -502,6 +502,23 @@ function CapabilitiesSection() {
   );
 }
 
+function Starfield() {
+  return (
+    <div className="absolute inset-0 -z-10 overflow-hidden" aria-hidden>
+      <div
+        className="absolute inset-0 opacity-50"
+        style={{
+          backgroundImage:
+            "radial-gradient(1px 1px at 20% 30%, white, transparent), radial-gradient(1px 1px at 60% 10%, white, transparent), radial-gradient(1.5px 1.5px at 85% 60%, white, transparent), radial-gradient(1px 1px at 40% 80%, white, transparent), radial-gradient(1px 1px at 10% 65%, white, transparent), radial-gradient(1.5px 1.5px at 92% 20%, white, transparent), radial-gradient(1px 1px at 70% 90%, white, transparent)",
+          backgroundSize: "100% 100%",
+        }}
+      />
+      <div className="absolute -top-32 left-1/4 size-[400px] rounded-full bg-[--color-neon-cyan]/10 blur-[100px]" />
+      <div className="absolute -bottom-32 right-1/4 size-[350px] rounded-full bg-[--color-neon-violet]/10 blur-[100px]" />
+    </div>
+  );
+}
+
 function HowItWorksSection() {
   const steps = [
     { n: "01", t: "Crée ta boutique", d: "Email + nom. 30 secondes." },
@@ -509,13 +526,17 @@ function HowItWorksSection() {
     { n: "03", t: "Active sans coder", d: "Partage ta boutique offerte, invite ton webmaster, ou suis le guide Wix/Shopify/WordPress avec diagnostic automatique." },
   ];
   return (
-    <section id="comment" className="relative py-32 px-6">
+    <section id="comment" className="relative py-32 px-6 overflow-hidden">
+      <Starfield />
       <motion.div {...fadeUp} className="max-w-3xl mx-auto text-center">
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full glass text-xs mb-5">
+          <span className="size-1.5 rounded-full bg-[--color-neon-cyan]" /> Mise en route
+        </div>
         <h2 className="font-display font-bold text-4xl sm:text-5xl">
-          3 étapes. <span className="text-gradient-neon">Pas une de plus.</span>
+          3 étapes. <span className="text-shiny-neon">Pas une de plus.</span>
         </h2>
       </motion.div>
-      <div className="mt-14 mx-auto max-w-5xl grid md:grid-cols-3 gap-5">
+      <div className="mt-16 mx-auto max-w-5xl grid md:grid-cols-3 gap-6">
         {steps.map((s, i) => (
           <motion.div
             key={s.n}
@@ -523,10 +544,12 @@ function HowItWorksSection() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6, delay: i * 0.15 }}
-            className="relative glass rounded-3xl p-7"
+            className={`relative liquid-glass rounded-3xl p-7 ${i === 1 ? "md:-translate-y-5" : ""}`}
           >
-            <div className="font-mono text-5xl font-bold text-gradient-neon">{s.n}</div>
-            <h3 className="mt-4 font-display font-semibold text-xl">{s.t}</h3>
+            <div className="inline-flex items-center justify-center size-14 rounded-full border border-[--color-neon-cyan]/40 font-mono text-lg font-bold text-[--color-neon-cyan]">
+              {s.n}
+            </div>
+            <h3 className="mt-5 font-display font-semibold text-xl">{s.t}</h3>
             <p className="mt-2 text-sm text-muted-foreground">{s.d}</p>
           </motion.div>
         ))}
@@ -543,10 +566,11 @@ function LanguagesSection() {
     { code: "DYU", name: "Dioula", sample: "I ni ce, ne bɛ se ka i dɛmɛ wa ?" },
   ];
   return (
-    <section className="relative py-24 px-6">
+    <section className="relative py-24 px-6 overflow-hidden">
+      <Starfield />
       <motion.div {...fadeUp} className="max-w-3xl mx-auto text-center">
         <h2 className="font-display font-bold text-4xl sm:text-5xl">
-          Elle parle <span className="text-gradient-neon">la langue de vos clients.</span>
+          Elle parle <span className="text-shiny-neon">la langue de vos clients.</span>
         </h2>
       </motion.div>
       <div className="mt-12 mx-auto max-w-5xl grid md:grid-cols-3 gap-5">
@@ -557,10 +581,11 @@ function LanguagesSection() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5, delay: i * 0.1 }}
-            className="glass rounded-3xl p-6"
+            whileHover={{ y: -4 }}
+            className="liquid-glass rounded-3xl p-6"
           >
             <div className="flex items-center gap-3">
-              <div className="size-10 grid place-items-center rounded-xl bg-gradient-to-br from-[--color-neon-violet]/40 to-[--color-neon-cyan]/40 font-mono text-xs font-bold">
+              <div className="size-11 grid place-items-center rounded-full border border-[--color-neon-cyan]/40 font-mono text-[11px] font-bold text-[--color-neon-cyan]">
                 {l.code}
               </div>
               <div className="font-display font-semibold">{l.name}</div>
@@ -688,13 +713,14 @@ function NoCodeInstallSection() {
   };
 
   return (
-    <section className="relative py-24 px-6">
+    <section className="relative py-24 px-6 overflow-hidden">
+      <Starfield />
       <motion.div {...fadeUp} className="max-w-3xl mx-auto text-center">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full glass text-xs text-muted-foreground mb-5">
           <Zap className="size-3 text-[--color-neon-cyan]" /> Pour tout le monde
         </div>
         <h2 className="font-display font-bold text-4xl sm:text-5xl">
-          Vous ne savez pas coder ? <span className="text-gradient-neon">Aucun problème.</span>
+          Vous ne savez pas coder ? <span className="text-shiny-neon">Aucun problème.</span>
         </h2>
         <p className="mt-4 text-muted-foreground">
           3 chemins simples : on installe pour vous, vous partagez une page boutique, ou votre plateforme l'ajoute en quelques clics.
@@ -707,9 +733,9 @@ function NoCodeInstallSection() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.5 }}
-          className="glass rounded-3xl p-6 flex flex-col"
+          className="liquid-glass rounded-3xl p-6 flex flex-col"
         >
-          <div className="size-10 grid place-items-center rounded-xl bg-gradient-to-br from-[--color-neon-violet] to-[--color-neon-cyan] font-display font-bold">1</div>
+          <div className="size-11 grid place-items-center rounded-full border border-[--color-neon-cyan]/40 font-display font-bold text-[--color-neon-cyan]">1</div>
           <h3 className="mt-4 font-display font-semibold text-lg">Installation guidée</h3>
           <p className="mt-2 text-sm text-muted-foreground flex-1">
             WordPress, Wix, Shopify ou autre : le tableau de bord donne les étapes exactes et vérifie automatiquement si Rachida est bien installée.
@@ -734,9 +760,9 @@ function NoCodeInstallSection() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.5, delay: 0.1 }}
-          className="glass rounded-3xl p-6 flex flex-col"
+          className="liquid-glass rounded-3xl p-6 flex flex-col"
         >
-          <div className="size-10 grid place-items-center rounded-xl bg-gradient-to-br from-[--color-neon-violet] to-[--color-neon-cyan] font-display font-bold">2</div>
+          <div className="size-11 grid place-items-center rounded-full border border-[--color-neon-cyan]/40 font-display font-bold text-[--color-neon-cyan]">2</div>
           <h3 className="mt-4 font-display font-semibold text-lg">Activation par WhatsApp</h3>
           <p className="mt-2 text-sm text-muted-foreground flex-1">
             Écrivez-nous sur WhatsApp et notre équipe connecte Rachida à votre boutique, sans configuration technique de votre côté.
@@ -745,7 +771,7 @@ function NoCodeInstallSection() {
             href={waLink}
             target="_blank"
             rel="noopener noreferrer"
-            className="mt-4 inline-flex items-center justify-center gap-2 text-sm px-3 py-2.5 rounded-xl bg-emerald-500/20 text-emerald-200 hover:bg-emerald-500/30 transition"
+            className="mt-4 inline-flex items-center justify-center gap-2 text-sm px-3 py-2.5 rounded-full bg-emerald-500/20 text-emerald-200 hover:bg-emerald-500/30 transition"
           >
             <MessageSquare className="size-4" /> Ouvrir WhatsApp
           </a>
@@ -757,9 +783,9 @@ function NoCodeInstallSection() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.5, delay: 0.2 }}
-          className="glass rounded-3xl p-6 flex flex-col"
+          className="liquid-glass rounded-3xl p-6 flex flex-col"
         >
-          <div className="size-10 grid place-items-center rounded-xl bg-gradient-to-br from-[--color-neon-violet] to-[--color-neon-cyan] font-display font-bold">3</div>
+          <div className="size-11 grid place-items-center rounded-full border border-[--color-neon-cyan]/40 font-display font-bold text-[--color-neon-cyan]">3</div>
           <h3 className="mt-4 font-display font-semibold text-lg">Page boutique offerte</h3>
           <p className="mt-2 text-sm text-muted-foreground flex-1">
             Pas de site ? Votre lien de vente est prêt dans le tableau de bord : catalogue, panier et Rachida intégrée. Vous le partagez sur WhatsApp, Facebook ou Instagram.
@@ -768,7 +794,7 @@ function NoCodeInstallSection() {
             href={shopLink}
             target="_blank"
             rel="noopener noreferrer"
-            className="mt-4 inline-flex items-center justify-center gap-2 text-sm px-3 py-2.5 rounded-xl bg-primary/30 hover:bg-primary/40 transition"
+            className="mt-4 inline-flex items-center justify-center gap-2 text-sm px-3 py-2.5 rounded-full bg-primary/30 hover:bg-primary/40 transition"
           >
             <ShoppingBag className="size-4" /> Voir une page démo
           </a>
