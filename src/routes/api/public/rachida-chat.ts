@@ -430,33 +430,41 @@ ${shop.system_prompt_extra ?? ""}`;
             { role: "system", content: systemPrompt },
             ...body.messages.map((m) => ({ role: m.role, content: m.content })),
           ] as ModelMessage[],
-          onFinish: async ({ text, finishReason, usage }) => {
-            if (!text) {
-              console.error("[rachida-chat] Réponse IA vide", {
-                finishReason,
-                usage,
-                model: process.env.GEMINI_TEXT_MODEL || "gemini-2.5-flash-lite (défaut)",
-              });
-            }
-            if (isStorefront && conversationId && text) {
-              await supabaseAdmin.from("messages").insert({
-                conversation_id: conversationId,
-                role: "assistant",
-                content: text,
-              });
-            }
-          },
         });
 
-        return result.toTextStreamResponse({
+        // Réponse groupée (pas de streaming mot-à-mot pour l'instant) : on attend le
+        // texte complet AVANT de répondre, pour pouvoir diagnostiquer une réponse vide
+        // et l'exposer via un en-tête plutôt que dans les logs serveur.
+        const text = await result.text;
+        const finishReason = await result.finishReason;
+        const usage = await result.usage;
+
+        if (!text) {
+          console.error("[rachida-chat] Réponse IA vide", { finishReason, usage });
+        }
+        if (isStorefront && conversationId && text) {
+          await supabaseAdmin.from("messages").insert({
+            conversation_id: conversationId,
+            role: "assistant",
+            content: text,
+          });
+        }
+
+        const fallback = "Désolée, je n'ai pas pu générer de réponse cette fois.";
+        return new Response(text || fallback, {
           headers: {
             ...corsHeaders,
+            "Content-Type": "text/plain; charset=utf-8",
             "X-Conversation-Id": conversationId ?? "",
             "X-Emotion": emotion,
             "X-Lead-Score": String(lead.score),
             "X-Language": language,
             "X-Source": "ai",
-            "Access-Control-Expose-Headers": "X-Conversation-Id, X-Emotion, X-Lead-Score, X-Language, X-Source",
+            "X-Debug-Empty": text ? "0" : "1",
+            "X-Debug-Finish-Reason": String(finishReason ?? ""),
+            "X-Debug-Usage": JSON.stringify(usage ?? {}),
+            "Access-Control-Expose-Headers":
+              "X-Conversation-Id, X-Emotion, X-Lead-Score, X-Language, X-Source, X-Debug-Empty, X-Debug-Finish-Reason, X-Debug-Usage",
           },
         });
       },
