@@ -420,28 +420,39 @@ RÈGLES :
 - Reste concise (2-4 phrases max sauf si une liste est demandée).
 ${shop.system_prompt_extra ?? ""}`;
 
-        const model = geminiModel();
+        let text = "";
+        let finishReason: string | undefined;
+        let usage: unknown;
+        let debugError = "";
 
-        const result = streamText({
-          model,
-          providerOptions: noThinking,
-          maxOutputTokens: GENEROUS_MAX_TOKENS,
-          messages: [
-            { role: "system", content: systemPrompt },
-            ...body.messages.map((m) => ({ role: m.role, content: m.content })),
-          ] as ModelMessage[],
-        });
+        try {
+          const model = geminiModel();
 
-        // Réponse groupée (pas de streaming mot-à-mot pour l'instant) : on attend le
-        // texte complet AVANT de répondre, pour pouvoir diagnostiquer une réponse vide
-        // et l'exposer via un en-tête plutôt que dans les logs serveur.
-        const text = await result.text;
-        const finishReason = await result.finishReason;
-        const usage = await result.usage;
+          const result = streamText({
+            model,
+            providerOptions: noThinking,
+            maxOutputTokens: GENEROUS_MAX_TOKENS,
+            messages: [
+              { role: "system", content: systemPrompt },
+              ...body.messages.map((m) => ({ role: m.role, content: m.content })),
+            ] as ModelMessage[],
+          });
 
-        if (!text) {
-          console.error("[rachida-chat] Réponse IA vide", { finishReason, usage });
+          // Réponse groupée (pas de streaming mot-à-mot pour l'instant) : on attend le
+          // texte complet AVANT de répondre, pour pouvoir diagnostiquer une réponse vide
+          // et l'exposer via un en-tête plutôt que dans les logs serveur.
+          text = await result.text;
+          finishReason = await result.finishReason;
+          usage = await result.usage;
+
+          if (!text) {
+            console.error("[rachida-chat] Réponse IA vide", { finishReason, usage });
+          }
+        } catch (err) {
+          debugError = err instanceof Error ? `${err.name}: ${err.message}` : String(err);
+          console.error("[rachida-chat] Erreur appel IA", err);
         }
+
         if (isStorefront && conversationId && text) {
           await supabaseAdmin.from("messages").insert({
             conversation_id: conversationId,
@@ -463,8 +474,9 @@ ${shop.system_prompt_extra ?? ""}`;
             "X-Debug-Empty": text ? "0" : "1",
             "X-Debug-Finish-Reason": String(finishReason ?? ""),
             "X-Debug-Usage": JSON.stringify(usage ?? {}),
+            "X-Debug-Error": debugError,
             "Access-Control-Expose-Headers":
-              "X-Conversation-Id, X-Emotion, X-Lead-Score, X-Language, X-Source, X-Debug-Empty, X-Debug-Finish-Reason, X-Debug-Usage",
+              "X-Conversation-Id, X-Emotion, X-Lead-Score, X-Language, X-Source, X-Debug-Empty, X-Debug-Finish-Reason, X-Debug-Usage, X-Debug-Error",
           },
         });
       },
