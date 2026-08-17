@@ -73,9 +73,9 @@ function AuthPage() {
   const isSignup = mode === "signup";
 
   return (
-    <div className="min-h-screen grid lg:grid-cols-2 bg-background text-foreground">
+    <>
       <Toaster />
-
+      <div className="min-h-screen grid lg:grid-cols-2 bg-background text-foreground">
       {/* Panneau visuel */}
       <div className="relative hidden lg:block overflow-hidden bg-[#0c0a14]">
         <div className="absolute -top-24 -left-24 size-[420px] rounded-full bg-gradient-to-br from-[--color-neon-violet] to-transparent opacity-40 blur-3xl" />
@@ -254,6 +254,7 @@ function AuthPage() {
           </p>
         </div>
       </div>
-    </div>
+      </div>
+    </>
   );
 }
