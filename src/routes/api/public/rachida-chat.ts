@@ -436,6 +436,11 @@ ${shop.system_prompt_extra ?? ""}`;
               { role: "system", content: systemPrompt },
               ...body.messages.map((m) => ({ role: m.role, content: m.content })),
             ] as ModelMessage[],
+            onError: (event) => {
+              const e = event.error;
+              debugError = e instanceof Error ? `${e.name}: ${e.message}` : JSON.stringify(e);
+              console.error("[rachida-chat] Erreur de flux IA (onError)", e);
+            },
           });
 
           // Réponse groupée (pas de streaming mot-à-mot pour l'instant) : on attend le
@@ -449,7 +454,9 @@ ${shop.system_prompt_extra ?? ""}`;
             console.error("[rachida-chat] Réponse IA vide", { finishReason, usage });
           }
         } catch (err) {
-          debugError = err instanceof Error ? `${err.name}: ${err.message}` : String(err);
+          if (!debugError) {
+            debugError = err instanceof Error ? `${err.name}: ${err.message}` : String(err);
+          }
           console.error("[rachida-chat] Erreur appel IA", err);
         }
 
