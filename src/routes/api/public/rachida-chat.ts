@@ -420,70 +420,43 @@ RÈGLES :
 - Reste concise (2-4 phrases max sauf si une liste est demandée).
 ${shop.system_prompt_extra ?? ""}`;
 
-        let text = "";
-        let finishReason: string | undefined;
-        let usage: unknown;
-        let debugError = "";
+        const model = geminiModel();
 
-        try {
-          const model = geminiModel();
+        const result = streamText({
+          model,
+          providerOptions: noThinking,
+          maxOutputTokens: GENEROUS_MAX_TOKENS,
+          messages: [
+            { role: "system", content: systemPrompt },
+            ...body.messages.map((m) => ({ role: m.role, content: m.content })),
+          ] as ModelMessage[],
+          onError: (event) => {
+            const e = event.error;
+            console.error("[rachida-chat] Erreur de flux IA", e instanceof Error ? `${e.name}: ${e.message}` : e);
+          },
+          onFinish: async ({ text, finishReason, usage }) => {
+            if (!text) {
+              console.error("[rachida-chat] Réponse IA vide", { finishReason, usage });
+            }
+            if (isStorefront && conversationId && text) {
+              await supabaseAdmin.from("messages").insert({
+                conversation_id: conversationId,
+                role: "assistant",
+                content: text,
+              });
+            }
+          },
+        });
 
-          const result = streamText({
-            model,
-            providerOptions: noThinking,
-            maxOutputTokens: GENEROUS_MAX_TOKENS,
-            messages: [
-              { role: "system", content: systemPrompt },
-              ...body.messages.map((m) => ({ role: m.role, content: m.content })),
-            ] as ModelMessage[],
-            onError: (event) => {
-              const e = event.error;
-              debugError = e instanceof Error ? `${e.name}: ${e.message}` : JSON.stringify(e);
-              console.error("[rachida-chat] Erreur de flux IA (onError)", e);
-            },
-          });
-
-          // Réponse groupée (pas de streaming mot-à-mot pour l'instant) : on attend le
-          // texte complet AVANT de répondre, pour pouvoir diagnostiquer une réponse vide
-          // et l'exposer via un en-tête plutôt que dans les logs serveur.
-          text = await result.text;
-          finishReason = await result.finishReason;
-          usage = await result.usage;
-
-          if (!text) {
-            console.error("[rachida-chat] Réponse IA vide", { finishReason, usage });
-          }
-        } catch (err) {
-          if (!debugError) {
-            debugError = err instanceof Error ? `${err.name}: ${err.message}` : String(err);
-          }
-          console.error("[rachida-chat] Erreur appel IA", err);
-        }
-
-        if (isStorefront && conversationId && text) {
-          await supabaseAdmin.from("messages").insert({
-            conversation_id: conversationId,
-            role: "assistant",
-            content: text,
-          });
-        }
-
-        const fallback = "Désolée, je n'ai pas pu générer de réponse cette fois.";
-        return new Response(text || fallback, {
+        return result.toTextStreamResponse({
           headers: {
             ...corsHeaders,
-            "Content-Type": "text/plain; charset=utf-8",
             "X-Conversation-Id": conversationId ?? "",
             "X-Emotion": emotion,
             "X-Lead-Score": String(lead.score),
             "X-Language": language,
             "X-Source": "ai",
-            "X-Debug-Empty": text ? "0" : "1",
-            "X-Debug-Finish-Reason": String(finishReason ?? ""),
-            "X-Debug-Usage": JSON.stringify(usage ?? {}),
-            "X-Debug-Error": debugError,
-            "Access-Control-Expose-Headers":
-              "X-Conversation-Id, X-Emotion, X-Lead-Score, X-Language, X-Source, X-Debug-Empty, X-Debug-Finish-Reason, X-Debug-Usage, X-Debug-Error",
+            "Access-Control-Expose-Headers": "X-Conversation-Id, X-Emotion, X-Lead-Score, X-Language, X-Source",
           },
         });
       },

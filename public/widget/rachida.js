@@ -373,9 +373,6 @@
       if (convId) state.conversationId = convId;
       state.emotion = res.headers.get('X-Emotion') || state.emotion;
       state.leadScore = parseInt(res.headers.get('X-Lead-Score') || '1', 10);
-      if (res.headers.get('X-Debug-Empty') === '1') {
-        console.error('[Rachida] Réponse IA vide — finishReason:', res.headers.get('X-Debug-Finish-Reason'), '— usage:', res.headers.get('X-Debug-Usage'), '— erreur:', res.headers.get('X-Debug-Error'));
-      }
       var reader = res.body.getReader();
       var decoder = new TextDecoder();
       var acc = '';

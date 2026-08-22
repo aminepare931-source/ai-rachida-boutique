@@ -10,12 +10,12 @@
 // dans les variables d'environnement sans toucher au code.
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
 
-// Modèle par défaut si GEMINI_TEXT_MODEL n'est pas défini. On utilise la variante
-// "Flash-Lite" plutôt que "Flash" : contrairement à Flash, Flash-Lite n'a PAS le
-// raisonnement interne ("thinking") activé par défaut, ce qui évite la classe de bug
-// "réponse vide" (les jetons de réflexion qui grignotent tout le budget de sortie).
-// Reste éligible au niveau gratuit — à reconfirmer sur https://ai.google.dev/gemini-api/docs/models
-const DEFAULT_TEXT_MODEL = process.env.GEMINI_TEXT_MODEL || "gemini-2.5-flash-lite";
+// Modèle par défaut si GEMINI_TEXT_MODEL n'est pas défini. gemini-3.5-flash-lite —
+// gemini-2.5-flash-lite a été retiré par Google pour les nouveaux comptes API
+// ("no longer available to new users"), confirmé par une erreur API réelle en
+// production. Comme 2.5-flash-lite, cette variante "Flash-Lite" n'a pas le
+// raisonnement interne ("thinking") activé par défaut.
+const DEFAULT_TEXT_MODEL = process.env.GEMINI_TEXT_MODEL || "gemini-3.5-flash-lite";
 
 export function createGeminiProvider(apiKey: string) {
   return createGoogleGenerativeAI({ apiKey });
