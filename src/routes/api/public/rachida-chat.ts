@@ -430,27 +430,58 @@ ${shop.system_prompt_extra ?? ""}`;
             { role: "system", content: systemPrompt },
             ...body.messages.map((m) => ({ role: m.role, content: m.content })),
           ] as ModelMessage[],
-          onError: (event) => {
-            const e = event.error;
-            console.error("[rachida-chat] Erreur de flux IA", e instanceof Error ? `${e.name}: ${e.message}` : e);
-          },
-          onFinish: async ({ text, finishReason, usage }) => {
-            if (!text) {
-              console.error("[rachida-chat] Réponse IA vide", { finishReason, usage });
+        });
+
+        let sentAnything = false;
+        let capturedError: unknown = null;
+        let fullText = "";
+        const encoder = new TextEncoder();
+
+        const stream = new ReadableStream<Uint8Array>({
+          async start(controller) {
+            try {
+              for await (const part of result.fullStream) {
+                if (part.type === "text-delta" && part.text) {
+                  sentAnything = true;
+                  fullText += part.text;
+                  controller.enqueue(encoder.encode(part.text));
+                } else if (part.type === "error") {
+                  capturedError = part.error;
+                }
+              }
+            } catch (err) {
+              capturedError = err;
             }
-            if (isStorefront && conversationId && text) {
+
+            if (!sentAnything) {
+              const errMsg =
+                capturedError instanceof Error
+                  ? `${capturedError.name}: ${capturedError.message}`
+                  : capturedError
+                    ? String(capturedError)
+                    : "réponse vide, aucune erreur explicite";
+              console.error("[rachida-chat] Réponse IA vide", errMsg);
+              const visible = `Désolée, un souci technique m'empêche de répondre. (${errMsg})`;
+              controller.enqueue(encoder.encode(visible));
+              fullText = visible;
+            }
+
+            if (isStorefront && conversationId && fullText) {
               await supabaseAdmin.from("messages").insert({
                 conversation_id: conversationId,
                 role: "assistant",
-                content: text,
+                content: fullText,
               });
             }
+
+            controller.close();
           },
         });
 
-        return result.toTextStreamResponse({
+        return new Response(stream, {
           headers: {
             ...corsHeaders,
+            "Content-Type": "text/plain; charset=utf-8",
             "X-Conversation-Id": conversationId ?? "",
             "X-Emotion": emotion,
             "X-Lead-Score": String(lead.score),
