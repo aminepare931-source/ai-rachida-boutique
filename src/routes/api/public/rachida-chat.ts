@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { streamText, type ModelMessage } from "ai";
-import { geminiModel, noThinking, GENEROUS_MAX_TOKENS } from "@/lib/ai-gateway.server";
+import { geminiModel, GENEROUS_MAX_TOKENS } from "@/lib/ai-gateway.server";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -424,7 +424,6 @@ ${shop.system_prompt_extra ?? ""}`;
 
         const result = streamText({
           model,
-          providerOptions: noThinking,
           maxOutputTokens: GENEROUS_MAX_TOKENS,
           messages: [
             { role: "system", content: systemPrompt },
@@ -454,12 +453,16 @@ ${shop.system_prompt_extra ?? ""}`;
             }
 
             if (!sentAnything) {
-              const errMsg =
-                capturedError instanceof Error
-                  ? `${capturedError.name}: ${capturedError.message}`
-                  : capturedError
-                    ? String(capturedError)
-                    : "réponse vide, aucune erreur explicite";
+              let errMsg: string;
+              if (capturedError instanceof Error) {
+                errMsg = `${capturedError.name}: ${capturedError.message}`;
+                const body = (capturedError as { responseBody?: string }).responseBody;
+                if (body) errMsg += ` | Détail Google: ${body}`;
+              } else if (capturedError) {
+                errMsg = String(capturedError);
+              } else {
+                errMsg = "réponse vide, aucune erreur explicite";
+              }
               console.error("[rachida-chat] Réponse IA vide", errMsg);
               const visible = `Désolée, un souci technique m'empêche de répondre. (${errMsg})`;
               controller.enqueue(encoder.encode(visible));

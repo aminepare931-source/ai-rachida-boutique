@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { geminiModel, noThinking, GENEROUS_MAX_TOKENS } from "@/lib/ai-gateway.server";
+import { geminiModel, GENEROUS_MAX_TOKENS } from "@/lib/ai-gateway.server";
 import { generateText } from "ai";
 
 async function ask(system: string, prompt: string): Promise<string> {
@@ -10,7 +10,6 @@ async function ask(system: string, prompt: string): Promise<string> {
     system,
     prompt,
     temperature: 0.85,
-    providerOptions: noThinking,
     maxOutputTokens: GENEROUS_MAX_TOKENS,
   });
   return text.trim();
