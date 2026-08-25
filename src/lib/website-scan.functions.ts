@@ -227,14 +227,17 @@ export const scanWebsiteForProducts = createServerFn({ method: "POST" })
     // (ex: "Chargement...", contenu injecté par React/Vue). On ré-essaie sur un nombre
     // limité de pages avec un vrai rendu — plus lent, donc seulement en dernier recours.
     const foundTooLittle = structuredProducts.length === 0 && leftoverText.trim().length < 300;
+    let headlessDebug = "non déclenché (assez de contenu trouvé au scan rapide)";
     if (foundTooLittle) {
       try {
         const { renderPageHtml, closeBrowser } = await import("@/lib/headless-render.server");
         const pagesToRender = urls.slice(0, MAX_HEADLESS_PAGES);
         leftoverText = "";
+        let renderedOk = 0;
         for (const url of pagesToRender) {
           const html = await renderPageHtml(url);
           if (!html) continue;
+          renderedOk++;
           usedHeadless = true;
           const jsonLd = extractJsonLdProducts(html, url);
           if (jsonLd.length) {
@@ -244,8 +247,10 @@ export const scanWebsiteForProducts = createServerFn({ method: "POST" })
           }
         }
         await closeBrowser();
+        headlessDebug = `${renderedOk}/${pagesToRender.length} page(s) rendues, ${structuredProducts.length} via JSON-LD, ${leftoverText.trim().length} caractères de texte pour l'IA`;
       } catch (err) {
-        console.error("[website-scan] Repli headless indisponible", err instanceof Error ? err.message : err);
+        headlessDebug = `échec : ${err instanceof Error ? `${err.name}: ${err.message}` : String(err)}`;
+        console.error("[website-scan] Repli headless indisponible", err);
         // On continue avec ce qu'on a du scan rapide — mieux vaut un résultat partiel
         // qu'un échec total si le rendu headless n'est pas configuré/disponible.
       }
@@ -298,5 +303,6 @@ export const scanWebsiteForProducts = createServerFn({ method: "POST" })
       usedSitemap,
       usedHeadless,
       viaStructuredData: structuredProducts.length,
+      debug: { urls: urls.slice(0, 5), headlessDebug },
     };
   });

@@ -36,6 +36,7 @@ export function SmartImportModal({
   const [text, setText] = useState("");
   const [siteUrl, setSiteUrl] = useState("");
   const [scanInfo, setScanInfo] = useState<{ pagesScanned: number; usedSitemap: boolean; usedHeadless: boolean } | null>(null);
+  const [scanDebug, setScanDebug] = useState<{ urls: string[]; headlessDebug: string } | null>(null);
   const [preview, setPreview] = useState<Extracted[]>([]);
   const [listening, setListening] = useState(false);
   const recRef = useRef<any>(null);
@@ -113,13 +114,16 @@ export function SmartImportModal({
     try {
       setBusy(true);
       setScanInfo(null);
+      setScanDebug(null);
       const r = await scanSite({ data: { shopId, url } });
       setScanInfo({ pagesScanned: r.pagesScanned, usedSitemap: r.usedSitemap, usedHeadless: r.usedHeadless });
       if (!r.products.length) {
         toast.error("Rachida n'a trouvé aucun produit reconnaissable sur ce site.");
+        console.error("[Scan de site] Diagnostic complet:", r.debug);
       } else {
         toast.success(`${r.pagesScanned} page(s) scannée(s), ${r.products.length} produit(s) trouvé(s)`);
       }
+      setScanDebug(r.debug);
       setPreview(r.products);
     } catch (e: any) {
       toast.error(e?.message ?? "Erreur pendant le scan");
@@ -194,6 +198,12 @@ export function SmartImportModal({
                 <button onClick={runSiteScan} disabled={busy} className="btn-neon w-full">
                   {busy ? <><Loader2 className="animate-spin" size={14} /> Rachida scanne ton site…</> : <><Globe size={14} /> Lancer le scan</>}
                 </button>
+                {scanDebug && (
+                  <div className="rounded-xl bg-black/40 border border-white/10 p-3 text-[11px] font-mono text-white/50 space-y-1">
+                    <div><b className="text-white/70">Pages regardées :</b> {scanDebug.urls.join(", ")}</div>
+                    <div><b className="text-white/70">Rendu JS :</b> {scanDebug.headlessDebug}</div>
+                  </div>
+                )}
               </motion.div>
             )}
 
