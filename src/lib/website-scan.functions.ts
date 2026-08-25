@@ -25,6 +25,7 @@ type ExtractedProduct = {
   stock?: number | null;
   description?: string | null;
   image_url?: string | null;
+  isService?: boolean;
 };
 
 async function fetchWithTimeout(url: string): Promise<Response | null> {
@@ -99,7 +100,7 @@ function prioritizeProductLikeUrls(urls: string[]): string[] {
     .slice(0, MAX_PAGES_TO_FETCH);
 }
 
-/** Cherche un JSON-LD schema.org/Product dans le HTML d'une page. */
+/** Cherche un JSON-LD schema.org/Product OU Service dans le HTML d'une page. */
 function extractJsonLdProducts(html: string, pageUrl: string): ExtractedProduct[] {
   const found: ExtractedProduct[] = [];
   const scripts = [...html.matchAll(/<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)];
@@ -108,19 +109,26 @@ function extractJsonLdProducts(html: string, pageUrl: string): ExtractedProduct[
       const json = JSON.parse(raw.trim());
       const items = Array.isArray(json) ? json : json["@graph"] ? json["@graph"] : [json];
       for (const item of items) {
-        if (!item || item["@type"] !== "Product") continue;
+        const type = item?.["@type"];
+        const isService = type === "Service" || type === "Offer" || type === "OfferCatalog";
+        const isProduct = type === "Product";
+        if (!item || (!isProduct && !isService)) continue;
+
         const offers = Array.isArray(item.offers) ? item.offers[0] : item.offers;
-        const price = Number(offers?.price ?? offers?.lowPrice ?? 0) || 0;
+        const price = Number(item.price ?? offers?.price ?? offers?.lowPrice ?? 0) || 0;
         const image = Array.isArray(item.image) ? item.image[0] : item.image;
         found.push({
           name: String(item.name ?? "").slice(0, 120) || "Produit",
           price,
           description: typeof item.description === "string" ? item.description.slice(0, 300) : null,
           image_url: typeof image === "string" ? image : null,
-          category: null,
+          category: isService ? "service" : null,
           gender: null,
           color: null,
-          stock: 1,
+          // Une prestation de service n'a pas de rupture de stock au sens physique —
+          // on la marque toujours disponible plutôt que 0 (qui déclencherait une
+          // fausse alerte "stock bas" côté Rachida).
+          stock: isService ? 999 : 1,
         });
       }
     } catch {
@@ -143,16 +151,17 @@ function stripHtmlToText(html: string): string {
 
 const SYSTEM = `Tu es Rachida, assistante d'un commerçant. Tu reçois du texte brut extrait de plusieurs pages d'un site web (mélangé, avec du bruit : menus, pied de page, etc.).
 
-Ta tâche : repérer les VRAIS produits vendus (pas les liens de menu, pas les articles de blog) et en extraire une liste pour un catalogue e-commerce.
+Ta tâche : repérer ce qui est VENDU — un produit physique (avec un prix à l'unité) OU une prestation de service payante (une consultation, un forfait, une intervention, un abonnement...) — et en extraire une liste pour le catalogue.
 
 Règles :
-- Ignore tout ce qui n'est pas un produit à vendre (navigation, footer, mentions légales, articles de blog).
-- Devine le prix si le format est ambigu ("5000f", "5 000 FCFA" → 5000). Si aucun prix trouvé, price: 0.
-- category : "vêtement", "chaussure", "cosmétique", "nourriture", "électronique", "accessoire", "artisanat", "autre".
-- Ne réponds qu'avec des produits que tu es raisonnablement sûr d'avoir bien identifiés.
+- Ignore tout ce qui n'est pas à vendre (navigation, footer, mentions légales, articles de blog, page "À propos").
+- Devine le prix si le format est ambigu ("5000f", "5 000 FCFA", "à partir de 10 000" → 10000). Si aucun prix trouvé, price: 0.
+- category : "vêtement", "chaussure", "cosmétique", "nourriture", "électronique", "accessoire", "artisanat", "service", "autre". Utilise "service" pour toute prestation (pas d'objet physique livré).
+- Pour un service, isService: true — il n'a pas de notion de stock physique.
+- Ne réponds qu'avec ce que tu es raisonnablement sûr d'avoir bien identifié.
 
 Réponds UNIQUEMENT en JSON strict, sans markdown :
-{"products":[{"name":"...","price":5000,"category":"...","description":"..."}]}`;
+{"products":[{"name":"...","price":5000,"category":"...","description":"...","isService":false}]}`;
 
 export const scanWebsiteForProducts = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -237,10 +246,10 @@ export const scanWebsiteForProducts = createServerFn({ method: "POST" })
       .map((p) => ({
         name: String(p.name).slice(0, 120),
         price: Number(p.price) || 0,
-        category: p.category ?? null,
+        category: p.category ?? (p.isService ? "service" : null),
         gender: p.gender ?? null,
         color: p.color ?? null,
-        stock: Number(p.stock ?? 1) || 0,
+        stock: Number(p.stock ?? (p.isService || p.category === "service" ? 999 : 1)) || 0,
         description: p.description ?? null,
         image_url: p.image_url ?? null,
       }));
