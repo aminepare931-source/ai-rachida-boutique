@@ -28,7 +28,7 @@ import rachidaLogo from "@/assets/rachida-logo.png";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Rachida AI — La vendeuse IA des boutiques africaines" },
+      { title: "Rachida AI — L'assistante IA des entreprises africaines" },
       {
         name: "description",
         content:
@@ -120,18 +120,17 @@ function Hero() {
           >
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full glass text-xs font-medium">
               <span className="size-1.5 rounded-full bg-emerald-400 pulse-glow" />
-              Vendeuse IA · faite pour l'Afrique de l'Ouest
+              Assistante IA · faite pour l'Afrique de l'Ouest
             </div>
 
             <h1 className="mt-6 font-display font-bold text-5xl sm:text-6xl lg:text-7xl leading-[0.95] tracking-tight">
               Votre équipe<br />
-              de vente IA,<br />
-              <span className="text-shiny-neon">à la demande.</span>
+              IA, <span className="text-shiny-neon">à la demande.</span>
             </h1>
 
             <p className="mt-6 max-w-md text-base sm:text-lg text-muted-foreground">
-              Rachida comprend votre catalogue, conseille en français, mooré et dioula, négocie intelligemment et clôt
-              des ventes pendant que vous dormez.
+              Rachida comprend votre activité — produits ou services — conseille en français, mooré et dioula, et
+              répond à vos clients pendant que vous dormez.
             </p>
 
             <div className="mt-9 flex flex-wrap items-center gap-3">
@@ -179,7 +178,7 @@ function Hero() {
             </div>
             <img
               src={rachidaAvatar}
-              alt="Rachida — vendeuse IA"
+              alt="Rachida — assistante IA"
               width={1024}
               height={1024}
               className="float w-[70vw] max-w-sm lg:max-w-md drop-shadow-[0_40px_100px_rgba(139,92,246,0.5)]"
@@ -233,9 +232,9 @@ function AboutBlock() {
           <MapPin className="size-3 text-[--color-neon-cyan]" /> Notre mission
         </div>
         <p className="mt-6 font-display font-semibold text-2xl sm:text-4xl leading-tight">
-          Nous <span className="text-shiny-neon">concevons</span> une vendeuse{" "}
+          Nous <span className="text-shiny-neon">concevons</span> une assistante{" "}
           <span className="text-shiny-neon">IA</span> pensée pour vos clients, pour que chaque{" "}
-          <span className="text-shiny-neon">conversation</span> se termine par une vente.
+          <span className="text-shiny-neon">conversation</span> fasse avancer votre activité.
         </p>
       </motion.div>
 
@@ -321,17 +320,18 @@ function MockupSection() {
             <MessageSquare className="size-3 text-[--color-neon-cyan]" /> En conditions réelles
           </div>
           <h2 className="mt-4 font-display font-bold text-4xl sm:text-5xl leading-tight">
-            Elle parle comme une <span className="text-shiny-neon">vraie vendeuse.</span>
+            Elle parle comme une <span className="text-shiny-neon">vraie professionnelle.</span>
           </h2>
           <p className="mt-5 text-muted-foreground text-lg">
-            Pas un chatbot scripté. Rachida lit l'intention, détecte la frustration, propose une remise dans la limite
-            que vous fixez, et clôt la vente naturellement — pendant que vous, vous gardez un œil sur vos ventes.
+            Pas un chatbot scripté. Rachida lit l'intention, détecte la frustration, propose une remise ou un tarif
+            dans la limite que vous fixez, et fait avancer la demande naturellement — pendant que vous gardez un œil
+            sur votre activité.
           </p>
           <ul className="mt-6 space-y-3 text-sm">
             {[
               { icon: Brain, text: "Mémoire persistante par client" },
-              { icon: HeartHandshake, text: "Négociation dans vos règles de remise" },
-              { icon: TrendingUp, text: "Scoring lead et détection d'achat automatique" },
+              { icon: HeartHandshake, text: "Négociation dans vos règles" },
+              { icon: TrendingUp, text: "Scoring lead et détection d'intérêt automatique" },
             ].map(({ icon: Icon, text }) => (
               <li key={text} className="flex items-center gap-3">
                 <span className="grid place-items-center size-7 rounded-lg glass">
@@ -448,11 +448,11 @@ function MockupSection() {
 
 function CapabilitiesSection() {
   const caps = [
-    { icon: Brain, title: "Cerveau commercial", desc: "Analyse budget, besoin, historique. Recommande le bon produit, au bon moment." },
-    { icon: HeartHandshake, title: "Négociation intelligente", desc: "Remise plafonnée par boutique. Justifiée à chaque fois." },
-    { icon: Eye, title: "Vision IA", desc: "Lit les preuves Mobile Money, identifie un produit par photo." },
+    { icon: Brain, title: "Cerveau métier", desc: "Analyse budget, besoin, historique. Recommande la bonne offre, au bon moment." },
+    { icon: HeartHandshake, title: "Négociation intelligente", desc: "Remise ou tarif plafonnés par vous. Justifiés à chaque fois." },
+    { icon: Eye, title: "Vision IA", desc: "Lit les preuves Mobile Money, identifie un produit ou un document par photo." },
     { icon: Languages, title: "FR · Mooré · Dioula", desc: "Détecte la langue du client et répond automatiquement." },
-    { icon: ShoppingBag, title: "Panier conversationnel", desc: "Ajoute, modifie, valide — sans quitter le chat." },
+    { icon: ShoppingBag, title: "Panier ou prise de rendez-vous", desc: "Commande produit ou demande de service — sans quitter le chat." },
     { icon: Zap, title: "Relances & fidélité", desc: "Relance en cas d'absence, suit la fidélité, recommande au bon moment." },
   ];
   return (
@@ -468,8 +468,8 @@ function CapabilitiesSection() {
             </h2>
           </div>
           <p className="max-w-xs text-muted-foreground">
-            Pensée comme une commerciale d'élite, capable de tenir une boutique entière du premier message à la
-            commande.
+            Pensée comme une professionnelle d'élite, capable de gérer toute une activité — produits ou services — du
+            premier message à la conclusion.
           </p>
         </motion.div>
 
@@ -521,9 +521,9 @@ function Starfield() {
 
 function HowItWorksSection() {
   const steps = [
-    { n: "01", t: "Crée ta boutique", d: "Email + nom. 30 secondes." },
-    { n: "02", t: "Ajoute ton catalogue", d: "CSV, manuel ou import en lot. Rachida l'apprend automatiquement." },
-    { n: "03", t: "Active sans coder", d: "Partage ta boutique offerte, invite ton webmaster, ou suis le guide Wix/Shopify/WordPress avec diagnostic automatique." },
+    { n: "01", t: "Crée ton espace", d: "Email + nom. 30 secondes." },
+    { n: "02", t: "Ajoute tes produits ou services", d: "CSV, manuel, scan de site ou import en lot. Rachida l'apprend automatiquement." },
+    { n: "03", t: "Active sans coder", d: "Partage ta page offerte, invite ton webmaster, ou suis le guide Wix/Shopify/WordPress avec diagnostic automatique." },
   ];
   return (
     <section id="comment" className="relative py-32 px-6 overflow-hidden">
@@ -631,12 +631,12 @@ function PricingSection() {
         <div className="text-sm text-muted-foreground">Beta</div>
         <div className="mt-2 font-display font-semibold text-5xl">Gratuit</div>
         <p className="mt-3 text-sm text-muted-foreground min-h-10">
-          Pour les commerçants qui activent Rachida pendant la phase beta.
+          Pour les entreprises qui activent Rachida pendant la phase beta.
         </p>
         <ul className="mt-6 space-y-3 text-sm text-left">
           {[
-            "Rachida sur votre site, WhatsApp ou page boutique",
-            "Catalogue, panier et commandes illimités",
+            "Rachida sur votre site, WhatsApp ou page dédiée",
+            "Produits, services et demandes illimités",
             "FR · Mooré · Dioula",
             "Tableau de bord temps réel",
           ].map((f) => (
@@ -673,8 +673,8 @@ function FinalCta() {
         />
         <div className="relative">
           <h2 className="font-display font-bold text-4xl sm:text-6xl leading-tight">
-            Donnez à votre boutique<br />
-            <span className="text-shiny-neon">une vraie vendeuse.</span>
+            Donnez à votre entreprise<br />
+            <span className="text-shiny-neon">une vraie assistante.</span>
           </h2>
           <p className="mt-5 text-muted-foreground text-lg max-w-xl mx-auto">
             Gratuit pendant la beta. Aucune carte bancaire requise.
@@ -696,7 +696,7 @@ function NoCodeInstallSection() {
   useEffect(() => setOrigin(window.location.origin), []);
   const snippet = `<script src="${origin}/widget/rachida.js" data-shop="demo" defer></script>`;
   const waNumber = "22655300868";
-  const waText = encodeURIComponent("Bonjour Rachida, je veux activer mon assistante IA pour ma boutique 🙌");
+  const waText = encodeURIComponent("Bonjour Rachida, je veux activer mon assistante IA pour mon entreprise 🙌");
   const waLink = `https://wa.me/${waNumber}?text=${waText}`;
   const shopLink = `${origin}/shop/demo`;
 
@@ -723,7 +723,7 @@ function NoCodeInstallSection() {
           Vous ne savez pas coder ? <span className="text-shiny-neon">Aucun problème.</span>
         </h2>
         <p className="mt-4 text-muted-foreground">
-          3 chemins simples : on installe pour vous, vous partagez une page boutique, ou votre plateforme l'ajoute en quelques clics.
+          3 chemins simples : on installe pour vous, vous partagez une page dédiée, ou votre plateforme l'ajoute en quelques clics.
         </p>
       </motion.div>
       <div className="mt-14 mx-auto max-w-6xl grid md:grid-cols-3 gap-5">
@@ -765,7 +765,7 @@ function NoCodeInstallSection() {
           <div className="size-11 grid place-items-center rounded-full border border-[--color-neon-cyan]/40 font-display font-bold text-[--color-neon-cyan]">2</div>
           <h3 className="mt-4 font-display font-semibold text-lg">Activation par WhatsApp</h3>
           <p className="mt-2 text-sm text-muted-foreground flex-1">
-            Écrivez-nous sur WhatsApp et notre équipe connecte Rachida à votre boutique, sans configuration technique de votre côté.
+            Écrivez-nous sur WhatsApp et notre équipe connecte Rachida à votre activité, sans configuration technique de votre côté.
           </p>
           <a
             href={waLink}
@@ -777,7 +777,7 @@ function NoCodeInstallSection() {
           </a>
         </motion.div>
 
-        {/* 3. Page boutique */}
+        {/* 3. Page dédiée */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -786,9 +786,9 @@ function NoCodeInstallSection() {
           className="liquid-glass rounded-3xl p-6 flex flex-col"
         >
           <div className="size-11 grid place-items-center rounded-full border border-[--color-neon-cyan]/40 font-display font-bold text-[--color-neon-cyan]">3</div>
-          <h3 className="mt-4 font-display font-semibold text-lg">Page boutique offerte</h3>
+          <h3 className="mt-4 font-display font-semibold text-lg">Page dédiée offerte</h3>
           <p className="mt-2 text-sm text-muted-foreground flex-1">
-            Pas de site ? Votre lien de vente est prêt dans le tableau de bord : catalogue, panier et Rachida intégrée. Vous le partagez sur WhatsApp, Facebook ou Instagram.
+            Pas de site ? Votre page est prête dans le tableau de bord : produits ou services, prise de contact et Rachida intégrée. Vous la partagez sur WhatsApp, Facebook ou Instagram.
           </p>
           <a
             href={shopLink}

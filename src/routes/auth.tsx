@@ -17,7 +17,7 @@ export const Route = createFileRoute("/auth")({
   component: AuthPage,
 });
 
-const BUSINESS_TYPES = ["Boutique", "Restaurant", "Autre"] as const;
+const BUSINESS_TYPES = ["Boutique", "Service", "Restaurant", "Autre"] as const;
 
 function AuthPage() {
   const nav = useNavigate();
@@ -91,11 +91,11 @@ function AuthPage() {
 
           <div>
             <h2 className="font-display font-bold text-4xl xl:text-5xl leading-[1.05]">
-              Discutez.<br />Vendez.<br />Grandissez.
+              Discutez.<br />Avancez.<br />Grandissez.
             </h2>
             <p className="mt-4 max-w-sm text-muted-foreground">
-              Une vendeuse IA pensée pour les commerces du Burkina Faso, disponible 24h/24 en français, mooré et
-              dioula.
+              Une assistante IA pensée pour les entreprises du Burkina Faso — produits ou services — disponible 24h/24
+              en français, mooré et dioula.
             </p>
 
             <div className="mt-8 liquid-glass rounded-2xl p-4 max-w-sm flex items-start gap-3">
@@ -171,7 +171,7 @@ function AuthPage() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="toi@boutique.bf"
+                placeholder="toi@monentreprise.bf"
                 className="input-neon mt-1.5"
               />
             </div>

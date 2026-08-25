@@ -63,10 +63,10 @@ const TAB_GROUPS = [
     ],
   },
   {
-    title: "Ma boutique",
+    title: "Mon activité",
     items: [
-      { key: "catalog", label: "Produits", icon: Package },
-      { key: "shop", label: "Rachida & boutique", icon: Sparkles },
+      { key: "catalog", label: "Produits & services", icon: Package },
+      { key: "shop", label: "Rachida & page dédiée", icon: Sparkles },
       { key: "faq", label: "Questions fréquentes", icon: HelpCircle },
       { key: "payments", label: "Paiements", icon: Wallet },
     ],
