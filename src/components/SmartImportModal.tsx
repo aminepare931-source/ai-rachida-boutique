@@ -35,7 +35,7 @@ export function SmartImportModal({
   const [busy, setBusy] = useState(false);
   const [text, setText] = useState("");
   const [siteUrl, setSiteUrl] = useState("");
-  const [scanInfo, setScanInfo] = useState<{ pagesScanned: number; usedSitemap: boolean } | null>(null);
+  const [scanInfo, setScanInfo] = useState<{ pagesScanned: number; usedSitemap: boolean; usedHeadless: boolean } | null>(null);
   const [preview, setPreview] = useState<Extracted[]>([]);
   const [listening, setListening] = useState(false);
   const recRef = useRef<any>(null);
@@ -114,7 +114,7 @@ export function SmartImportModal({
       setBusy(true);
       setScanInfo(null);
       const r = await scanSite({ data: { shopId, url } });
-      setScanInfo({ pagesScanned: r.pagesScanned, usedSitemap: r.usedSitemap });
+      setScanInfo({ pagesScanned: r.pagesScanned, usedSitemap: r.usedSitemap, usedHeadless: r.usedHeadless });
       if (!r.products.length) {
         toast.error("Rachida n'a trouvé aucun produit reconnaissable sur ce site.");
       } else {
@@ -262,6 +262,7 @@ export function SmartImportModal({
                 {scanInfo && (
                   <div className="text-xs text-white/40">
                     {scanInfo.pagesScanned} page(s) scannée(s) · {scanInfo.usedSitemap ? "via sitemap du site" : "via les liens de la page d'accueil"}
+                    {scanInfo.usedHeadless && " · rendu JS activé (site dynamique détecté)"}
                   </div>
                 )}
                 <div className="space-y-2 max-h-[45vh] overflow-y-auto pr-1">

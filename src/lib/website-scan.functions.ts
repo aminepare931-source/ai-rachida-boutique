@@ -13,6 +13,7 @@ import { geminiModel, GENEROUS_MAX_TOKENS } from "@/lib/ai-gateway.server";
 //    pour limiter le coût plutôt qu'un appel par page.
 
 const MAX_PAGES_TO_FETCH = 15;
+const MAX_HEADLESS_PAGES = 5;
 const MAX_TEXT_CHARS_FOR_AI = 15000;
 const FETCH_TIMEOUT_MS = 8000;
 
@@ -201,6 +202,7 @@ export const scanWebsiteForProducts = createServerFn({ method: "POST" })
     const structuredProducts: ExtractedProduct[] = [];
     let leftoverText = "";
     let pagesFetched = 0;
+    let usedHeadless = false;
 
     for (const url of urls) {
       const res = await fetchWithTimeout(url);
@@ -218,6 +220,35 @@ export const scanWebsiteForProducts = createServerFn({ method: "POST" })
 
     if (pagesFetched === 0) {
       throw new Error("Impossible de lire ce site (pages inaccessibles). Vérifie que l'adresse est correcte et publique.");
+    }
+
+    // 2bis. Repli navigateur headless : si le scan rapide n'a presque rien trouvé,
+    // c'est probablement un site dont le contenu est chargé en JavaScript après coup
+    // (ex: "Chargement...", contenu injecté par React/Vue). On ré-essaie sur un nombre
+    // limité de pages avec un vrai rendu — plus lent, donc seulement en dernier recours.
+    const foundTooLittle = structuredProducts.length === 0 && leftoverText.trim().length < 300;
+    if (foundTooLittle) {
+      try {
+        const { renderPageHtml, closeBrowser } = await import("@/lib/headless-render.server");
+        const pagesToRender = urls.slice(0, MAX_HEADLESS_PAGES);
+        leftoverText = "";
+        for (const url of pagesToRender) {
+          const html = await renderPageHtml(url);
+          if (!html) continue;
+          usedHeadless = true;
+          const jsonLd = extractJsonLdProducts(html, url);
+          if (jsonLd.length) {
+            structuredProducts.push(...jsonLd);
+          } else if (leftoverText.length < MAX_TEXT_CHARS_FOR_AI) {
+            leftoverText += `\n\n--- Page: ${url} ---\n` + stripHtmlToText(html).slice(0, 2000);
+          }
+        }
+        await closeBrowser();
+      } catch (err) {
+        console.error("[website-scan] Repli headless indisponible", err instanceof Error ? err.message : err);
+        // On continue avec ce qu'on a du scan rapide — mieux vaut un résultat partiel
+        // qu'un échec total si le rendu headless n'est pas configuré/disponible.
+      }
     }
 
     // 3. Repli IA sur le texte restant (un seul appel, quel que soit le nombre de pages)
@@ -261,5 +292,11 @@ export const scanWebsiteForProducts = createServerFn({ method: "POST" })
       return true;
     });
 
-    return { products, pagesScanned: pagesFetched, usedSitemap, viaStructuredData: structuredProducts.length };
+    return {
+      products,
+      pagesScanned: pagesFetched,
+      usedSitemap,
+      usedHeadless,
+      viaStructuredData: structuredProducts.length,
+    };
   });
