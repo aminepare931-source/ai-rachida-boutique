@@ -1,9 +1,10 @@
 import { useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Camera, Mic, MessageSquareText, X, Loader2, Sparkles, Check, Trash2 } from "lucide-react";
+import { Camera, Mic, MessageSquareText, Globe, X, Loader2, Sparkles, Check, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import { smartImportProducts, saveImportedProducts } from "@/lib/products-smart-import.functions";
+import { scanWebsiteForProducts } from "@/lib/website-scan.functions";
 
 type Extracted = {
   name: string;
@@ -16,7 +17,7 @@ type Extracted = {
   image_url?: string | null;
 };
 
-type Mode = "menu" | "photo" | "text" | "voice";
+type Mode = "menu" | "photo" | "text" | "voice" | "site";
 
 export function SmartImportModal({
   shopId,
@@ -29,9 +30,12 @@ export function SmartImportModal({
 }) {
   const smart = useServerFn(smartImportProducts);
   const save = useServerFn(saveImportedProducts);
+  const scanSite = useServerFn(scanWebsiteForProducts);
   const [mode, setMode] = useState<Mode>("menu");
   const [busy, setBusy] = useState(false);
   const [text, setText] = useState("");
+  const [siteUrl, setSiteUrl] = useState("");
+  const [scanInfo, setScanInfo] = useState<{ pagesScanned: number; usedSitemap: boolean } | null>(null);
   const [preview, setPreview] = useState<Extracted[]>([]);
   const [listening, setListening] = useState(false);
   const recRef = useRef<any>(null);
@@ -102,6 +106,28 @@ export function SmartImportModal({
     setListening(false);
   }
 
+  async function runSiteScan() {
+    if (!siteUrl.trim()) return toast.error("Colle l'adresse de ton site d'abord.");
+    let url = siteUrl.trim();
+    if (!/^https?:\/\//i.test(url)) url = "https://" + url;
+    try {
+      setBusy(true);
+      setScanInfo(null);
+      const r = await scanSite({ data: { shopId, url } });
+      setScanInfo({ pagesScanned: r.pagesScanned, usedSitemap: r.usedSitemap });
+      if (!r.products.length) {
+        toast.error("Rachida n'a trouvé aucun produit reconnaissable sur ce site.");
+      } else {
+        toast.success(`${r.pagesScanned} page(s) scannée(s), ${r.products.length} produit(s) trouvé(s)`);
+      }
+      setPreview(r.products);
+    } catch (e: any) {
+      toast.error(e?.message ?? "Erreur pendant le scan");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function confirmSave() {
     if (!preview.length) return;
     try {
@@ -143,10 +169,31 @@ export function SmartImportModal({
         <div className="p-6 overflow-y-auto flex-1">
           <AnimatePresence mode="wait">
             {mode === "menu" && preview.length === 0 && (
-              <motion.div key="menu" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="grid sm:grid-cols-3 gap-3">
+              <motion.div key="menu" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
                 <ChoiceCard icon={Camera} title="Prendre / envoyer une photo" desc="Photo de tes produits, d'un cahier de prix, d'une étiquette. Rachida lit tout." onClick={() => setMode("photo")} accent="from-violet-500 to-purple-500" />
                 <ChoiceCard icon={MessageSquareText} title="Coller un texte" desc="Copie ta liste WhatsApp, ton pense-bête, ou tape simplement les prix." onClick={() => setMode("text")} accent="from-cyan-500 to-blue-500" />
                 <ChoiceCard icon={Mic} title="Parler à Rachida" desc="Dicte tes produits à voix haute, dans ta langue. Elle comprend." onClick={() => setMode("voice")} accent="from-emerald-500 to-teal-500" />
+                <ChoiceCard icon={Globe} title="Scanner mon site" desc="Tu as déjà un site ? Rachida le parcourt et remplit ton catalogue toute seule." onClick={() => setMode("site")} accent="from-amber-500 to-orange-500" />
+              </motion.div>
+            )}
+
+            {mode === "site" && preview.length === 0 && (
+              <motion.div key="site" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-3">
+                <BackBtn onClick={() => setMode("menu")} />
+                <label className="text-xs text-white/50">Adresse de ton site</label>
+                <input
+                  className="input-neon w-full"
+                  placeholder="maboutique.com"
+                  value={siteUrl}
+                  onChange={(e) => setSiteUrl(e.target.value)}
+                />
+                <p className="text-xs text-white/40">
+                  Rachida cherche les pages produits automatiquement (jusqu'à {" "}
+                  {15} pages). Ça peut prendre 20-30 secondes.
+                </p>
+                <button onClick={runSiteScan} disabled={busy} className="btn-neon w-full">
+                  {busy ? <><Loader2 className="animate-spin" size={14} /> Rachida scanne ton site…</> : <><Globe size={14} /> Lancer le scan</>}
+                </button>
               </motion.div>
             )}
 
@@ -212,6 +259,11 @@ export function SmartImportModal({
                 <div className="text-sm text-white/70">
                   ✨ Rachida a préparé <b className="text-white">{preview.length}</b> produit{preview.length > 1 ? "s" : ""}. Vérifie et ajuste si besoin.
                 </div>
+                {scanInfo && (
+                  <div className="text-xs text-white/40">
+                    {scanInfo.pagesScanned} page(s) scannée(s) · {scanInfo.usedSitemap ? "via sitemap du site" : "via les liens de la page d'accueil"}
+                  </div>
+                )}
                 <div className="space-y-2 max-h-[45vh] overflow-y-auto pr-1">
                   {preview.map((p, i) => (
                     <div key={i} className="p-3 rounded-xl bg-white/[0.03] border border-white/10 grid grid-cols-12 gap-2 items-center">
@@ -223,7 +275,7 @@ export function SmartImportModal({
                   ))}
                 </div>
                 <div className="flex gap-2 justify-end pt-2">
-                  <button onClick={() => setPreview([])} className="btn-ghost">Recommencer</button>
+                  <button onClick={() => { setPreview([]); setScanInfo(null); }} className="btn-ghost">Recommencer</button>
                   <button onClick={confirmSave} disabled={busy || !preview.length} className="btn-neon">
                     {busy ? <><Loader2 className="animate-spin" size={14} /> Ajout…</> : <><Check size={14} /> Ajouter au catalogue</>}
                   </button>
