@@ -77,8 +77,12 @@ async function discoverUrlsFromSitemap(origin: string): Promise<string[]> {
 }
 
 /** Repli : extrait les liens internes trouvés sur la page d'accueil. */
+const NON_PAGE_EXTENSIONS = /\.(png|jpe?g|gif|svg|webp|ico|css|js|mjs|json|webmanifest|woff2?|ttf|eot|pdf|xml|mp4|webm|zip|txt)(\?|#|$)/i;
+
 function extractInternalLinks(html: string, origin: string): string[] {
-  const links = [...html.matchAll(/href=["']([^"']+)["']/gi)].map((m) => m[1]);
+  // Uniquement les vraies balises <a href="...">, pas <link>/<img>/<script src>
+  // (qui pointent vers des icônes, du CSS, des manifests — pas des pages).
+  const links = [...html.matchAll(/<a\b[^>]*\shref=["']([^"']+)["']/gi)].map((m) => m[1]);
   const abs = links
     .map((href) => {
       try {
@@ -87,7 +91,7 @@ function extractInternalLinks(html: string, origin: string): string[] {
         return null;
       }
     })
-    .filter((u): u is string => !!u && u.startsWith(origin));
+    .filter((u): u is string => !!u && u.startsWith(origin) && !NON_PAGE_EXTENSIONS.test(u));
   return [...new Set(abs)];
 }
 
@@ -196,6 +200,7 @@ export const scanWebsiteForProducts = createServerFn({ method: "POST" })
       urls = extractInternalLinks(homeHtml, origin);
       urls.unshift(origin);
     }
+    urls = urls.filter((u) => !NON_PAGE_EXTENSIONS.test(u));
     urls = prioritizeProductLikeUrls(urls);
 
     // 2. Récupération + extraction JSON-LD (gratuit) par page, texte de repli pour l'IA
