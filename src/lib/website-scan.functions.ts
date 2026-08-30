@@ -222,35 +222,43 @@ export const scanWebsiteForProducts = createServerFn({ method: "POST" })
       throw new Error("Impossible de lire ce site (pages inaccessibles). Vérifie que l'adresse est correcte et publique.");
     }
 
-    // 2bis. Repli navigateur headless : si le scan rapide n'a presque rien trouvé,
-    // c'est probablement un site dont le contenu est chargé en JavaScript après coup
-    // (ex: "Chargement...", contenu injecté par React/Vue). On ré-essaie sur un nombre
-    // limité de pages avec un vrai rendu — plus lent, donc seulement en dernier recours.
+    // 2bis. Repli "rendu JS" via Jina AI Reader (r.jina.ai, gratuit, sans clé) : si le
+    // scan rapide n'a presque rien trouvé, c'est probablement un site dont le contenu
+    // est chargé en JavaScript après coup (ex: "Chargement...", React/Vue). Plutôt que
+    // de faire tourner nous-mêmes un navigateur (fragile sur une fonction serverless),
+    // on délègue le rendu à ce service : il exécute la page côté serveur et renvoie le
+    // texte déjà nettoyé, prêt pour l'IA.
     const foundTooLittle = structuredProducts.length === 0 && leftoverText.trim().length < 300;
     let headlessDebug = "non déclenché (assez de contenu trouvé au scan rapide)";
     if (foundTooLittle) {
-      try {
-        const { renderPageHtml, closeBrowser } = await import("@/lib/headless-render.server");
-        const pagesToRender = urls.slice(0, MAX_HEADLESS_PAGES);
-        leftoverText = "";
-        let renderedOk = 0;
-        for (const url of pagesToRender) {
-          const html = await renderPageHtml(url);
-          if (!html) continue;
+      const pagesToRender = urls.slice(0, MAX_HEADLESS_PAGES);
+      leftoverText = "";
+      let renderedOk = 0;
+      let lastError = "";
+      for (const url of pagesToRender) {
+        try {
+          const res = await fetchWithTimeout(`https://r.jina.ai/${url}`);
+          if (!res) {
+            lastError = "réponse vide de r.jina.ai";
+            continue;
+          }
+          const cleanText = (await res.text()).slice(0, 3000);
+          if (!cleanText.trim()) continue;
           renderedOk++;
           usedHeadless = true;
-          const jsonLd = extractJsonLdProducts(html, url);
-          if (jsonLd.length) {
-            structuredProducts.push(...jsonLd);
-          } else if (leftoverText.length < MAX_TEXT_CHARS_FOR_AI) {
-            leftoverText += `\n\n--- Page: ${url} ---\n` + stripHtmlToText(html).slice(0, 2000);
+          if (leftoverText.length < MAX_TEXT_CHARS_FOR_AI) {
+            leftoverText += `\n\n--- Page: ${url} ---\n` + cleanText;
           }
+        } catch (err) {
+          lastError = err instanceof Error ? `${err.name}: ${err.message}` : String(err);
         }
-        await closeBrowser();
-        headlessDebug = `${renderedOk}/${pagesToRender.length} page(s) rendues, ${structuredProducts.length} via JSON-LD, ${leftoverText.trim().length} caractères de texte pour l'IA`;
-      } catch (err) {
-        headlessDebug = `échec : ${err instanceof Error ? `${err.name}: ${err.message}` : String(err)}`;
-        console.error("[website-scan] Repli headless indisponible", err);
+      }
+      headlessDebug =
+        renderedOk > 0
+          ? `${renderedOk}/${pagesToRender.length} page(s) rendues via r.jina.ai, ${leftoverText.trim().length} caractères pour l'IA`
+          : `échec sur toutes les pages${lastError ? ` (${lastError})` : ""}`;
+      if (renderedOk === 0) {
+        console.error("[website-scan] Repli r.jina.ai indisponible", lastError);
         // On continue avec ce qu'on a du scan rapide — mieux vaut un résultat partiel
         // qu'un échec total si le rendu headless n'est pas configuré/disponible.
       }
