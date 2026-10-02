@@ -1068,6 +1068,50 @@ export type Database = {
         }
         Relationships: []
       }
+      whatsapp_connections: {
+        Row: {
+          access_token: string
+          created_at: string
+          display_phone_number: string | null
+          id: string
+          phone_number_id: string
+          shop_id: string
+          status: string
+          updated_at: string
+          waba_id: string | null
+        }
+        Insert: {
+          access_token: string
+          created_at?: string
+          display_phone_number?: string | null
+          id?: string
+          phone_number_id: string
+          shop_id: string
+          status?: string
+          updated_at?: string
+          waba_id?: string | null
+        }
+        Update: {
+          access_token?: string
+          created_at?: string
+          display_phone_number?: string | null
+          id?: string
+          phone_number_id?: string
+          shop_id?: string
+          status?: string
+          updated_at?: string
+          waba_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_connections_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: true
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

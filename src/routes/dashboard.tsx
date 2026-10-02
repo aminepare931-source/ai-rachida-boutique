@@ -8,10 +8,11 @@ import {
   Bot, Settings, Package, MessageSquare, ShoppingBag, Code, LogOut, Plus, Trash2, Upload,
   LayoutDashboard, Users, HelpCircle, Sparkles, TrendingUp, Flame,
   CheckCircle2, XCircle, Loader2, Mail, Globe, Globe2, Copy, ExternalLink, QrCode, Share2, Wand2,
-  Wallet, Megaphone, Award, CalendarClock,
+  Wallet, Megaphone, Award, CalendarClock, MessageCircle,
 } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { checkInstall } from "@/lib/install-checker.functions";
+import { getWhatsAppConnection, connectWhatsApp, disconnectWhatsApp } from "@/lib/whatsapp-connection.functions";
 import { motion, AnimatePresence } from "framer-motion";
 import { AreaChart, Area, ResponsiveContainer, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 import { RachidaWidget } from "@/components/RachidaWidget";
@@ -634,7 +635,105 @@ function ShopTab({ shop, onUpdated }: { shop: Shop; onUpdated: (s: Shop) => void
         <Field label="Personnalité & instructions supplémentaires"><textarea className="input-neon" rows={4} value={form.system_prompt_extra ?? ""} onChange={(e) => setForm({ ...form, system_prompt_extra: e.target.value })} placeholder="Ex : Tu es spécialisée en mode féminine, sois enthousiaste et propose toujours des coordonnés." /></Field>
         <button onClick={save} disabled={saving} className="btn-neon mt-4">{saving ? "..." : "Enregistrer"}</button>
       </GlassCard>
+      <WhatsAppConnectionCard shopId={shop.id} />
     </div>
+  );
+}
+
+function WhatsAppConnectionCard({ shopId }: { shopId: string }) {
+  const getConn = useServerFn(getWhatsAppConnection);
+  const connect = useServerFn(connectWhatsApp);
+  const disconnect = useServerFn(disconnectWhatsApp);
+
+  const [conn, setConn] = useState<{ phone_number_id: string; display_phone_number: string | null; status: string } | null>(null);
+  const [loaded, setLoaded] = useState(false);
+  const [showForm, setShowForm] = useState(false);
+  const [phoneNumberId, setPhoneNumberId] = useState("");
+  const [accessToken, setAccessToken] = useState("");
+  const [wabaId, setWabaId] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  const load = useCallback(async () => {
+    try {
+      const r = await getConn({ data: { shopId } });
+      setConn(r as any);
+    } finally {
+      setLoaded(true);
+    }
+  }, [getConn, shopId]);
+  useEffect(() => { void load(); }, [load]);
+
+  async function submit() {
+    if (!phoneNumberId.trim() || !accessToken.trim()) return toast.error("Renseigne au moins l'ID du numéro et le jeton d'accès.");
+    setSaving(true);
+    try {
+      await connect({ data: { shopId, phoneNumberId: phoneNumberId.trim(), accessToken: accessToken.trim(), wabaId: wabaId.trim() || undefined } });
+      toast.success("WhatsApp Business connecté");
+      setShowForm(false);
+      setAccessToken("");
+      void load();
+    } catch (e: any) {
+      toast.error(e?.message ?? "Erreur de connexion");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function remove() {
+    if (!confirm("Déconnecter ce numéro WhatsApp ? Rachida arrêtera de répondre dessus.")) return;
+    await disconnect({ data: { shopId } });
+    toast.success("Déconnecté");
+    void load();
+  }
+
+  return (
+    <GlassCard>
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <div>
+          <h2 className="font-semibold text-lg flex items-center gap-2">
+            <MessageCircle size={18} className="text-emerald-400" /> WhatsApp Business
+          </h2>
+          <p className="text-sm text-white/50 mt-1">
+            Rachida répond directement depuis le numéro WhatsApp habituel de la boutique.
+          </p>
+        </div>
+        {loaded && conn && (
+          <span className="text-xs px-2.5 py-1 rounded-full bg-emerald-500/15 text-emerald-300">
+            Connecté{conn.display_phone_number ? ` · ${conn.display_phone_number}` : ""}
+          </span>
+        )}
+      </div>
+
+      {loaded && !conn && !showForm && (
+        <button onClick={() => setShowForm(true)} className="btn-neon mt-4">Connecter WhatsApp Business</button>
+      )}
+
+      {loaded && conn && (
+        <button onClick={remove} className="btn-ghost mt-4 text-red-300">Déconnecter</button>
+      )}
+
+      {showForm && (
+        <div className="mt-4 space-y-3 border-t border-white/10 pt-4">
+          <p className="text-xs text-white/40">
+            Ces informations viennent de ton compte Meta Business (developers.facebook.com), après avoir configuré
+            l'API WhatsApp Business pour ton numéro.
+          </p>
+          <Field label="Phone Number ID">
+            <input className="input-neon" value={phoneNumberId} onChange={(e) => setPhoneNumberId(e.target.value)} placeholder="ex: 123456789012345" />
+          </Field>
+          <Field label="Jeton d'accès (access token)">
+            <input className="input-neon" type="password" value={accessToken} onChange={(e) => setAccessToken(e.target.value)} placeholder="EAAxxxxxxxxxxxx" />
+          </Field>
+          <Field label="WABA ID (optionnel)">
+            <input className="input-neon" value={wabaId} onChange={(e) => setWabaId(e.target.value)} placeholder="ex: 987654321098765" />
+          </Field>
+          <div className="flex gap-2">
+            <button onClick={submit} disabled={saving} className="btn-neon">{saving ? "..." : "Connecter"}</button>
+            <button onClick={() => setShowForm(false)} className="btn-ghost">Annuler</button>
+          </div>
+        </div>
+      )}
+    </GlassCard>
   );
 }
 

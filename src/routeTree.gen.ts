@@ -20,6 +20,7 @@ import { Route as ApiPublicRachidaInstallPingRouteImport } from './routes/api/pu
 import { Route as ApiPublicRachidaSearchRouteImport } from './routes/api/public/rachida-search'
 import { Route as ApiPublicRachidaVisionRouteImport } from './routes/api/public/rachida-vision'
 import { Route as ApiPublicShopConfigRouteImport } from './routes/api/public/shop-config'
+import { Route as ApiPublicWhatsappWebhookRouteImport } from './routes/api/public/whatsapp-webhook'
 import { Route as ApiPublicHooksDailyReportRouteImport } from './routes/api/public/hooks/daily-report'
 
 const IndexRoute = IndexRouteImport.update({
@@ -78,6 +79,12 @@ const ApiPublicShopConfigRoute = ApiPublicShopConfigRouteImport.update({
   path: '/api/public/shop-config',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicWhatsappWebhookRoute =
+  ApiPublicWhatsappWebhookRouteImport.update({
+    id: '/api/public/whatsapp-webhook',
+    path: '/api/public/whatsapp-webhook',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksDailyReportRoute =
   ApiPublicHooksDailyReportRouteImport.update({
     id: '/api/public/hooks/daily-report',
@@ -97,6 +104,7 @@ export interface FileRoutesByFullPath {
   '/api/public/rachida-search': typeof ApiPublicRachidaSearchRoute
   '/api/public/rachida-vision': typeof ApiPublicRachidaVisionRoute
   '/api/public/shop-config': typeof ApiPublicShopConfigRoute
+  '/api/public/whatsapp-webhook': typeof ApiPublicWhatsappWebhookRoute
   '/api/public/hooks/daily-report': typeof ApiPublicHooksDailyReportRoute
 }
 export interface FileRoutesByTo {
@@ -111,6 +119,7 @@ export interface FileRoutesByTo {
   '/api/public/rachida-search': typeof ApiPublicRachidaSearchRoute
   '/api/public/rachida-vision': typeof ApiPublicRachidaVisionRoute
   '/api/public/shop-config': typeof ApiPublicShopConfigRoute
+  '/api/public/whatsapp-webhook': typeof ApiPublicWhatsappWebhookRoute
   '/api/public/hooks/daily-report': typeof ApiPublicHooksDailyReportRoute
 }
 export interface FileRoutesById {
@@ -126,6 +135,7 @@ export interface FileRoutesById {
   '/api/public/rachida-search': typeof ApiPublicRachidaSearchRoute
   '/api/public/rachida-vision': typeof ApiPublicRachidaVisionRoute
   '/api/public/shop-config': typeof ApiPublicShopConfigRoute
+  '/api/public/whatsapp-webhook': typeof ApiPublicWhatsappWebhookRoute
   '/api/public/hooks/daily-report': typeof ApiPublicHooksDailyReportRoute
 }
 export interface FileRouteTypes {
@@ -142,6 +152,7 @@ export interface FileRouteTypes {
     | '/api/public/rachida-search'
     | '/api/public/rachida-vision'
     | '/api/public/shop-config'
+    | '/api/public/whatsapp-webhook'
     | '/api/public/hooks/daily-report'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -156,6 +167,7 @@ export interface FileRouteTypes {
     | '/api/public/rachida-search'
     | '/api/public/rachida-vision'
     | '/api/public/shop-config'
+    | '/api/public/whatsapp-webhook'
     | '/api/public/hooks/daily-report'
   id:
     | '__root__'
@@ -170,6 +182,7 @@ export interface FileRouteTypes {
     | '/api/public/rachida-search'
     | '/api/public/rachida-vision'
     | '/api/public/shop-config'
+    | '/api/public/whatsapp-webhook'
     | '/api/public/hooks/daily-report'
   fileRoutesById: FileRoutesById
 }
@@ -185,6 +198,7 @@ export interface RootRouteChildren {
   ApiPublicRachidaSearchRoute: typeof ApiPublicRachidaSearchRoute
   ApiPublicRachidaVisionRoute: typeof ApiPublicRachidaVisionRoute
   ApiPublicShopConfigRoute: typeof ApiPublicShopConfigRoute
+  ApiPublicWhatsappWebhookRoute: typeof ApiPublicWhatsappWebhookRoute
   ApiPublicHooksDailyReportRoute: typeof ApiPublicHooksDailyReportRoute
 }
 
@@ -267,6 +281,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicShopConfigRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/whatsapp-webhook': {
+      id: '/api/public/whatsapp-webhook'
+      path: '/api/public/whatsapp-webhook'
+      fullPath: '/api/public/whatsapp-webhook'
+      preLoaderRoute: typeof ApiPublicWhatsappWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/daily-report': {
       id: '/api/public/hooks/daily-report'
       path: '/api/public/hooks/daily-report'
@@ -289,6 +310,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicRachidaSearchRoute: ApiPublicRachidaSearchRoute,
   ApiPublicRachidaVisionRoute: ApiPublicRachidaVisionRoute,
   ApiPublicShopConfigRoute: ApiPublicShopConfigRoute,
+  ApiPublicWhatsappWebhookRoute: ApiPublicWhatsappWebhookRoute,
   ApiPublicHooksDailyReportRoute: ApiPublicHooksDailyReportRoute,
 }
 export const routeTree = rootRouteImport
