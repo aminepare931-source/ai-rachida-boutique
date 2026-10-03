@@ -67,7 +67,7 @@ const TAB_GROUPS = [
     title: "Mon activité",
     items: [
       { key: "catalog", label: "Produits & services", icon: Package },
-      { key: "shop", label: "Rachida & page dédiée", icon: Sparkles },
+      { key: "shop", label: "WhatsApp & page dédiée", icon: Sparkles },
       { key: "faq", label: "Questions fréquentes", icon: HelpCircle },
       { key: "payments", label: "Paiements", icon: Wallet },
     ],
@@ -242,7 +242,7 @@ function Dashboard() {
               exit={{ opacity: 0, y: -8 }}
               transition={{ duration: 0.2 }}
             >
-              {tab === "overview" && <OverviewTab shopId={shop.id} currency={shop.currency} />}
+              {tab === "overview" && <OverviewTab shopId={shop.id} currency={shop.currency} onGoToWhatsApp={() => setTab("shop")} />}
               {tab === "shop" && <ShopTab shop={shop} onUpdated={setShop} />}
               {tab === "catalog" && <CatalogTab shopId={shop.id} />}
               {tab === "conversations" && <ConversationsTab shopId={shop.id} />}
@@ -283,11 +283,19 @@ function ToolsTabWrapper({ shop }: { shop: Shop }) {
 
 
 /* ---------- Overview ---------- */
-function OverviewTab({ shopId, currency }: { shopId: string; currency: string }) {
+function OverviewTab({ shopId, currency, onGoToWhatsApp }: { shopId: string; currency: string; onGoToWhatsApp: () => void }) {
   const [stats, setStats] = useState({ convs: 0, orders: 0, revenue: 0, hotLeads: 0 });
   const [chartData, setChartData] = useState<{ day: string; convs: number; orders: number }[]>([]);
   const [emotions, setEmotions] = useState<Record<string, number>>({});
   const [topProducts, setTopProducts] = useState<{ name: string; views: number }[]>([]);
+  const [waConnected, setWaConnected] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase.from("whatsapp_connections").select("id").eq("shop_id", shopId).limit(1);
+      setWaConnected(!!data?.[0]);
+    })();
+  }, [shopId]);
 
   useEffect(() => {
     (async () => {
@@ -333,6 +341,21 @@ function OverviewTab({ shopId, currency }: { shopId: string; currency: string })
         <h1 className="text-3xl font-bold tracking-tight">Vue d'ensemble</h1>
         <p className="text-white/40 text-sm">14 derniers jours · données temps réel</p>
       </div>
+
+      {waConnected === false && (
+        <div className="liquid-glass rounded-2xl p-5 flex items-center justify-between flex-wrap gap-3 border border-emerald-400/20">
+          <div className="flex items-center gap-3">
+            <span className="grid place-items-center size-10 rounded-xl bg-emerald-500/15 shrink-0">
+              <MessageCircle size={18} className="text-emerald-400" />
+            </span>
+            <div>
+              <div className="font-semibold text-sm">Connecte ton WhatsApp Business</div>
+              <div className="text-xs text-white/50">L'étape essentielle pour que Rachida réponde directement sur ton numéro.</div>
+            </div>
+          </div>
+          <button onClick={onGoToWhatsApp} className="btn-neon shrink-0">Connecter</button>
+        </div>
+      )}
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <KpiCard label="Conversations" value={stats.convs} icon={MessageSquare} accent="from-violet-500 to-purple-500" />
@@ -621,6 +644,7 @@ function ShopTab({ shop, onUpdated }: { shop: Shop; onUpdated: (s: Shop) => void
   return (
     <div className="space-y-6">
       <h1 className="text-3xl font-bold tracking-tight">IA & Boutique</h1>
+      <WhatsAppConnectionCard shopId={shop.id} />
       <GlassCard>
         <div className="grid md:grid-cols-2 gap-4">
           <Field label="Nom de la boutique"><input className="input-neon" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></Field>
@@ -635,7 +659,6 @@ function ShopTab({ shop, onUpdated }: { shop: Shop; onUpdated: (s: Shop) => void
         <Field label="Personnalité & instructions supplémentaires"><textarea className="input-neon" rows={4} value={form.system_prompt_extra ?? ""} onChange={(e) => setForm({ ...form, system_prompt_extra: e.target.value })} placeholder="Ex : Tu es spécialisée en mode féminine, sois enthousiaste et propose toujours des coordonnés." /></Field>
         <button onClick={save} disabled={saving} className="btn-neon mt-4">{saving ? "..." : "Enregistrer"}</button>
       </GlassCard>
-      <WhatsAppConnectionCard shopId={shop.id} />
     </div>
   );
 }

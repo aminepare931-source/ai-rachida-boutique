@@ -720,25 +720,54 @@ function NoCodeInstallSection() {
           <Zap className="size-3 text-[--color-neon-cyan]" /> Pour tout le monde
         </div>
         <h2 className="font-display font-bold text-4xl sm:text-5xl">
-          Vous ne savez pas coder ? <span className="text-shiny-neon">Aucun problème.</span>
+          Là où vos clients sont <span className="text-shiny-neon">déjà.</span>
         </h2>
         <p className="mt-4 text-muted-foreground">
-          3 chemins simples : on installe pour vous, vous partagez une page dédiée, ou votre plateforme l'ajoute en quelques clics.
+          Pas besoin de site pour commencer : Rachida répond directement sur votre WhatsApp habituel. Une page ou un
+          site, c'est en option, quand vous voulez.
         </p>
       </motion.div>
       <div className="mt-14 mx-auto max-w-6xl grid md:grid-cols-3 gap-5">
-        {/* 1. Snippet */}
+        {/* 1. WhatsApp Business — le chemin principal */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.5 }}
+          className="liquid-glass rounded-3xl p-6 flex flex-col border border-emerald-400/20"
+        >
+          <div className="flex items-center justify-between">
+            <div className="size-11 grid place-items-center rounded-full border border-emerald-400/40 font-display font-bold text-emerald-300">1</div>
+            <span className="text-[10px] uppercase tracking-widest text-emerald-300/80">Recommandé</span>
+          </div>
+          <h3 className="mt-4 font-display font-semibold text-lg">Connecter votre WhatsApp</h3>
+          <p className="mt-2 text-sm text-muted-foreground flex-1">
+            Rachida répond directement depuis votre numéro WhatsApp habituel — vos clients continuent à vous écrire
+            comme avant. Connexion en quelques minutes depuis le tableau de bord, guide fourni.
+          </p>
+          <a
+            href={waLink}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-4 inline-flex items-center justify-center gap-2 text-sm px-3 py-2.5 rounded-full bg-emerald-500/20 text-emerald-200 hover:bg-emerald-500/30 transition"
+          >
+            <MessageSquare className="size-4" /> Être accompagné sur WhatsApp
+          </a>
+        </motion.div>
+
+        {/* 2. Snippet pour un site existant */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5, delay: 0.1 }}
           className="liquid-glass rounded-3xl p-6 flex flex-col"
         >
-          <div className="size-11 grid place-items-center rounded-full border border-[--color-neon-cyan]/40 font-display font-bold text-[--color-neon-cyan]">1</div>
-          <h3 className="mt-4 font-display font-semibold text-lg">Installation guidée</h3>
+          <div className="size-11 grid place-items-center rounded-full border border-[--color-neon-cyan]/40 font-display font-bold text-[--color-neon-cyan]">2</div>
+          <h3 className="mt-4 font-display font-semibold text-lg">Déjà un site ?</h3>
           <p className="mt-2 text-sm text-muted-foreground flex-1">
-            WordPress, Wix, Shopify ou autre : le tableau de bord donne les étapes exactes et vérifie automatiquement si Rachida est bien installée.
+            WordPress, Wix, Shopify ou autre : ajoutez aussi Rachida en widget de chat. Le tableau de bord donne les
+            étapes exactes et vérifie automatiquement l'installation.
           </p>
           <div className="mt-4">
             <div className="rounded-xl bg-black/40 border border-white/10 p-3 font-mono text-[11px] text-cyan-200 overflow-x-auto select-all">
@@ -752,29 +781,6 @@ function NoCodeInstallSection() {
               {copied ? "Copié !" : "Copier si un technicien le demande"}
             </button>
           </div>
-        </motion.div>
-
-        {/* 2. WhatsApp */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5, delay: 0.1 }}
-          className="liquid-glass rounded-3xl p-6 flex flex-col"
-        >
-          <div className="size-11 grid place-items-center rounded-full border border-[--color-neon-cyan]/40 font-display font-bold text-[--color-neon-cyan]">2</div>
-          <h3 className="mt-4 font-display font-semibold text-lg">Activation par WhatsApp</h3>
-          <p className="mt-2 text-sm text-muted-foreground flex-1">
-            Écrivez-nous sur WhatsApp et notre équipe connecte Rachida à votre activité, sans configuration technique de votre côté.
-          </p>
-          <a
-            href={waLink}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="mt-4 inline-flex items-center justify-center gap-2 text-sm px-3 py-2.5 rounded-full bg-emerald-500/20 text-emerald-200 hover:bg-emerald-500/30 transition"
-          >
-            <MessageSquare className="size-4" /> Ouvrir WhatsApp
-          </a>
         </motion.div>
 
         {/* 3. Page dédiée */}

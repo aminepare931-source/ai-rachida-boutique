@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { CheckCircle2, ArrowRight, X, Sparkles, Rocket, Store, Wallet, Package } from "lucide-react";
+import { ArrowRight, X, Sparkles, Rocket, Store, Wallet, Package, MessageCircle } from "lucide-react";
 
 type Shop = { id: string; name: string; whatsapp: string | null; slug: string };
 
@@ -73,7 +73,10 @@ export function OnboardingWizard({ shop, onDone }: { shop: Shop; onDone: () => v
           <div className="space-y-3">
             <p className="text-white/60 text-sm">Numéro où tu reçois les commandes. Sans ça, Rachida ne peut envoyer personne chez toi.</p>
             <input type="tel" value={whatsapp} onChange={(e) => setWhatsapp(e.target.value)} placeholder="+226 70 12 34 56" className="input-neon w-full text-lg" />
-            <div className="text-xs text-white/40">Format international avec l'indicatif du pays.</div>
+            <div className="text-xs text-white/40">
+              Format international avec l'indicatif du pays. Ce numéro sert au contact humain — pour que Rachida
+              réponde elle-même directement dessus, tu connecteras WhatsApp Business juste après.
+            </div>
           </div>
         )}
         {step === 2 && (
@@ -94,8 +97,14 @@ export function OnboardingWizard({ shop, onDone }: { shop: Shop; onDone: () => v
           <div className="space-y-3">
             <p className="text-white/70">Rachida connaît maintenant l'essentiel. Prochaine étape recommandée :</p>
             <ul className="space-y-2 text-sm">
-              <li className="flex gap-2 items-start"><Package className="size-4 text-violet-300 mt-0.5 shrink-0" /> Ajoute tes produits avec <b>Ajout intelligent</b> (photo, texte, voix)</li>
-              <li className="flex gap-2 items-start"><CheckCircle2 className="size-4 text-emerald-300 mt-0.5 shrink-0" /> Partage ta boutique par WhatsApp ou colle ton site actuel dans <b>Site 1-clic</b></li>
+              <li className="flex gap-2 items-start">
+                <MessageCircle className="size-4 text-emerald-300 mt-0.5 shrink-0" />
+                <span>
+                  <b>L'essentiel :</b> connecte ton WhatsApp Business dans <b>IA & Boutique</b> — c'est ce qui fait
+                  répondre Rachida directement sur ton numéro habituel
+                </span>
+              </li>
+              <li className="flex gap-2 items-start"><Package className="size-4 text-violet-300 mt-0.5 shrink-0" /> Ajoute tes produits ou services avec <b>Ajout intelligent</b> (photo, texte, voix, ou scan de site)</li>
               <li className="flex gap-2 items-start"><Sparkles className="size-4 text-cyan-300 mt-0.5 shrink-0" /> Demande à Rachida des <b>descriptions</b> et <b>posts sociaux</b> dans l'onglet Outils IA</li>
             </ul>
           </div>
